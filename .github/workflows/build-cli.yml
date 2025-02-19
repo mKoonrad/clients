@@ -143,7 +143,7 @@ jobs:
           npm link ../sdk-internal
 
       - name: Build & Package Unix
-        run: npm run dist:${{ matrix.license_type.build_prefix }}:${{ env.SHORT_RUNNER_OS }} --quiet
+        run: npm run dist:${{ matrix.license_type.build_prefix }}:${{ env.SHORT_RUNNER_OS }}${{ matrix.os.target_suffix }} --quiet
 
       - name: Zip Unix
         run: |
