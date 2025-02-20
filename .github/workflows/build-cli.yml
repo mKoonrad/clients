@@ -77,7 +77,7 @@ jobs:
           echo "has_secrets=$has_secrets" >> $GITHUB_OUTPUT
 
   cli:
-    name: CLI ${{ matrix.os.base }} - ${{ matrix.os.target_suffix }} - ${{ matrix.license_type.readable }}
+    name: CLI ${{ matrix.os.base }}${{ matrix.os.target_suffix && format('- {0}', matrix.os.target_suffix)}} - ${{ matrix.license_type.readable }}
     strategy:
       matrix:
         os:
