@@ -13,8 +13,7 @@ import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/sym
 import { getClassInitializer } from "@bitwarden/common/platform/services/cryptography/get-class-initializer";
 
 import { ServerConfig } from "../../../platform/abstractions/config/server-config";
-
-import { buildDecryptMessage, buildSetConfigMessage } from "./encrypt.worker";
+import { buildDecryptMessage, buildSetConfigMessage } from "../types/worker-command.type";
 
 // TTL (time to live) is not strictly required but avoids tying up memory resources if inactive
 const workerTTL = 60000; // 1 minute

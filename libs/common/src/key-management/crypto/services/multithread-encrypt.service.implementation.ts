@@ -10,9 +10,9 @@ import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/sym
 import { getClassInitializer } from "@bitwarden/common/platform/services/cryptography/get-class-initializer";
 
 import { ServerConfig } from "../../../platform/abstractions/config/server-config";
+import { buildDecryptMessage, buildSetConfigMessage } from "../types/worker-command.type";
 
 import { EncryptServiceImplementation } from "./encrypt.service.implementation";
-import { buildDecryptMessage, buildSetConfigMessage } from "./encrypt.worker";
 
 // TTL (time to live) is not strictly required but avoids tying up memory resources if inactive
 const workerTTL = 3 * 60000; // 3 minutes
@@ -78,7 +78,7 @@ export class MultithreadEncryptServiceImplementation extends EncryptServiceImple
   override onServerConfigChange(newConfig: ServerConfig): void {
     super.onServerConfigChange(newConfig);
 
-    if (this.worker !== null) {
+    if (this.worker !== null && this.worker !== undefined) {
       const request = buildSetConfigMessage({ newConfig });
       this.worker.postMessage(request);
     }
