@@ -23,6 +23,7 @@ const minNumberOfItemsForMultithreading = 400;
 export class BulkEncryptServiceImplementation implements BulkEncryptService {
   private workers: Worker[] = [];
   private timeout: any;
+  private currentServerConfig: ServerConfig | undefined = undefined;
 
   private clear$ = new Subject<void>();
 
@@ -61,10 +62,8 @@ export class BulkEncryptServiceImplementation implements BulkEncryptService {
   }
 
   onServerConfigChange(newConfig: ServerConfig): void {
-    this.workers.forEach((worker) => {
-      const request = buildSetConfigMessage({ newConfig });
-      worker.postMessage(request);
-    });
+    this.currentServerConfig = newConfig;
+    this.updateWorkerServerConfigs(newConfig);
   }
 
   /**
@@ -102,6 +101,9 @@ export class BulkEncryptServiceImplementation implements BulkEncryptService {
             ),
           ),
         );
+      }
+      if (this.currentServerConfig != undefined) {
+        this.updateWorkerServerConfigs(this.currentServerConfig);
       }
     }
 
@@ -152,6 +154,13 @@ export class BulkEncryptServiceImplementation implements BulkEncryptService {
     this.restartTimeout();
 
     return decryptedItems;
+  }
+
+  private updateWorkerServerConfigs(newConfig: ServerConfig) {
+    this.workers.forEach((worker) => {
+      const request = buildSetConfigMessage({ newConfig });
+      worker.postMessage(request);
+    });
   }
 
   private clear() {

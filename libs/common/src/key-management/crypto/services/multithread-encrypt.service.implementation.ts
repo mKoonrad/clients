@@ -23,6 +23,7 @@ const workerTTL = 3 * 60000; // 3 minutes
 export class MultithreadEncryptServiceImplementation extends EncryptServiceImplementation {
   private worker: Worker;
   private timeout: any;
+  private currentServerConfig: ServerConfig | undefined = undefined;
 
   private clear$ = new Subject<void>();
 
@@ -40,13 +41,18 @@ export class MultithreadEncryptServiceImplementation extends EncryptServiceImple
 
     this.logService.info("Starting decryption using multithreading");
 
-    this.worker ??= new Worker(
-      new URL(
-        /* webpackChunkName: 'encrypt-worker' */
-        "@bitwarden/common/key-management/crypto/services/encrypt.worker.ts",
-        import.meta.url,
-      ),
-    );
+    if (this.worker === null || this.worker === undefined) {
+      this.worker = new Worker(
+        new URL(
+          /* webpackChunkName: 'encrypt-worker' */
+          "@bitwarden/common/key-management/crypto/services/encrypt.worker.ts",
+          import.meta.url,
+        ),
+      );
+      if (this.currentServerConfig !== undefined) {
+        this.updateWorkerServerConfig(this.currentServerConfig);
+      }
+    }
 
     this.restartTimeout();
 
@@ -76,8 +82,12 @@ export class MultithreadEncryptServiceImplementation extends EncryptServiceImple
   }
 
   override onServerConfigChange(newConfig: ServerConfig): void {
+    this.currentServerConfig = newConfig;
     super.onServerConfigChange(newConfig);
+    this.updateWorkerServerConfig(newConfig);
+  }
 
+  private updateWorkerServerConfig(newConfig: ServerConfig) {
     if (this.worker != null) {
       const request = buildSetConfigMessage({ newConfig });
       this.worker.postMessage(request);
