@@ -78,7 +78,7 @@ export class MultithreadEncryptServiceImplementation extends EncryptServiceImple
   override onServerConfigChange(newConfig: ServerConfig): void {
     super.onServerConfigChange(newConfig);
 
-    if (this.worker !== null && this.worker !== undefined) {
+    if (this.worker != null) {
       const request = buildSetConfigMessage({ newConfig });
       this.worker.postMessage(request);
     }

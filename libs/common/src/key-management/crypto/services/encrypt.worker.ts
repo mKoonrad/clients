@@ -1,5 +1,7 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
+import { Jsonify } from "type-fest";
+
 import { Decryptable } from "@bitwarden/common/platform/interfaces/decryptable.interface";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import { ConsoleLogService } from "@bitwarden/common/platform/services/console-log.service";
@@ -13,7 +15,6 @@ import {
   DECRYPT_COMMAND,
   SET_CONFIG_COMMAND,
   ParsedDecryptCommandData,
-  ParsedSetConfigCommandData,
 } from "../types/worker-command.type";
 
 import { EncryptServiceImplementation } from "./encrypt.service.implementation";
@@ -53,8 +54,10 @@ workerApi.addEventListener("message", async (event: { data: string }) => {
   switch (request.command) {
     case DECRYPT_COMMAND:
       return await handleDecrypt(request as unknown as ParsedDecryptCommandData);
-    case SET_CONFIG_COMMAND:
-      return await handleSetConfig(request as unknown as ParsedSetConfigCommandData);
+    case SET_CONFIG_COMMAND: {
+      const newConfig = (request as unknown as { newConfig: Jsonify<ServerConfig> }).newConfig;
+      return await handleSetConfig(newConfig);
+    }
     default:
       logService.error(`[EncryptWorker] unknown worker command`, request.command, request);
   }
@@ -74,7 +77,6 @@ async function handleDecrypt(request: ParsedDecryptCommandData) {
   });
 }
 
-async function handleSetConfig(request: ParsedSetConfigCommandData) {
-  const newConfig = ServerConfig.fromJSON(request.newConfig);
-  encryptService.onServerConfigChange(newConfig);
+async function handleSetConfig(newConfig: Jsonify<ServerConfig>) {
+  encryptService.onServerConfigChange(ServerConfig.fromJSON(newConfig));
 }

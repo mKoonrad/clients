@@ -21,10 +21,6 @@ export type ParsedDecryptCommandData = {
 
 type SetConfigCommandData = { newConfig: ServerConfig };
 
-export type ParsedSetConfigCommandData = {
-  newConfig: Jsonify<ServerConfig>;
-};
-
 export function buildDecryptMessage(data: DecryptCommandData): string {
   return JSON.stringify({
     command: DECRYPT_COMMAND,
