@@ -6,15 +6,17 @@
   display: flex;
   align-items: center;
 
+  /*
   * {
     @include themify($themes) {
       color: themed("headingColor");
     }
     font-size: $font-size-base;
   }
+  */
 
   button {
-    @extend .no-btn;
+    // @extend .no-btn;
   }
 
   h3,
@@ -91,7 +93,7 @@
 
   button,
   a {
-    @extend .no-btn;
+    // @extend .no-btn;
   }
 
   .contents {
