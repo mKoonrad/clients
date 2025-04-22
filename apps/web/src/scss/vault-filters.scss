@@ -6,14 +6,12 @@
   display: flex;
   align-items: center;
 
-  /*
   * {
     @include themify($themes) {
       color: themed("headingColor");
     }
-    font-size: $font-size-base;
+    font-size: 1rem;
   }
-  */
 
   button {
     // @extend .no-btn;
