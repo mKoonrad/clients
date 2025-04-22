@@ -153,4 +153,37 @@ describe("KdfConfigService", () => {
       await expect(sutKdfConfigService.getKdfConfig(mockUserId)).resolves.toEqual(kdfConfig);
     });
   });
+
+  describe("getKdfConfig$", () => {
+    it("gets KdfConfig of provided user", async () => {
+      await expect(
+        firstValueFrom(sutKdfConfigService.getKdfConfig$(mockUserId)),
+      ).resolves.toBeNull();
+      const kdfConfig: KdfConfig = new PBKDF2KdfConfig(500_000);
+      await fakeStateProvider.setUserState(KDF_CONFIG, kdfConfig, mockUserId);
+      await expect(firstValueFrom(sutKdfConfigService.getKdfConfig$(mockUserId))).resolves.toEqual(
+        kdfConfig,
+      );
+    });
+
+    it("gets KdfConfig of provided user after changed", async () => {
+      await expect(
+        firstValueFrom(sutKdfConfigService.getKdfConfig$(mockUserId)),
+      ).resolves.toBeNull();
+      await fakeStateProvider.setUserState(KDF_CONFIG, new PBKDF2KdfConfig(500_000), mockUserId);
+      const kdfConfigChanged: KdfConfig = new PBKDF2KdfConfig(500_001);
+      await fakeStateProvider.setUserState(KDF_CONFIG, kdfConfigChanged, mockUserId);
+      await expect(firstValueFrom(sutKdfConfigService.getKdfConfig$(mockUserId))).resolves.toEqual(
+        kdfConfigChanged,
+      );
+    });
+
+    it("throws error userId cannot be null", async () => {
+      try {
+        sutKdfConfigService.getKdfConfig$(null as unknown as UserId);
+      } catch (e) {
+        expect(e).toEqual(new Error("userId cannot be null"));
+      }
+    });
+  });
 });
