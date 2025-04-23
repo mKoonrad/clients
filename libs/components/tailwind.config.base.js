@@ -136,6 +136,17 @@ module.exports = {
         '"Segoe UI Emoji"',
         '"Segoe UI Symbol"',
       ],
+      serif: ["ui-serif", "Georgia", "Cambria", '"Times New Roman"', "Times", "serif"],
+      mono: [
+        "ui-monospace",
+        "SFMono-Regular",
+        "Menlo",
+        "Monaco",
+        "Consolas",
+        '"Liberation Mono"',
+        '"Courier New"',
+        "monospace",
+      ],
     },
     ringOffsetColor: ({ theme }) => ({
       DEFAULT: theme("colors.background"),
