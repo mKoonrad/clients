@@ -1,7 +1,4 @@
 @import "../../../../libs/components/src/tw-theme.css";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /**
  * Web specific normalization. These should eventually be moved to tw-theme.css.
