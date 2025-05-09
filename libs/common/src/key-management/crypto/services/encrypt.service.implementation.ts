@@ -118,6 +118,13 @@ export class EncryptServiceImplementation implements EncryptService {
     wrappedDecapsulationKey: EncString,
     wrappingKey: SymmetricCryptoKey,
   ): Promise<Uint8Array> {
+    if (wrappedDecapsulationKey == null) {
+      throw new Error("No wrappedDecapsulationKey provided for unwrapping.");
+    }
+    if (wrappingKey == null) {
+      throw new Error("No wrappingKey provided for unwrapping.");
+    }
+
     return PureCrypto.unwrap_decapsulation_key(
       wrappedDecapsulationKey.encryptedString,
       wrappingKey.toEncoded(),
@@ -127,6 +134,13 @@ export class EncryptServiceImplementation implements EncryptService {
     wrappedEncapsulationKey: EncString,
     wrappingKey: SymmetricCryptoKey,
   ): Promise<Uint8Array> {
+    if (wrappedEncapsulationKey == null) {
+      throw new Error("No wrappedEncapsulationKey provided for unwrapping.");
+    }
+    if (wrappingKey == null) {
+      throw new Error("No wrappingKey provided for unwrapping.");
+    }
+
     return PureCrypto.unwrap_encapsulation_key(
       wrappedEncapsulationKey.encryptedString,
       wrappingKey.toEncoded(),
@@ -136,6 +150,13 @@ export class EncryptServiceImplementation implements EncryptService {
     keyToBeUnwrapped: EncString,
     wrappingKey: SymmetricCryptoKey,
   ): Promise<SymmetricCryptoKey> {
+    if (keyToBeUnwrapped == null) {
+      throw new Error("No keyToBeUnwrapped provided for unwrapping.");
+    }
+    if (wrappingKey == null) {
+      throw new Error("No wrappingKey provided for unwrapping.");
+    }
+
     return new SymmetricCryptoKey(
       PureCrypto.unwrap_symmetric_key(keyToBeUnwrapped.encryptedString, wrappingKey.toEncoded()),
     );
@@ -409,6 +430,9 @@ export class EncryptServiceImplementation implements EncryptService {
     if (sharedKey == null) {
       throw new Error("No sharedKey provided for encapsulation");
     }
+    if (encapsulationKey == null) {
+      throw new Error("No encapsulationKey provided for encapsulation");
+    }
     return new EncString(
       PureCrypto.encapsulate_key_unsigned(sharedKey.toEncoded(), encapsulationKey),
     );
@@ -418,6 +442,13 @@ export class EncryptServiceImplementation implements EncryptService {
     encryptedSharedKey: EncString,
     decapsulationKey: Uint8Array,
   ): Promise<SymmetricCryptoKey> {
+    if (encryptedSharedKey == null) {
+      throw new Error("No encryptedSharedKey provided for decapsulation");
+    }
+    if (decapsulationKey == null) {
+      throw new Error("No decapsulationKey provided for decapsulation");
+    }
+
     const keyBytes = PureCrypto.decapsulate_key_unsigned(
       encryptedSharedKey.encryptedString,
       decapsulationKey,
