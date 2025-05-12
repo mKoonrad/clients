@@ -600,6 +600,18 @@ describe("EncryptService", () => {
         key.toEncoded(),
       );
     });
+    it("throws if wrappedDecapsulationKey is null", () => {
+      const key = new SymmetricCryptoKey(makeStaticByteArray(64));
+      return expect(encryptService.unwrapDecapsulationKey(null, key)).rejects.toThrow(
+        "No wrappedDecapsulationKey provided for unwrapping.",
+      );
+    });
+    it("throws if wrappingKey is null", () => {
+      const encString = new EncString("wrapped_decapsulation_key");
+      return expect(encryptService.unwrapDecapsulationKey(encString, null)).rejects.toThrow(
+        "No wrappingKey provided for unwrapping.",
+      );
+    });
   });
 
   describe("unwrapEncapsulationKey", () => {
@@ -613,6 +625,18 @@ describe("EncryptService", () => {
         key.toEncoded(),
       );
     });
+    it("throws if wrappedEncapsulationKey is null", () => {
+      const key = new SymmetricCryptoKey(makeStaticByteArray(64));
+      return expect(encryptService.unwrapEncapsulationKey(null, key)).rejects.toThrow(
+        "No wrappedEncapsulationKey provided for unwrapping.",
+      );
+    });
+    it("throws if wrappingKey is null", () => {
+      const encString = new EncString("wrapped_encapsulation_key");
+      return expect(encryptService.unwrapEncapsulationKey(encString, null)).rejects.toThrow(
+        "No wrappingKey provided for unwrapping.",
+      );
+    });
   });
 
   describe("unwrapSymmetricKey", () => {
@@ -624,6 +648,18 @@ describe("EncryptService", () => {
       expect(PureCrypto.unwrap_symmetric_key).toHaveBeenCalledWith(
         encString.encryptedString,
         key.toEncoded(),
+      );
+    });
+    it("throws if keyToBeUnwrapped is null", () => {
+      const key = new SymmetricCryptoKey(makeStaticByteArray(64));
+      return expect(encryptService.unwrapSymmetricKey(null, key)).rejects.toThrow(
+        "No keyToBeUnwrapped provided for unwrapping.",
+      );
+    });
+    it("throws if wrappingKey is null", () => {
+      const encString = new EncString("wrapped_symmetric_key");
+      return expect(encryptService.unwrapSymmetricKey(encString, null)).rejects.toThrow(
+        "No wrappingKey provided for unwrapping.",
       );
     });
   });
