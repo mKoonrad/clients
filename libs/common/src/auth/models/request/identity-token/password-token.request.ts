@@ -36,10 +36,6 @@ export class PasswordTokenRequest extends TokenRequest implements CaptchaProtect
     return obj;
   }
 
-  alterIdentityTokenHeaders(headers: Headers) {
-    // Auth-Email header is deprecated and no longer needed
-  }
-
   static fromJSON(json: any) {
     return Object.assign(Object.create(PasswordTokenRequest.prototype), json, {
       device: json.device ? DeviceRequest.fromJSON(json.device) : undefined,
