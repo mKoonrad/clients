@@ -1,4 +1,5 @@
 import { CommonModule } from "@angular/common";
+import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ReactiveFormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
@@ -6,6 +7,7 @@ import { By } from "@angular/platform-browser";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
 import { PolicyResponse } from "@bitwarden/common/admin-console/models/response/policy.response";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
+import { I18nPipe } from "@bitwarden/ui-common";
 
 import {
   HelpUsersUpdatePasswordsPolicy,
@@ -29,9 +31,10 @@ describe("HelpUsersUpdatePasswordsComponent", () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CommonModule, ReactiveFormsModule],
+      imports: [CommonModule, ReactiveFormsModule, I18nPipe],
       declarations: [HelpUsersUpdatePasswordsComponent],
       providers: [{ provide: I18nService, useValue: { t: (key: string) => key } }],
+      schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HelpUsersUpdatePasswordsComponent);
