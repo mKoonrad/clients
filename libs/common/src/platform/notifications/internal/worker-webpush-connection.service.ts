@@ -124,7 +124,9 @@ class MyWebPushConnector implements WebPushConnector {
           return this.webPushApiService.putSubscription(subscription.toJSON());
         }).pipe(
           switchMap(() => this.pushEvent$),
-          map((e) => new NotificationResponse(e.data.json().data)),
+          map((e) => {
+            return new NotificationResponse(e.data.json().data);
+          }),
         );
       }),
     );
@@ -132,7 +134,7 @@ class MyWebPushConnector implements WebPushConnector {
 
   private async pushManagerSubscribe(key: string) {
     return await this.serviceWorkerRegistration.pushManager.subscribe({
-      userVisibleOnly: true,
+      userVisibleOnly: false,
       applicationServerKey: key,
     });
   }
