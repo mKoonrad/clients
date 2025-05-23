@@ -6,6 +6,7 @@ import { UserVerificationService } from "@bitwarden/common/auth/abstractions/use
 import { VerificationType } from "@bitwarden/common/auth/enums/verification-type";
 import { MasterPasswordVerification } from "@bitwarden/common/auth/types/verification";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
+import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
@@ -42,7 +43,6 @@ import { UnlockDataRequest } from "./request/unlock-data.request";
 import { UpdateKeyRequest } from "./request/update-key.request";
 import { UserDataRequest } from "./request/userdata.request";
 import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
-import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 
 type MasterPasswordAuthenticationAndUnlockData = {
   masterPassword: string;
