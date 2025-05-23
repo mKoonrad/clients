@@ -442,13 +442,13 @@ describe("KeyRotationService", () => {
 
     it("throws error if is upgrading", async () => {
       await expect(
-        await keyRotationService.getNewAccountKeys(currentUserKey, mockEncryptedPrivateKey, true),
+        keyRotationService.getNewAccountKeys(currentUserKey, mockEncryptedPrivateKey, true),
       ).rejects.toThrow();
     });
     it("throws if v2 user", async () => {
       const v2UserKey = new SymmetricCryptoKey(new Uint8Array(70)) as UserKey;
       await expect(
-        await keyRotationService.getNewAccountKeys(v2UserKey, mockEncryptedPrivateKey, false),
+        keyRotationService.getNewAccountKeys(v2UserKey, mockEncryptedPrivateKey, false),
       ).rejects.toThrow();
     });
     it("returns new account keys", async () => {
