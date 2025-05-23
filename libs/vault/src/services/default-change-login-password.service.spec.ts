@@ -7,6 +7,10 @@ import { mock } from "jest-mock-extended";
 import { of } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
+import { PolicyType } from "@bitwarden/common/admin-console/enums";
+import { Policy } from "@bitwarden/common/admin-console/models/domain/policy";
+import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import {
   Environment,
   EnvironmentService,
@@ -22,17 +26,34 @@ describe("DefaultChangeLoginPasswordService", () => {
   let service: DefaultChangeLoginPasswordService;
 
   const mockApiService = mock<ApiService>();
+  const mockPolicyService = mock<PolicyService>();
+  const mockAccountService = mock<AccountService>();
 
   beforeEach(() => {
     mockApiService.nativeFetch.mockImplementation(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve({ uri: null }) } as Response),
     );
 
-    service = new DefaultChangeLoginPasswordService(mockApiService, {
+    const mockEnvironmentService = {
       environment$: of({
         getIconsUrl: () => "https://icons.bitwarden.com",
       } as Environment),
-    } as EnvironmentService);
+    } as EnvironmentService;
+
+    mockPolicyService.policiesByType$.mockImplementation(() =>
+      of([{ type: PolicyType.HelpUsersUpdatePasswords, enabled: true }] as Policy[]),
+    );
+
+    mockAccountService.activeAccount$ = of({
+      id: "test-user-id",
+    } as Account);
+
+    service = new DefaultChangeLoginPasswordService(
+      mockApiService,
+      mockEnvironmentService,
+      mockPolicyService,
+      mockAccountService,
+    );
   });
 
   it("should return null for non-login ciphers", async () => {
@@ -152,5 +173,25 @@ describe("DefaultChangeLoginPasswordService", () => {
     const url = await service.getChangePasswordUrl(cipher);
 
     expect(url).toBe("https://working.com/.well-known/change-password");
+  });
+
+  it("returns the first URL when the policy is not enabled", async () => {
+    mockPolicyService.policiesByType$.mockImplementationOnce(() =>
+      of([{ type: PolicyType.HelpUsersUpdatePasswords, enabled: false }] as Policy[]),
+    );
+
+    const cipher = {
+      type: CipherType.Login,
+      login: Object.assign(new LoginView(), {
+        uris: [{ uri: "https://example.com/" }, { uri: "https://another-example.com" }],
+      }),
+    } as CipherView;
+
+    mockApiService.nativeFetch.mockClear();
+
+    const url = await service.getChangePasswordUrl(cipher);
+
+    expect(url).toBe("https://example.com/");
+    expect(mockApiService.nativeFetch).not.toHaveBeenCalled();
   });
 });

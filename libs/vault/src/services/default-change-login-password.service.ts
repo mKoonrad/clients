@@ -1,7 +1,12 @@
 import { Injectable } from "@angular/core";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, map, switchMap } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
+import { PolicyType } from "@bitwarden/common/admin-console/enums";
+import { getFirstPolicy } from "@bitwarden/common/admin-console/services/policy/default-policy.service";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { getUserId } from "@bitwarden/common/auth/services/account.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { CipherType } from "@bitwarden/common/vault/enums";
@@ -15,6 +20,8 @@ export class DefaultChangeLoginPasswordService implements ChangeLoginPasswordSer
   constructor(
     private apiService: ApiService,
     private environmentService: EnvironmentService,
+    private policyService: PolicyService,
+    private accountService: AccountService,
   ) {}
 
   /**
@@ -33,6 +40,22 @@ export class DefaultChangeLoginPasswordService implements ChangeLoginPasswordSer
 
     if (urls.length === 0) {
       return null;
+    }
+
+    const helpUsersUpdatePasswordsPolicyEnabled = await firstValueFrom(
+      this.accountService.activeAccount$.pipe(
+        getUserId,
+        switchMap((userId) =>
+          this.policyService.policiesByType$(PolicyType.HelpUsersUpdatePasswords, userId),
+        ),
+        getFirstPolicy,
+        map((policy) => !!policy?.enabled),
+      ),
+    );
+
+    // When the policy is not enabled, return the first URL
+    if (!helpUsersUpdatePasswordsPolicyEnabled) {
+      return urls[0].href;
     }
 
     for (const url of urls) {
