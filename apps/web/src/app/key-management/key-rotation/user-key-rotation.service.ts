@@ -103,20 +103,20 @@ export class UserKeyRotationService {
     const { trustedOrgs, trustedEmergencyAccessUsers } = await this.verifyTrust(user);
 
     // Read current cryptographic state / settings
-    const masterKeyKdfConfig = await this.firstValueFromOrThrow(
+    const masterKeyKdfConfig: KdfConfig = (await this.firstValueFromOrThrow(
       this.kdfConfigService.getKdfConfig$(user.id),
       "KDF config",
-    );
+    ))!;
     const masterKeySalt = user.email;
-    const currentUserKey = await this.firstValueFromOrThrow(
+    const currentUserKey: UserKey = (await this.firstValueFromOrThrow(
       this.keyService.userKey$(user.id),
       "User key",
-    );
+    ))!;
     const currentUserKeyWrappedPrivateKey = new EncString(
-      await this.firstValueFromOrThrow(
+      (await this.firstValueFromOrThrow(
         this.keyService.userEncryptedPrivateKey$(user.id),
         "User encrypted private key",
-      ),
+      ))!,
     );
 
     // Update account keys
@@ -296,7 +296,7 @@ export class UserKeyRotationService {
     ))!;
 
     return new UnlockDataRequest(
-      masterPasswordUnlockData,
+      masterPasswordUnlockData!,
       emergencyAccessUnlockData,
       organizationAccountRecoveryUnlockData,
       passkeyUnlockData,
