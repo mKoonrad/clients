@@ -1,6 +1,4 @@
 import { ClientType } from "../../../../enums";
-import { Utils } from "../../../../platform/misc/utils";
-
 import { DeviceRequest } from "./device.request";
 import { TokenTwoFactorRequest } from "./token-two-factor.request";
 import { TokenRequest } from "./token.request";
