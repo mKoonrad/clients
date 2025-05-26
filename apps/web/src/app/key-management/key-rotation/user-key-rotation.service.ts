@@ -244,6 +244,15 @@ export class UserKeyRotationService {
     if (isUpgrading) {
       // To upgrade from v1 to v2, a new signing key pair is created.
       const sdkClient = await this.sdkClientFactory.createSdkClient();
+      await sdkClient.crypto().initialize_user_crypto({
+        kdfParams: kdfParams.toSdkConfig(),
+        email: email,
+        privateKey: newUserKeyWrappedPrivateKey.encryptedString!,
+        signingKey: undefined,
+        method: {
+          decryptedKey: { decrypted_user_key: newUserKey.toBase64() },
+        },
+      });
       const signingKeys = sdkClient.crypto().make_signing_keys();
       return {
         userKey: newUserKey,

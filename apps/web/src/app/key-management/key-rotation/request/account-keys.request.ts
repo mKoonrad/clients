@@ -23,7 +23,7 @@ export class AccountKeysRequest {
     this.userKeyEncryptedAccountPrivateKey = userKeyEncryptedAccountPrivateKey;
     this.accountPublicKey = accountPublicKey;
     this.signedPublicKeyOwnershipClaim = signedPublicKeyOwnershipClaim;
-    this.userKeyEncryptedSigningKey = userKeyEncryptedSigningKey.toString();
+    this.userKeyEncryptedSigningKey = userKeyEncryptedSigningKey.inner().toString();
     this.verifyingKey = verifyingKey.toString();
     this.signingKeyType = verifyingKey?.algorithm();
   }
