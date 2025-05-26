@@ -14,7 +14,13 @@ import {
   throwIfEmpty,
 } from "rxjs";
 
-import { KeyService, KdfConfigService, KdfConfig, KdfType } from "@bitwarden/key-management";
+import {
+  KeyService,
+  KdfConfigService,
+  KdfConfig,
+  KdfType,
+  SigningKey,
+} from "@bitwarden/key-management";
 import {
   BitwardenClient,
   ClientSettings,
@@ -124,6 +130,7 @@ export class DefaultSdkService implements SdkService {
     const privateKey$ = this.keyService
       .userEncryptedPrivateKey$(userId)
       .pipe(distinctUntilChanged());
+    const signingKey$ = this.keyService.userSigningKey$(userId).pipe(distinctUntilChanged());
     const userKey$ = this.keyService.userKey$(userId).pipe(distinctUntilChanged());
     const orgKeys$ = this.keyService.encryptedOrgKeys$(userId).pipe(
       distinctUntilChanged(compareValues), // The upstream observable emits different objects with the same values
@@ -135,11 +142,12 @@ export class DefaultSdkService implements SdkService {
       kdfParams$,
       privateKey$,
       userKey$,
+      signingKey$,
       orgKeys$,
       SdkLoadService.Ready, // Makes sure we wait (once) for the SDK to be loaded
     ]).pipe(
       // switchMap is required to allow the clean-up logic to be executed when `combineLatest` emits a new value.
-      switchMap(([env, account, kdfParams, privateKey, userKey, orgKeys]) => {
+      switchMap(([env, account, kdfParams, privateKey, userKey, signingKey, orgKeys]) => {
         // Create our own observable to be able to implement clean-up logic
         return new Observable<Rc<BitwardenClient>>((subscriber) => {
           const createAndInitializeClient = async () => {
@@ -150,7 +158,15 @@ export class DefaultSdkService implements SdkService {
             const settings = this.toSettings(env);
             const client = await this.sdkClientFactory.createSdkClient(settings);
 
-            await this.initializeClient(client, account, kdfParams, privateKey, userKey, orgKeys);
+            await this.initializeClient(
+              client,
+              account,
+              kdfParams,
+              privateKey,
+              userKey,
+              signingKey,
+              orgKeys,
+            );
 
             return client;
           };
@@ -185,6 +201,7 @@ export class DefaultSdkService implements SdkService {
     kdfParams: KdfConfig,
     privateKey: EncryptedString,
     userKey: UserKey,
+    signingKey: SigningKey | null,
     orgKeys: Record<OrganizationId, EncryptedOrganizationKeyData> | null,
   ) {
     await client.crypto().initialize_user_crypto({
@@ -203,6 +220,7 @@ export class DefaultSdkService implements SdkService {
               },
             },
       privateKey,
+      signingKey: signingKey?.inner(),
     });
 
     // We initialize the org crypto even if the org_keys are

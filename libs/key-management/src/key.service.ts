@@ -38,6 +38,7 @@ import {
   USER_ENCRYPTED_PRIVATE_KEY,
   USER_EVER_HAD_USER_KEY,
   USER_KEY,
+  USER_KEY_ENCRYPTED_SIGNING_KEY,
 } from "@bitwarden/common/platform/services/key-state/user-key.state";
 import { ActiveUserState, StateProvider } from "@bitwarden/common/platform/state";
 import { CsprngArray } from "@bitwarden/common/types/csprng";
@@ -59,6 +60,7 @@ import {
   UserPrivateKeyDecryptionFailedError,
 } from "./abstractions/key.service";
 import { KdfConfig } from "./models/kdf-config";
+import { SigningKey } from "./models/signing-key";
 
 export class DefaultKeyService implements KeyServiceAbstraction {
   private readonly activeUserEverHadUserKey: ActiveUserState<boolean>;
@@ -564,6 +566,10 @@ export class DefaultKeyService implements KeyServiceAbstraction {
     await this.stateProvider.setUserState(USER_ENCRYPTED_PRIVATE_KEY, null, userId);
   }
 
+  private async clearSigningKey(userId: UserId): Promise<void> {
+    await this.stateProvider.setUserState(USER_KEY_ENCRYPTED_SIGNING_KEY, null, userId);
+  }
+
   async clearPinKeys(userId?: UserId): Promise<void> {
     userId ??= await firstValueFrom(this.stateProvider.activeUserId$);
 
@@ -600,6 +606,7 @@ export class DefaultKeyService implements KeyServiceAbstraction {
     await this.clearOrgKeys(userId);
     await this.clearProviderKeys(userId);
     await this.clearKeyPair(userId);
+    await this.clearSigningKey(userId);
     await this.clearPinKeys(userId);
     await this.stateProvider.setUserState(USER_EVER_HAD_USER_KEY, null, userId);
   }
@@ -993,6 +1000,31 @@ export class DefaultKeyService implements KeyServiceAbstraction {
         }
 
         return forkJoin(encryptedProviderKeys);
+      }),
+    );
+  }
+
+  async setUserSigningKey(userSigningKey: SigningKey, userId: UserId): Promise<void> {
+    if (userSigningKey == null) {
+      throw new Error("No user signing key provided.");
+    }
+    if (userId == null) {
+      throw new Error("No userId provided.");
+    }
+    await this.stateProvider.setUserState(
+      USER_KEY_ENCRYPTED_SIGNING_KEY,
+      userSigningKey.toSerializable(),
+      userId,
+    );
+  }
+
+  userSigningKey$(userId: UserId): Observable<SigningKey | null> {
+    return this.stateProvider.getUser(userId, USER_KEY_ENCRYPTED_SIGNING_KEY).state$.pipe(
+      map((encryptedSigningKey) => {
+        if (encryptedSigningKey == null) {
+          return null;
+        }
+        return SigningKey.fromSerializable(encryptedSigningKey);
       }),
     );
   }
