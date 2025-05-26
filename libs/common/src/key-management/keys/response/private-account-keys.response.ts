@@ -6,7 +6,7 @@ export class PrivateAccountKeysResponseModel {
   readonly AsymmetricEncryptionKeys: AsymmetricEncryptionDataResponse;
 
   constructor(response: any) {
-    if ("signingKeys" in response) {
+    if ("signingKeys" in response && response.signingKeys != null) {
       this.SigningKeys = new UserSigningKeyData(response.signingKeys);
     }
 
