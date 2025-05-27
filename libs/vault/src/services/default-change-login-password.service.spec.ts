@@ -8,8 +8,6 @@ import { of } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
-import { PolicyType } from "@bitwarden/common/admin-console/enums";
-import { Policy } from "@bitwarden/common/admin-console/models/domain/policy";
 import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import {
   Environment,
@@ -40,9 +38,7 @@ describe("DefaultChangeLoginPasswordService", () => {
       } as Environment),
     } as EnvironmentService;
 
-    mockPolicyService.policiesByType$.mockImplementation(() =>
-      of([{ type: PolicyType.HelpUsersUpdatePasswords, enabled: true }] as Policy[]),
-    );
+    mockPolicyService.policyAppliesToUser$.mockImplementation(() => of(true));
 
     mockAccountService.activeAccount$ = of({
       id: "test-user-id",
@@ -176,9 +172,7 @@ describe("DefaultChangeLoginPasswordService", () => {
   });
 
   it("returns the first URL when the policy is not enabled", async () => {
-    mockPolicyService.policiesByType$.mockImplementationOnce(() =>
-      of([{ type: PolicyType.HelpUsersUpdatePasswords, enabled: false }] as Policy[]),
-    );
+    mockPolicyService.policyAppliesToUser$.mockImplementationOnce(() => of(false));
 
     const cipher = {
       type: CipherType.Login,

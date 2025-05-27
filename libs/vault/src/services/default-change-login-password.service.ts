@@ -1,10 +1,9 @@
 import { Injectable } from "@angular/core";
-import { firstValueFrom, map, switchMap } from "rxjs";
+import { firstValueFrom, switchMap } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
-import { getFirstPolicy } from "@bitwarden/common/admin-console/services/policy/default-policy.service";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { getUserId } from "@bitwarden/common/auth/services/account.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
@@ -46,10 +45,8 @@ export class DefaultChangeLoginPasswordService implements ChangeLoginPasswordSer
       this.accountService.activeAccount$.pipe(
         getUserId,
         switchMap((userId) =>
-          this.policyService.policiesByType$(PolicyType.HelpUsersUpdatePasswords, userId),
+          this.policyService.policyAppliesToUser$(PolicyType.HelpUsersUpdatePasswords, userId),
         ),
-        getFirstPolicy,
-        map((policy) => !!policy?.enabled),
       ),
     );
 
