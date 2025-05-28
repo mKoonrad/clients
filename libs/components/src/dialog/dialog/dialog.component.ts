@@ -1,7 +1,15 @@
 import { CdkTrapFocus } from "@angular/cdk/a11y";
 import { CdkScrollable } from "@angular/cdk/scrolling";
 import { CommonModule } from "@angular/common";
-import { Component, HostBinding, HostListener, inject, viewChild, input, booleanAttribute } from "@angular/core";
+import {
+  Component,
+  HostBinding,
+  HostListener,
+  inject,
+  viewChild,
+  input,
+  booleanAttribute,
+} from "@angular/core";
 
 import { I18nPipe } from "@bitwarden/ui-common";
 
@@ -104,7 +112,7 @@ export class DialogComponent {
   }
 
   get animationClasses() {
-    switch (this.dialogSize) {
+    switch (this.dialogSize()) {
       case "small":
         return ["tw-animate-slide-down"];
       default:
