@@ -1,4 +1,4 @@
-import { SignedPublicKeyOwnershipClaim } from "@bitwarden/common/key-management/types";
+import { SignedPublicKey } from "@bitwarden/common/key-management/types";
 import { SigningKey, SigningKeyType, VerifyingKey } from "@bitwarden/key-management";
 
 // This request contains other account-owned keys that are encrypted with the user key.
@@ -16,7 +16,7 @@ export class AccountKeysRequest {
   constructor(
     userKeyEncryptedAccountPrivateKey: string,
     accountPublicKey: string,
-    signedPublicKeyOwnershipClaim: SignedPublicKeyOwnershipClaim | null,
+    signedPublicKeyOwnershipClaim: SignedPublicKey | null,
     userKeyEncryptedSigningKey: SigningKey | null,
     verifyingKey: VerifyingKey | null,
   ) {

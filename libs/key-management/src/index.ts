@@ -20,8 +20,5 @@ export {
 export { KdfConfigService } from "./abstractions/kdf-config.service";
 export { DefaultKdfConfigService } from "./kdf-config.service";
 export { KdfType } from "./enums/kdf-type.enum";
-export { SigningKeyType, parseSigningKeyTypeFromString } from "./enums/signing-key-type.enum";
-export { SigningKey, SerializableUserSigningKeyPair } from "./models/signing-key";
-export { VerifyingKey } from "./models/verifying-key";
 
 export * from "./user-asymmetric-key-regeneration";

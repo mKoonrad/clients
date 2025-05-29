@@ -4,6 +4,7 @@ import { EncryptedOrganizationKeyData } from "@bitwarden/common/admin-console/mo
 import { ProfileOrganizationResponse } from "@bitwarden/common/admin-console/models/response/profile-organization.response";
 import { ProfileProviderOrganizationResponse } from "@bitwarden/common/admin-console/models/response/profile-provider-organization.response";
 import { ProfileProviderResponse } from "@bitwarden/common/admin-console/models/response/profile-provider.response";
+import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { KeySuffixOptions, HashPurpose } from "@bitwarden/common/platform/enums";
 import { EncryptedString, EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
@@ -19,7 +20,6 @@ import {
 } from "@bitwarden/common/types/key";
 
 import { KdfConfig } from "../models/kdf-config";
-import { SigningKey } from "../models/signing-key";
 
 export class UserPrivateKeyDecryptionFailedError extends Error {
   constructor() {

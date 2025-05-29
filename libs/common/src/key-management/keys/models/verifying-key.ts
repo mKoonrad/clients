@@ -1,7 +1,7 @@
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { PureCrypto } from "@bitwarden/sdk-internal";
 
-import { SigningKeyType as SigningKeyAlgorithm } from "../enums/signing-key-type.enum";
+import { SigningKeyType as SigningKeyAlgorithm } from "../../enums/signing-key-type.enum";
 
 /**
  * A verifying key is a public key used to verify signatures

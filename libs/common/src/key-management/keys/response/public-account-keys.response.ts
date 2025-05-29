@@ -1,11 +1,11 @@
-import { VerifyingKey } from "@bitwarden/key-management";
+import { SignedPublicKey } from "../../types";
+import { VerifyingKey } from "../models/verifying-key";
 
-import { SignedPublicKeyOwnershipClaim } from "../../types";
 
 export class PublicAccountKeysResponseModel {
   readonly VerifyingKey: VerifyingKey;
   readonly PublicKey: string;
-  readonly SignedPublicKeyOwnershipClaim: SignedPublicKeyOwnershipClaim;
+  readonly SignedPublicKeyOwnershipClaim: SignedPublicKey;
 
   constructor(response: any) {
     this.VerifyingKey = new VerifyingKey(response.verifyingKey);
