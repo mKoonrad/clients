@@ -100,7 +100,8 @@ export class UserKeyRotationService {
 
     // First, the provided organizations and emergency access users need to be verified;
     // this is currently done by providing the user a manual confirmation dialog.
-    const { trustedOrgs, trustedEmergencyAccessUsers } = await this.verifyTrust(user);
+    const { trustedOrganizationPublicKeys, trustedEmergencyAccessUserPublicKeys } =
+      await this.verifyTrust(user);
 
     // Read current cryptographic state / settings
     const masterKeyKdfConfig: KdfConfig = (await this.firstValueFromOrThrow(
@@ -142,8 +143,8 @@ export class UserKeyRotationService {
           masterKeySalt,
           masterPasswordHint: newMasterPasswordHint,
         } as MasterPasswordAuthenticationAndUnlockData,
-        trustedEmergencyAccessUsers,
-        trustedOrgs,
+        trustedEmergencyAccessUserPublicKeys,
+        trustedOrganizationPublicKeys,
       ),
       new AccountKeysRequest(wrappedPrivateKey.encryptedString!, publicKey),
       await this.getAccountDataRequest(currentUserKey, newUserKey, user),
@@ -306,7 +307,10 @@ export class UserKeyRotationService {
 
   async verifyTrust(
     user: Account,
-  ): Promise<{ trustedOrgs: Uint8Array[]; trustedEmergencyAccessUsers: Uint8Array[] }> {
+  ): Promise<{
+    trustedOrganizationPublicKeys: Uint8Array[];
+    trustedEmergencyAccessUserPublicKeys: Uint8Array[];
+  }> {
     // Since currently the joined organizations and emergency access grantees are
     // not signed, manual trust prompts are required, to verify that the server
     // does not inject public keys here.
@@ -330,7 +334,7 @@ export class UserKeyRotationService {
         orgName: organizations.length > 0 ? organizations[0].orgName : undefined,
       });
       if (!(await firstValueFrom(trustInfoDialog.closed))) {
-        return { trustedOrgs: [], trustedEmergencyAccessUsers: [] };
+        return { trustedOrganizationPublicKeys: [], trustedEmergencyAccessUserPublicKeys: [] };
       }
     }
 
@@ -341,7 +345,7 @@ export class UserKeyRotationService {
         publicKey: organization.publicKey,
       });
       if (!(await firstValueFrom(dialogRef.closed))) {
-        return { trustedOrgs: [], trustedEmergencyAccessUsers: [] };
+        return { trustedOrganizationPublicKeys: [], trustedEmergencyAccessUserPublicKeys: [] };
       }
     }
 
@@ -352,7 +356,7 @@ export class UserKeyRotationService {
         publicKey: details.publicKey,
       });
       if (!(await firstValueFrom(dialogRef.closed))) {
-        return { trustedOrgs: [], trustedEmergencyAccessUsers: [] };
+        return { trustedOrganizationPublicKeys: [], trustedEmergencyAccessUserPublicKeys: [] };
       }
     }
 
@@ -360,8 +364,8 @@ export class UserKeyRotationService {
       "[Userkey rotation] Trust verified for all organizations and emergency access users",
     );
     return {
-      trustedOrgs: organizations.map((d) => d.publicKey),
-      trustedEmergencyAccessUsers: emergencyAccessGrantees.map((d) => d.publicKey),
+      trustedOrganizationPublicKeys: organizations.map((d) => d.publicKey),
+      trustedEmergencyAccessUserPublicKeys: emergencyAccessGrantees.map((d) => d.publicKey),
     };
   }
 

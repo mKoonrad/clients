@@ -622,8 +622,10 @@ describe("KeyRotationService", () => {
       mockResetPasswordService.getPublicKeys.mockResolvedValue([
         mockOrganizationUserResetPasswordEntry,
       ]);
-      const { trustedOrgs, trustedEmergencyAccessUsers } =
-        await keyRotationService.verifyTrust(mockUser);
+      const {
+        trustedOrganizationPublicKeys: trustedOrgs,
+        trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
+      } = await keyRotationService.verifyTrust(mockUser);
       expect(trustedEmergencyAccessUsers).toEqual([]);
       expect(trustedOrgs).toEqual([]);
     });
@@ -637,8 +639,10 @@ describe("KeyRotationService", () => {
       mockResetPasswordService.getPublicKeys.mockResolvedValue([
         mockOrganizationUserResetPasswordEntry,
       ]);
-      const { trustedOrgs, trustedEmergencyAccessUsers } =
-        await keyRotationService.verifyTrust(mockUser);
+      const {
+        trustedOrganizationPublicKeys: trustedOrgs,
+        trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
+      } = await keyRotationService.verifyTrust(mockUser);
       expect(trustedEmergencyAccessUsers).toEqual([]);
       expect(trustedOrgs).toEqual([]);
     });
@@ -653,8 +657,10 @@ describe("KeyRotationService", () => {
       mockResetPasswordService.getPublicKeys.mockResolvedValue([
         mockOrganizationUserResetPasswordEntry,
       ]);
-      const { trustedOrgs, trustedEmergencyAccessUsers } =
-        await keyRotationService.verifyTrust(mockUser);
+      const {
+        trustedOrganizationPublicKeys: trustedOrgs,
+        trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
+      } = await keyRotationService.verifyTrust(mockUser);
       expect(trustedEmergencyAccessUsers).toEqual([]);
       expect(trustedOrgs).toEqual([]);
     });
@@ -669,8 +675,10 @@ describe("KeyRotationService", () => {
       mockResetPasswordService.getPublicKeys.mockResolvedValue([
         mockOrganizationUserResetPasswordEntry,
       ]);
-      const { trustedOrgs, trustedEmergencyAccessUsers } =
-        await keyRotationService.verifyTrust(mockUser);
+      const {
+        trustedOrganizationPublicKeys: trustedOrgs,
+        trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
+      } = await keyRotationService.verifyTrust(mockUser);
       expect(trustedEmergencyAccessUsers).toEqual([
         mockGranteeEmergencyAccessWithPublicKey.publicKey,
       ]);
