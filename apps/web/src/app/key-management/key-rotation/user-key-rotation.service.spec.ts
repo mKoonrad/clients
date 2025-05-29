@@ -621,11 +621,13 @@ describe("KeyRotationService", () => {
         mockOrganizationUserResetPasswordEntry,
       ]);
       const {
+        wasTrustDenied,
         trustedOrganizationPublicKeys: trustedOrgs,
         trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
       } = await keyRotationService.verifyTrust(mockUser);
       expect(trustedEmergencyAccessUsers).toEqual([]);
       expect(trustedOrgs).toEqual([]);
+      expect(wasTrustDenied).toBe(true);
     });
 
     it("returns empty arrays if emergency access dialog is closed", async () => {
@@ -638,11 +640,13 @@ describe("KeyRotationService", () => {
         mockOrganizationUserResetPasswordEntry,
       ]);
       const {
+        wasTrustDenied,
         trustedOrganizationPublicKeys: trustedOrgs,
         trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
       } = await keyRotationService.verifyTrust(mockUser);
       expect(trustedEmergencyAccessUsers).toEqual([]);
       expect(trustedOrgs).toEqual([]);
+      expect(wasTrustDenied).toBe(true);
     });
 
     it("returns empty arrays if account recovery dialog is closed", async () => {
@@ -656,11 +660,13 @@ describe("KeyRotationService", () => {
         mockOrganizationUserResetPasswordEntry,
       ]);
       const {
+        wasTrustDenied,
         trustedOrganizationPublicKeys: trustedOrgs,
         trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
       } = await keyRotationService.verifyTrust(mockUser);
       expect(trustedEmergencyAccessUsers).toEqual([]);
       expect(trustedOrgs).toEqual([]);
+      expect(wasTrustDenied).toBe(true);
     });
 
     it("returns trusted keys if all dialogs are accepted", async () => {
@@ -674,9 +680,11 @@ describe("KeyRotationService", () => {
         mockOrganizationUserResetPasswordEntry,
       ]);
       const {
+        wasTrustDenied,
         trustedOrganizationPublicKeys: trustedOrgs,
         trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
       } = await keyRotationService.verifyTrust(mockUser);
+      expect(wasTrustDenied).toBe(false);
       expect(trustedEmergencyAccessUsers).toEqual([
         mockGranteeEmergencyAccessWithPublicKey.publicKey,
       ]);

@@ -100,8 +100,11 @@ export class UserKeyRotationService {
 
     // First, the provided organizations and emergency access users need to be verified;
     // this is currently done by providing the user a manual confirmation dialog.
-    const { trustedOrganizationPublicKeys, trustedEmergencyAccessUserPublicKeys } =
+    const { wasTrustDenied, trustedOrganizationPublicKeys, trustedEmergencyAccessUserPublicKeys } =
       await this.verifyTrust(user);
+    if (wasTrustDenied) {
+      this.logService.info("[Userkey rotation] Trust was denied by user. Aborting!");
+    }
 
     // Read current cryptographic state / settings
     const masterKeyKdfConfig: KdfConfig = (await this.firstValueFromOrThrow(
@@ -322,6 +325,7 @@ export class UserKeyRotationService {
   }
 
   async verifyTrust(user: Account): Promise<{
+    wasTrustDenied: boolean;
     trustedOrganizationPublicKeys: Uint8Array[];
     trustedEmergencyAccessUserPublicKeys: Uint8Array[];
   }> {
@@ -348,7 +352,11 @@ export class UserKeyRotationService {
         orgName: organizations.length > 0 ? organizations[0].orgName : undefined,
       });
       if (!(await firstValueFrom(trustInfoDialog.closed))) {
-        return { trustedOrganizationPublicKeys: [], trustedEmergencyAccessUserPublicKeys: [] };
+        return {
+          wasTrustDenied: true,
+          trustedOrganizationPublicKeys: [],
+          trustedEmergencyAccessUserPublicKeys: [],
+        };
       }
     }
 
@@ -359,7 +367,11 @@ export class UserKeyRotationService {
         publicKey: organization.publicKey,
       });
       if (!(await firstValueFrom(dialogRef.closed))) {
-        return { trustedOrganizationPublicKeys: [], trustedEmergencyAccessUserPublicKeys: [] };
+        return {
+          wasTrustDenied: true,
+          trustedOrganizationPublicKeys: [],
+          trustedEmergencyAccessUserPublicKeys: [],
+        };
       }
     }
 
@@ -370,7 +382,11 @@ export class UserKeyRotationService {
         publicKey: details.publicKey,
       });
       if (!(await firstValueFrom(dialogRef.closed))) {
-        return { trustedOrganizationPublicKeys: [], trustedEmergencyAccessUserPublicKeys: [] };
+        return {
+          wasTrustDenied: true,
+          trustedOrganizationPublicKeys: [],
+          trustedEmergencyAccessUserPublicKeys: [],
+        };
       }
     }
 
@@ -378,6 +394,7 @@ export class UserKeyRotationService {
       "[Userkey rotation] Trust verified for all organizations and emergency access users",
     );
     return {
+      wasTrustDenied: false,
       trustedOrganizationPublicKeys: organizations.map((d) => d.publicKey),
       trustedEmergencyAccessUserPublicKeys: emergencyAccessGrantees.map((d) => d.publicKey),
     };
