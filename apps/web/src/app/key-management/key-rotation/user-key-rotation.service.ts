@@ -166,7 +166,7 @@ export class UserKeyRotationService {
       await this.makeServerMasterKeyAuthenticationHash(
         currentMasterPassword,
         masterKeyKdfConfig,
-        user.email,
+        masterKeySalt,
       ),
     );
 
