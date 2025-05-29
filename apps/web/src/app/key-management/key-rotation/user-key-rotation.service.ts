@@ -108,7 +108,8 @@ export class UserKeyRotationService {
       this.kdfConfigService.getKdfConfig$(user.id),
       "KDF config",
     ))!;
-    const masterKeySalt = user.email;
+    // The masterkey salt used for deriving the masterkey always needs to be trimmed and lowercased.
+    const masterKeySalt = user.email.trim().toLowerCase();
     const currentUserKey: UserKey = (await this.firstValueFromOrThrow(
       this.keyService.userKey$(user.id),
       "User key",
