@@ -11,7 +11,6 @@ import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-time
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
-import { EncryptionType } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { EncryptedString, EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
@@ -422,7 +421,7 @@ describe("KeyRotationService", () => {
     });
   });
 
-  describe("getNewAccountKeys", () => {
+  describe("getNewAccountKeysV1", () => {
     const currentUserKey = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
     const mockEncryptedPrivateKey = new EncString(
       "2.eh465OrUcluL9UpnCOUTAg==|2HXNXwrLwAjUfZ/U75c92rZEltt1eHxjMkp/ADAmx346oT1+GaQvaL1QIV/9Om0T72m8AnlO92iUfWdhbA/ifHZ+lhFoUVeyw1M88CMzktbVcq42rFoK7SGHSAGdTL3ccUWKI8yCCQJhpt2X6a/5+T7ey5k2CqvylKyOtkiCnVeLmYqETn5BM9Rl3tEgJW1yDLuSJ+L+Qh9xnk/Z3zJUV5HAs+YwjKwuSNrd00SXjDyx8rBEstD9MKI+lrk7to/q90vqKqCucAj/dzUpVtHe88al2AAlBVwQ13HUPdNFOyti6niUgCAWx+DzRqlhkFvl/z/rtxtQsyqq/3Eh/EL54ylxKzAya0ev9EaIOm/dD1aBmI58p4Bs0eMOCIKJjtw+Cmdql+RhCtKtumgFShqyXv+LfD/FgUsdTVNExk3YNhgwPR4jOaMa/j9LCrBMCLKxdAhQyBe7T3qoX1fBBirvY6t77ifMu1YEQ6DfmFphVSwDH5C9xGeTSh5IELSf0tGVtlWUe9RffDDzccD0L1lR8U+dqzoSTYCuXvhEhQptdIW6fpH/47u0M5MiI97/d35A7Et2I1gjHp7WF3qsY20ellBueu7ZL5P1BmqPXl58yaBBXJaCutYHDfIucspqdZmfBGEbdRT4wmuZRON0J8zLmUejM0VR/2MOmpfyYQXnJhTfrvnZ1bOg1aMhUxJ2vhDNPXUFm5b+vwsho4GEvcLAKq9WwbvOJ/sK7sEVfTfEO2IG+0X6wkWm7RpR6Wq9FGKSrv2PSjMAYnb+z3ETeWiaaiD+tVFxa2AaqsbOuX092/86GySpHES7cFWhQ/YMOgj6egUi8mEC0CqMXYsx0TTJDsn16oP+XB3a2WoRqzE0YBozp2aMXxhVf/jMZ03BmEmRQu5B+Sq1gMEZwtIfJ+srkZLMYlLjvVw92FRoFy+N6ytPiyf6RMHMUnJ3vEZSBogaElYoQAtFJ5kK811CUzb78zEHH8xWtPrCZn9zZfvf/zaWxo7fpV8VwAwUeHXHcQMraZum5QeO+5tLRUYrLm85JNelGfmUA3BjfNyFbfb32PhkWWd0CbDaPME48uIriVK32pNEtvtR/+I/f3YgA/jP9kSlDvbzG/OAg/AFBIpNwKUzsu4+va8mI+O5FDufw5D74WwdGJ9DeyEb2CHtWMR1VwtFKL0ZZsqltNf8EkBeJ5RtTNtAMM8ie4dDZaKC96ymQHKrdB4hjkAr0F1XFsU4XdOa9Nbkdcm/7KoNc6bE6oJtG9lqE8h+1CysfcbfJ7am+hvDFzT0IPmp3GDSMAk+e6xySgFQw0C/SZ7LQsxPa1s6hc+BOtTn0oClZnU7Mowxv+z+xURJj4Yp3Cy6tAoia1jEQSs6lSMNKPf9bi3xFKtPl4143hwhpvTAzJUcski9OVGd7Du+VyxwIrvLqp5Ct/oNrESVJpf1EDCs9xT1EW+PiSkRmHXoZ1t5MOLFEiMAZL2+bNe3A2661oJeMtps8zrfCVc251OUE1WvqWePlTOs5TDVqdwDH88J6rHLsbaf33Mxh5DP8gMfZQxE44Nsp6H0/Szfkss5UmFwBEpHjl1GJMWDnB3u2d+l1CSkLoB6C+diAUlY6wL/VwJBeMPHZTf6amQIS2B/lo/CnvV/E3k=|uuoY4b7xwMYBNIZi85KBsaHmNqtJl5FrKxZI9ugeNwc=",
@@ -440,22 +439,10 @@ describe("KeyRotationService", () => {
       jest.restoreAllMocks();
     });
 
-    it("throws error if is upgrading", async () => {
-      await expect(
-        keyRotationService.getNewAccountKeys(currentUserKey, mockEncryptedPrivateKey, true),
-      ).rejects.toThrow();
-    });
-    it("throws if v2 user", async () => {
-      const v2UserKey = new SymmetricCryptoKey(new Uint8Array(70)) as UserKey;
-      await expect(
-        keyRotationService.getNewAccountKeys(v2UserKey, mockEncryptedPrivateKey, false),
-      ).rejects.toThrow();
-    });
     it("returns new account keys", async () => {
-      const result = await keyRotationService.getNewAccountKeys(
+      const result = await keyRotationService.getNewAccountKeysV1(
         currentUserKey,
         mockEncryptedPrivateKey,
-        false,
       );
       expect(result).toEqual({
         userKey: expect.any(SymmetricCryptoKey),
@@ -464,6 +451,17 @@ describe("KeyRotationService", () => {
           publicKey: Utils.fromBufferToB64(new Uint8Array(400)),
         },
       });
+    });
+  });
+
+  describe("getNewAccountKeysV2", () => {
+    it("throws not supported", async () => {
+      await expect(
+        keyRotationService.getNewAccountKeysV2(
+          new SymmetricCryptoKey(new Uint8Array(64)) as UserKey,
+          null,
+        ),
+      ).rejects.toThrow("User encryption v2 upgrade is not supported yet");
     });
   });
 
@@ -686,43 +684,42 @@ describe("KeyRotationService", () => {
     });
   });
 
-  describe("makeNewUserKey", () => {
-    it("returns xchacha20poly1305 key, isUpgrading=true if feature flag is enabled and old key is v1 key", async () => {
-      mockConfigService.getFeatureFlag.mockResolvedValue(true);
-      const { isUpgrading, newUserKey } = await keyRotationService.makeNewUserKey(
-        new SymmetricCryptoKey(new Uint8Array(64)) as UserKey,
-        true,
+  describe("makeNewUserKeyV1", () => {
+    it("throws if old keys is xchacha20poly1305 key", async () => {
+      await expect(
+        keyRotationService.makeNewUserKeyV1(new SymmetricCryptoKey(new Uint8Array(70)) as UserKey),
+      ).rejects.toThrow(
+        "User account crypto format is v2, but the feature flag is disabled. User key rotation cannot proceed.",
       );
-      expect(isUpgrading).toBe(true);
-      expect(newUserKey).toBeInstanceOf(SymmetricCryptoKey);
-      expect(newUserKey.inner().type).toBe(EncryptionType.CoseEncrypt0);
     });
-    it("returns xchacha20poly1305 key, isUpgrading=false if feature flag is enabled and old key is v2 key", async () => {
-      const { isUpgrading, newUserKey } = await keyRotationService.makeNewUserKey(
-        new SymmetricCryptoKey(new Uint8Array(70)) as UserKey,
-        true,
-      );
-      expect(isUpgrading).toBe(false);
-      expect(newUserKey).toBeInstanceOf(SymmetricCryptoKey);
-      expect(newUserKey.inner().type).toBe(EncryptionType.CoseEncrypt0);
+    it("returns new user key", async () => {
+      const oldKey = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
+      const newKey = await keyRotationService.makeNewUserKeyV1(oldKey);
+      expect(newKey).toEqual(new SymmetricCryptoKey(new Uint8Array(64)));
     });
-    it("returns xchacha20poly1305 key, isUpgrading=false if feature flag is disabled and old key is v2 key", async () => {
-      const { isUpgrading, newUserKey } = await keyRotationService.makeNewUserKey(
-        new SymmetricCryptoKey(new Uint8Array(70)) as UserKey,
-        false,
-      );
-      expect(isUpgrading).toBe(false);
-      expect(newUserKey).toBeInstanceOf(SymmetricCryptoKey);
-      expect(newUserKey.inner().type).toBe(EncryptionType.CoseEncrypt0);
+  });
+
+  describe("makeNewUserKeyV2", () => {
+    it("returns xchacha20poly1305 key", async () => {
+      const oldKey = new SymmetricCryptoKey(new Uint8Array(70)) as UserKey;
+      const { newUserKey } = await keyRotationService.makeNewUserKeyV2(oldKey);
+      expect(newUserKey).toEqual(new SymmetricCryptoKey(new Uint8Array(70)));
     });
-    it("returns aes256cbc key, isUpgrading=false if feature flag is disabled and old key is v1 key", async () => {
-      const { isUpgrading, newUserKey } = await keyRotationService.makeNewUserKey(
-        new SymmetricCryptoKey(new Uint8Array(64)) as UserKey,
-        false,
-      );
-      expect(isUpgrading).toBe(false);
-      expect(newUserKey).toBeInstanceOf(SymmetricCryptoKey);
-      expect(newUserKey.inner().type).toBe(EncryptionType.AesCbc256_HmacSha256_B64);
+    it("returns isUpgrading true if old key is v1", async () => {
+      const oldKey = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
+      const newKey = await keyRotationService.makeNewUserKeyV2(oldKey);
+      expect(newKey).toEqual({
+        newUserKey: new SymmetricCryptoKey(new Uint8Array(70)),
+        isUpgrading: true,
+      });
+    });
+    it("returns isUpgrading false if old key is v2", async () => {
+      const oldKey = new SymmetricCryptoKey(new Uint8Array(70)) as UserKey;
+      const newKey = await keyRotationService.makeNewUserKeyV2(oldKey);
+      expect(newKey).toEqual({
+        newUserKey: new SymmetricCryptoKey(new Uint8Array(70)),
+        isUpgrading: false,
+      });
     });
   });
 

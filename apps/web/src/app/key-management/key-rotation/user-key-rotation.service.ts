@@ -122,14 +122,28 @@ export class UserKeyRotationService {
 
     // Update account keys
     // This creates at least a new user key, and possibly upgrades user encryption formats
-    const {
-      userKey: newUserKey,
-      asymmetricEncryptionKeys: { wrappedPrivateKey, publicKey },
-    } = await this.getNewAccountKeys(
-      currentUserKey,
-      currentUserKeyWrappedPrivateKey,
-      upgradeToV2FeatureFlagEnabled,
-    );
+    let newUserKey: UserKey;
+    let wrappedPrivateKey: EncString;
+    let publicKey: string;
+    if (upgradeToV2FeatureFlagEnabled) {
+      this.logService.info("[Userkey rotation] Using v2 account keys");
+      const { userKey, asymmetricEncryptionKeys } = await this.getNewAccountKeysV2(
+        currentUserKey,
+        currentUserKeyWrappedPrivateKey,
+      );
+      newUserKey = userKey;
+      wrappedPrivateKey = asymmetricEncryptionKeys.wrappedPrivateKey;
+      publicKey = asymmetricEncryptionKeys.publicKey;
+    } else {
+      this.logService.info("[Userkey rotation] Using v1 account keys");
+      const { userKey, asymmetricEncryptionKeys } = await this.getNewAccountKeysV1(
+        currentUserKey,
+        currentUserKeyWrappedPrivateKey,
+      );
+      newUserKey = userKey;
+      wrappedPrivateKey = asymmetricEncryptionKeys.wrappedPrivateKey;
+      publicKey = asymmetricEncryptionKeys.publicKey;
+    }
 
     // Assemble the key rotation request
     const request = new RotateUserAccountKeysRequest(
@@ -179,10 +193,9 @@ export class UserKeyRotationService {
     }
   }
 
-  async getNewAccountKeys(
+  async getNewAccountKeysV1(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
-    upgradeToV2FeatureFlagEnabled: boolean,
   ): Promise<{
     userKey: UserKey;
     asymmetricEncryptionKeys: {
@@ -193,10 +206,7 @@ export class UserKeyRotationService {
     // Account key rotation creates a new userkey. All downstream data and keys need to be re-encrypted under this key.
     // Further, this method is used to create new keys in the event that the key hierarchy changes, such as for the
     // creation of a new signing key pair.
-    const { isUpgrading, newUserKey } = await this.makeNewUserKey(
-      currentUserKey,
-      upgradeToV2FeatureFlagEnabled,
-    );
+    const newUserKey = await this.makeNewUserKeyV1(currentUserKey);
 
     // Re-encrypt the private key with the new user key
     // Rotation of the private key is not supported yet
@@ -210,21 +220,26 @@ export class UserKeyRotationService {
     );
     const publicKey = await this.cryptoFunctionService.rsaExtractPublicKey(privateKey);
 
-    if (isUpgrading) {
-      throw new Error("User encryption v2 upgrade is not supported yet");
-    } else {
-      if (this.isV1User(currentUserKey)) {
-        return {
-          userKey: newUserKey,
-          asymmetricEncryptionKeys: {
-            wrappedPrivateKey: newUserKeyWrappedPrivateKey,
-            publicKey: Utils.fromBufferToB64(publicKey),
-          },
-        };
-      } else {
-        throw new Error("User encryption v2 rotation is not supported yet");
-      }
-    }
+    return {
+      userKey: newUserKey,
+      asymmetricEncryptionKeys: {
+        wrappedPrivateKey: newUserKeyWrappedPrivateKey,
+        publicKey: Utils.fromBufferToB64(publicKey),
+      },
+    };
+  }
+
+  async getNewAccountKeysV2(
+    currentUserKey: UserKey,
+    currentUserKeyWrappedPrivateKey: EncString,
+  ): Promise<{
+    userKey: UserKey;
+    asymmetricEncryptionKeys: {
+      wrappedPrivateKey: EncString;
+      publicKey: string;
+    };
+  }> {
+    throw new Error("User encryption v2 upgrade is not supported yet");
   }
 
   async createMasterPasswordUnlockDataRequest(
@@ -305,9 +320,7 @@ export class UserKeyRotationService {
     );
   }
 
-  async verifyTrust(
-    user: Account,
-  ): Promise<{
+  async verifyTrust(user: Account): Promise<{
     trustedOrganizationPublicKeys: Uint8Array[];
     trustedEmergencyAccessUserPublicKeys: Uint8Array[];
   }> {
@@ -401,9 +414,36 @@ export class UserKeyRotationService {
     return new UserDataRequest(rotatedCiphers, rotatedFolders, rotatedSends);
   }
 
-  async makeNewUserKey(
-    originalUserKey: UserKey,
-    v2FeatureFlagEnabled: boolean,
+  async makeNewUserKeyV1(oldUserKey: UserKey): Promise<UserKey> {
+    // The user's account format is determined by the user key.
+    // Being tied to the userkey ensures an all-or-nothing approach. A compromised
+    // server cannot downgrade to a previous format (no signing keys) without
+    // completely making the account unusable.
+    //
+    // V0: AES256-CBC (no userkey, directly using masterkey) (pre-2019 accounts)
+    //     This format is unsupported, and not secure; It is being forced migrated, and being removed
+    // V1: AES256-CBC-HMAC userkey, no signing key (2019-2025)
+    //     This format is still supported, but may be migrated in the future
+    // V2: XChaCha20-Poly1305 userkey, signing key, account security version
+    //     This is the new, modern format.
+    if (this.isV1User(oldUserKey)) {
+      this.logService.info(
+        "[Userkey rotation] Existing userkey key is AES256-CBC-HMAC; not upgrading",
+      );
+      return new SymmetricCryptoKey(PureCrypto.make_user_key_aes256_cbc_hmac()) as UserKey;
+    } else {
+      // If the feature flag is rolled back, we want to block rotation in order to be as safe as possible with the user's account.
+      this.logService.info(
+        "[Userkey rotation] Existing userkey key is XChaCha20-Poly1305, but feature flag is not enabled; aborting..",
+      );
+      throw new Error(
+        "User account crypto format is v2, but the feature flag is disabled. User key rotation cannot proceed.",
+      );
+    }
+  }
+
+  async makeNewUserKeyV2(
+    oldUserKey: UserKey,
   ): Promise<{ isUpgrading: boolean; newUserKey: UserKey }> {
     // The user's account format is determined by the user key.
     // Being tied to the userkey ensures an all-or-nothing approach. A compromised
@@ -416,23 +456,18 @@ export class UserKeyRotationService {
     //     This format is still supported, but may be migrated in the future
     // V2: XChaCha20-Poly1305 userkey, signing key, account security version
     //     This is the new, modern format.
-    let newUserKey: UserKey;
-    let isUpgrading = false;
-    if (this.isV1User(originalUserKey)) {
-      this.logService.info("[Userkey rotation] Existing userkey key is AES256-CBC-HMAC");
-      if (v2FeatureFlagEnabled) {
-        this.logService.info("[Userkey rotation] Upgrading to encryption format v2");
-        newUserKey = new SymmetricCryptoKey(
-          PureCrypto.make_user_key_xchacha20_poly1305(),
-        ) as UserKey;
-        isUpgrading = true;
-      } else {
-        this.logService.info("[Userkey rotation] Keeping encryption format v1");
-        newUserKey = new SymmetricCryptoKey(PureCrypto.make_user_key_aes256_cbc_hmac()) as UserKey;
-      }
+    const newUserKey: UserKey = new SymmetricCryptoKey(
+      PureCrypto.make_user_key_xchacha20_poly1305(),
+    ) as UserKey;
+    const isUpgrading = this.isV1User(oldUserKey);
+    if (isUpgrading) {
+      this.logService.info(
+        "[Userkey rotation] Existing userkey key is AES256-CBC-HMAC; upgrading to XChaCha20-Poly1305",
+      );
     } else {
-      this.logService.info("[Userkey rotation] Keeping encryption format v2");
-      newUserKey = new SymmetricCryptoKey(PureCrypto.make_user_key_xchacha20_poly1305()) as UserKey;
+      this.logService.info(
+        "[Userkey rotation] Existing userkey key is XChaCha20-Poly1305; no upgrade needed",
+      );
     }
     return { isUpgrading, newUserKey };
   }
