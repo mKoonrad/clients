@@ -1,9 +1,9 @@
 import { NgModule } from "@angular/core";
 
-import { TestableUserKeyRotationService } from "./testable-user-key-rotation.service";
 import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
+import { UserKeyRotationService } from "./user-key-rotation.service";
 
 @NgModule({
-  providers: [TestableUserKeyRotationService, UserKeyRotationApiService],
+  providers: [UserKeyRotationService, UserKeyRotationApiService],
 })
 export class UserKeyRotationModule {}
