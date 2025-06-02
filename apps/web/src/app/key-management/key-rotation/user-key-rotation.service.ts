@@ -9,6 +9,8 @@ import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
+import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
 import { SignedPublicKey } from "@bitwarden/common/key-management/types";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
@@ -26,13 +28,7 @@ import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.servi
 import { FolderService } from "@bitwarden/common/vault/abstractions/folder/folder.service.abstraction";
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
 import { DialogService, ToastService } from "@bitwarden/components";
-import {
-  KdfConfig,
-  KdfConfigService,
-  KeyService,
-  SigningKey,
-  VerifyingKey,
-} from "@bitwarden/key-management";
+import { KdfConfig, KdfConfigService, KeyService } from "@bitwarden/key-management";
 import {
   AccountRecoveryTrustComponent,
   EmergencyAccessTrustComponent,
@@ -318,11 +314,19 @@ export class UserKeyRotationService {
       verifyingKey: VerifyingKey;
     };
   }> {
+    // A v1 user has: AES256-CBC-HMAC userkey, no signing key, RSA-2048 bit private key for RSA-OAEP-SHA1.
+    // A v2 user has: XChaCha20-Poly1305 userkey, ed25519 signing key, RSA-2048 bit private key for RSA-OAEP-SHA1,
+    // and a copy of the public key, corresponding to the private key, signed by the signing key.
+    // To upgrade, a new userkey is created, and the private key is re-wrapped with the new user key.
+    // The private key is NOT rotated for this migration, but may be rotated in a later migration.
+    // A signing key is generated and wrapped with the new user key.
+
+    // Make new XChaCha20-Poly1305 user key
     const newUserKey: UserKey = new SymmetricCryptoKey(
       PureCrypto.make_user_key_xchacha20_poly1305(),
     ) as UserKey;
-    // Re-encrypt the private key with the new user key
-    // Rotation of the private key is not supported yet
+
+    // Re-wrap the user private key with the new user key
     const privateKey = await this.encryptService.unwrapDecapsulationKey(
       currentUserKeyWrappedPrivateKey,
       currentUserKey,
@@ -334,7 +338,9 @@ export class UserKeyRotationService {
     const publicKey = Utils.fromBufferToB64(
       await this.cryptoFunctionService.rsaExtractPublicKey(privateKey),
     );
-    // To upgrade from v1 to v2, a new signing key pair is created.
+
+    // Make a new signing key pair. For this, we initialize an SDK instance with no signing key,
+    // with the new user key.
     const sdkClient = await this.sdkClientFactory.createSdkClient();
     await sdkClient.crypto().initialize_user_crypto({
       userId: userId,
@@ -347,6 +353,7 @@ export class UserKeyRotationService {
       },
     });
     const makeSigningKeysResult = sdkClient.crypto().make_signing_keys();
+
     return {
       userKey: newUserKey,
       asymmetricEncryptionKeypair: {
@@ -380,9 +387,15 @@ export class UserKeyRotationService {
       verifyingKey: VerifyingKey;
     };
   }> {
+    // Rotating a v2 user means creating a new XChaCha20-Poly1305 user key, re-wrapping the private key and signing key.
+    // The signature of the public key is also updated. Rotating a v2 user does not change the private key or signing key.
+
+    // Make new XChaCha20-Poly1305 user key
     const newUserKey: UserKey = new SymmetricCryptoKey(
       PureCrypto.make_user_key_xchacha20_poly1305(),
     ) as UserKey;
+
+    // Initialize a new sdk client with the *current* user key. The function to re-wrap takes the current user key.
     const sdkClient = await this.sdkClientFactory.createSdkClient();
     await sdkClient.crypto().initialize_user_crypto({
       userId: userId,
@@ -395,11 +408,13 @@ export class UserKeyRotationService {
       },
     });
     const rotatedKeys = sdkClient.crypto().rotate_account_keys(newUserKey.toBase64());
+
     return {
       userKey: newUserKey,
       asymmetricEncryptionKeypair: {
         wrappedPrivateKey: new EncString(rotatedKeys.privateKey),
         publicKey: rotatedKeys.publicKey,
+        // This contains the same public key, but signed
         signedPublicKey: rotatedKeys.signedPublicKey,
       },
       signingKeypair: {
