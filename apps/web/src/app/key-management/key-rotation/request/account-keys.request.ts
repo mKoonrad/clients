@@ -1,5 +1,7 @@
+import { SigningKeyType } from "@bitwarden/common/key-management/enums/signing-key-type.enum";
+import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
 import { SignedPublicKey } from "@bitwarden/common/key-management/types";
-import { SigningKey, SigningKeyType, VerifyingKey } from "@bitwarden/key-management";
 
 // This request contains other account-owned keys that are encrypted with the user key.
 export class AccountKeysRequest {

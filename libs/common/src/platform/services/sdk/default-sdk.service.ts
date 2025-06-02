@@ -16,13 +16,7 @@ import {
 
 // This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
 // eslint-disable-next-line no-restricted-imports
-import {
-  KeyService,
-  KdfConfigService,
-  KdfConfig,
-  KdfType,
-  SigningKey,
-} from "@bitwarden/key-management";
+import { KeyService, KdfConfigService, KdfConfig, KdfType } from "@bitwarden/key-management";
 import {
   BitwardenClient,
   ClientSettings,
@@ -32,6 +26,7 @@ import {
 import { EncryptedOrganizationKeyData } from "../../../admin-console/models/data/encrypted-organization-key.data";
 import { AccountInfo, AccountService } from "../../../auth/abstractions/account.service";
 import { DeviceType } from "../../../enums/device-type.enum";
+import { SigningKey } from "../../../key-management/keys/models/signing-key";
 import { OrganizationId, UserId } from "../../../types/guid";
 import { UserKey } from "../../../types/key";
 import { Environment, EnvironmentService } from "../../abstractions/environment.service";

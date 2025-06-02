@@ -1,4 +1,5 @@
-import { SigningKey, VerifyingKey } from "@bitwarden/key-management";
+import { SigningKey } from "../models/signing-key";
+import { VerifyingKey } from "../models/verifying-key";
 
 export class UserSigningKeyData {
   readonly wrappedSigningKey: SigningKey;

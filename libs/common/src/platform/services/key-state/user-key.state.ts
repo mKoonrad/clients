@@ -1,5 +1,4 @@
-import { SerializableUserSigningKeyPair } from "@bitwarden/key-management";
-
+import { SerializableUserSigningKeyPair } from "../../../key-management/keys/models/signing-key";
 import { UserKey } from "../../../types/key";
 import { EncryptedString } from "../../models/domain/enc-string";
 import { SymmetricCryptoKey } from "../../models/domain/symmetric-crypto-key";
