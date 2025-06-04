@@ -27,7 +27,6 @@ import { FolderWithIdRequest } from "@bitwarden/common/vault/models/request/fold
 import { DialogService, ToastService } from "@bitwarden/components";
 import {
   KeyService,
-  DEFAULT_KDF_CONFIG,
   PBKDF2KdfConfig,
   KdfConfigService,
   KdfConfig,
@@ -360,14 +359,6 @@ describe("KeyRotationService", () => {
         encryptedString: "mockEncryptedData",
       } as any);
 
-      // Mock user verification
-      mockUserVerificationService.verifyUserByMasterPassword.mockResolvedValue({
-        masterKey: "mockMasterKey" as any,
-        kdfConfig: DEFAULT_KDF_CONFIG,
-        email: "mockEmail",
-        policyOptions: null,
-      });
-
       // Mock user key
       mockKeyService.userKey$.mockReturnValue(new BehaviorSubject("mockOriginalUserKey" as any));
 
@@ -490,20 +481,6 @@ describe("KeyRotationService", () => {
 
     it("throws if no private key is found", async () => {
       keyPair.next(null);
-
-      await expect(
-        keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
-          "mockMasterPassword",
-          "mockMasterPassword1",
-          mockUser,
-        ),
-      ).rejects.toThrow();
-    });
-
-    it("throws if master password is incorrect", async () => {
-      mockUserVerificationService.verifyUserByMasterPassword.mockRejectedValueOnce(
-        new Error("Invalid master password"),
-      );
 
       await expect(
         keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
