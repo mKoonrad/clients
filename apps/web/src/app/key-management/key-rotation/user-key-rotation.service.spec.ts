@@ -45,8 +45,8 @@ import { EmergencyAccessStatusType } from "../../auth/emergency-access/enums/eme
 import { EmergencyAccessType } from "../../auth/emergency-access/enums/emergency-access-type";
 import { EmergencyAccessWithIdRequest } from "../../auth/emergency-access/request/emergency-access-update.request";
 
-import { TestableUserKeyRotationService } from "./testable-user-key-rotation.service";
 import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
+import { UserKeyRotationService } from "./user-key-rotation.service";
 
 const initialPromptedOpenTrue = jest.fn();
 initialPromptedOpenTrue.mockReturnValue({ closed: new BehaviorSubject(true) });
@@ -115,7 +115,7 @@ function createMockWebauthn(id: string): any {
 }
 
 describe("KeyRotationService", () => {
-  let keyRotationService: TestableUserKeyRotationService;
+  let keyRotationService: UserKeyRotationService;
 
   let mockUserVerificationService: MockProxy<UserVerificationService>;
   let mockApiService: MockProxy<UserKeyRotationApiService>;
@@ -194,7 +194,7 @@ describe("KeyRotationService", () => {
     mockCryptoFunctionService = mock<CryptoFunctionService>();
     mockKdfConfigService = mock<KdfConfigService>();
 
-    keyRotationService = new TestableUserKeyRotationService(
+    keyRotationService = new UserKeyRotationService(
       mockUserVerificationService,
       mockApiService,
       mockCipherService,
