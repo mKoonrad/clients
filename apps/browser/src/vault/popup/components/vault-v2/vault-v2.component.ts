@@ -20,7 +20,9 @@ import { NudgesService, NudgeType } from "@bitwarden/angular/vault";
 import { SpotlightComponent } from "@bitwarden/angular/vault/components/spotlight/spotlight.component";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { getUserId } from "@bitwarden/common/auth/services/account.service";
+import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
+import { UriMatchStrategy } from "@bitwarden/common/models/domain/domain-service";
 import { CipherId, CollectionId, OrganizationId, UserId } from "@bitwarden/common/types/guid";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CipherType } from "@bitwarden/common/vault/enums";
@@ -153,6 +155,7 @@ export class VaultV2Component implements OnInit, AfterViewInit, OnDestroy {
     private introCarouselService: IntroCarouselService,
     private nudgesService: NudgesService,
     private router: Router,
+    private domainSettingsService: DomainSettingsService,
   ) {
     combineLatest([
       this.vaultPopupItemsService.emptyVault$,
@@ -190,6 +193,8 @@ export class VaultV2Component implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async ngOnInit() {
+    void this.handleDeprecatedUriStrategies();
+
     this.activeUserId = await firstValueFrom(this.accountService.activeAccount$.pipe(getUserId));
 
     await this.introCarouselService.setIntroCarouselDismissed();
@@ -207,6 +212,35 @@ export class VaultV2Component implements OnInit, AfterViewInit, OnDestroy {
           cipherIds: ciphers.map((c) => c.id as CipherId),
         });
       });
+  }
+
+  async handleDeprecatedUriStrategies(): Promise<void> {
+    const defaultUriMatchStrategy = await firstValueFrom(
+      this.domainSettingsService.defaultUriMatchStrategy$,
+    );
+
+    if (
+      defaultUriMatchStrategy !== UriMatchStrategy.StartsWith &&
+      defaultUriMatchStrategy !== UriMatchStrategy.RegularExpression
+    ) {
+      return;
+    }
+
+    const dialogContentKey =
+      defaultUriMatchStrategy === UriMatchStrategy.StartsWith
+        ? "uriMatchDeprecationDialogStartsWithContent"
+        : "uriMatchDeprecationDialogRegExContent";
+
+    await this.dialogService.openSimpleDialog({
+      title: { key: "uriMatchDeprecationDialogTitle" },
+      content: { key: dialogContentKey },
+      acceptButtonText: { key: "gotIt" },
+      cancelButtonText: null,
+      disableClose: true,
+      type: "info",
+      acceptAction: () =>
+        this.domainSettingsService.setDefaultUriMatchStrategy(UriMatchStrategy.Domain),
+    });
   }
 
   ngOnDestroy() {
