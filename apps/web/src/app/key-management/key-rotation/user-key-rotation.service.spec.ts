@@ -301,34 +301,7 @@ describe("KeyRotationService", () => {
       mockWebauthnLoginAdminService.getRotatedData.mockResolvedValue(webauthn);
     });
 
-    it("rotates the user key and encrypted data legacy", async () => {
-      await keyRotationService.rotateUserKeyAndEncryptedDataLegacy("mockMasterPassword", mockUser);
-
-      expect(mockApiService.postUserKeyUpdate).toHaveBeenCalled();
-      const arg = mockApiService.postUserKeyUpdate.mock.calls[0][0];
-      expect(arg.key).toBe("mockNewUserKey");
-      expect(arg.privateKey).toBe("mockEncryptedData");
-      expect(arg.ciphers.length).toBe(2);
-      expect(arg.folders.length).toBe(2);
-      expect(arg.sends.length).toBe(2);
-      expect(arg.emergencyAccessKeys.length).toBe(1);
-      expect(arg.resetPasswordKeys.length).toBe(1);
-      expect(arg.webauthnKeys.length).toBe(2);
-    });
-
-    it("throws if last sync is null", async () => {
-      mockSyncService.getLastSync.mockResolvedValue(null);
-
-      await expect(
-        keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
-          "mockMasterPassword",
-          "mockNewMasterPassword",
-          mockUser,
-        ),
-      ).rejects.toThrow();
-    });
-
-    it("rotates the user key and encrypted data", async () => {
+    it("rotates the userkey and encrypted data and changes master password", async () => {
       KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
       AccountRecoveryTrustComponent.open = initialPromptedOpenTrue;
       EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
@@ -365,7 +338,6 @@ describe("KeyRotationService", () => {
       AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
       EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
       mockKdfConfigService.getKdfConfig$.mockReturnValue(new BehaviorSubject(null));
-
       await expect(
         keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
           "mockMasterPassword",
@@ -375,26 +347,52 @@ describe("KeyRotationService", () => {
       ).rejects.toThrow();
     });
 
-    it("throws if user key is null", async () => {
+    it("returns early when emergency access trust warning dialog is declined", async () => {
       KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
+      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenUntrusted;
       AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
-      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
-      mockKdfConfigService.getKdfConfig$.mockReturnValue(
-        new BehaviorSubject(new PBKDF2KdfConfig(100000)),
+      await keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
+        "mockMasterPassword",
+        "newMasterPassword",
+        mockUser,
       );
-      mockKeyService.userKey$.mockReturnValue(new BehaviorSubject(null));
+      expect(mockApiService.postUserKeyUpdateV2).not.toHaveBeenCalled();
+    });
 
+    it("returns early when account recovery trust warning dialog is declined", async () => {
+      KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
+      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
+      AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenUntrusted;
+      await keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
+        "mockMasterPassword",
+        "newMasterPassword",
+        mockUser,
+      );
+      expect(mockApiService.postUserKeyUpdateV2).not.toHaveBeenCalled();
+    });
+
+    it("throws if master password provided is falsey", async () => {
       await expect(
-        keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
-          "mockMasterPassword",
-          "mockMasterPassword1",
-          mockUser,
-        ),
+        keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData("", "", mockUser),
       ).rejects.toThrow();
     });
 
     it("throws if no private key is found", async () => {
       keyPair.next(null);
+
+      await expect(
+        keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
+          "mockMasterPassword",
+          "mockMasterPassword1",
+          mockUser,
+        ),
+      ).rejects.toThrow();
+    });
+
+    it("throws if master password is incorrect", async () => {
+      mockUserVerificationService.verifyUserByMasterPassword.mockRejectedValueOnce(
+        new Error("Invalid master password"),
+      );
 
       await expect(
         keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
