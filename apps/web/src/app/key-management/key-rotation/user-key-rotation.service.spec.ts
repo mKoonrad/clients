@@ -219,16 +219,13 @@ describe("KeyRotationService", () => {
   });
 
   beforeEach(() => {
+    jest.clearAllMocks();
     jest.mock("@bitwarden/key-management-ui");
     jest.spyOn(PureCrypto, "make_user_key_aes256_cbc_hmac").mockReturnValue(new Uint8Array(64));
     jest.spyOn(PureCrypto, "make_user_key_xchacha20_poly1305").mockReturnValue(new Uint8Array(70));
     jest
       .spyOn(PureCrypto, "encrypt_user_key_with_master_password")
       .mockReturnValue("mockNewUserKey");
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
   });
 
   describe("rotateUserKeyAndEncryptedData", () => {
@@ -299,6 +296,10 @@ describe("KeyRotationService", () => {
       // Mock Webauthn
       const webauthn = [createMockWebauthn("13"), createMockWebauthn("14")];
       mockWebauthnLoginAdminService.getRotatedData.mockResolvedValue(webauthn);
+
+      KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
+      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
+      AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
     });
 
     it("rotates the userkey and encrypted data and changes master password", async () => {
