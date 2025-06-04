@@ -15,6 +15,7 @@ import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import { SendService } from "@bitwarden/common/tools/send/services/send.service.abstraction";
+import { UserId } from "@bitwarden/common/types/guid";
 import { UserKey } from "@bitwarden/common/types/key";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { FolderService } from "@bitwarden/common/vault/abstractions/folder/folder.service.abstraction";
@@ -103,6 +104,7 @@ export class UserKeyRotationService {
       await this.verifyTrust(user);
     if (wasTrustDenied) {
       this.logService.info("[Userkey rotation] Trust was denied by user. Aborting!");
+      return;
     }
 
     // Read current cryptographic state / settings
