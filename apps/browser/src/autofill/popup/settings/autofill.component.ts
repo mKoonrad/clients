@@ -165,7 +165,6 @@ export class AutofillComponent implements OnInit {
       { name: i18nService.t("baseDomainOptionRecommended"), value: UriMatchStrategy.Domain },
       { name: i18nService.t("host"), value: UriMatchStrategy.Host },
       { name: i18nService.t("exact"), value: UriMatchStrategy.Exact },
-      { name: i18nService.t("never"), value: UriMatchStrategy.Never },
     ];
 
     this.browserClientVendor = BrowserApi.getBrowserClientVendor(window);
