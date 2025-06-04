@@ -193,8 +193,6 @@ export class VaultV2Component implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async ngOnInit() {
-    void this.handleDeprecatedUriStrategies();
-
     this.activeUserId = await firstValueFrom(this.accountService.activeAccount$.pipe(getUserId));
 
     await this.introCarouselService.setIntroCarouselDismissed();
@@ -212,6 +210,8 @@ export class VaultV2Component implements OnInit, AfterViewInit, OnDestroy {
           cipherIds: ciphers.map((c) => c.id as CipherId),
         });
       });
+
+    this.handleDeprecatedUriStrategies().catch(() => {});
   }
 
   async handleDeprecatedUriStrategies(): Promise<void> {
