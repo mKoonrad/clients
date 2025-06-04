@@ -187,9 +187,7 @@ class TestUserKeyRotationService extends UserKeyRotationService {
       trustedOrganizationPublicKeys,
     );
   }
-  override verifyTrust(
-    user: Account,
-  ): Promise<{
+  override verifyTrust(user: Account): Promise<{
     wasTrustDenied: boolean;
     trustedOrganizationPublicKeys: Uint8Array[];
     trustedEmergencyAccessUserPublicKeys: Uint8Array[];
@@ -231,7 +229,7 @@ class TestUserKeyRotationService extends UserKeyRotationService {
 }
 
 describe("KeyRotationService", () => {
-  let keyRotationService: UserKeyRotationService;
+  let keyRotationService: TestUserKeyRotationService;
 
   let mockUserVerificationService: MockProxy<UserVerificationService>;
   let mockApiService: MockProxy<UserKeyRotationApiService>;
