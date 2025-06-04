@@ -1,7 +1,7 @@
+import { Injectable } from "@angular/core";
 import { firstValueFrom, Observable } from "rxjs";
 
 import { Account } from "@bitwarden/common/auth/abstractions/account.service";
-import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
@@ -52,9 +52,9 @@ type MasterPasswordAuthenticationAndUnlockData = {
  * exposed for unit testing. It is wrapped by UserKeyRotationService to only
  * expose the public API.
  */
+@Injectable({ providedIn: "root" })
 export class UserKeyRotationService {
   constructor(
-    private userVerificationService: UserVerificationService,
     private apiService: UserKeyRotationApiService,
     private cipherService: CipherService,
     private folderService: FolderService,

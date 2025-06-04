@@ -3,7 +3,6 @@ import { BehaviorSubject } from "rxjs";
 
 import { OrganizationUserResetPasswordWithIdRequest } from "@bitwarden/admin-console/common";
 import { Account } from "@bitwarden/common/auth/abstractions/account.service";
-import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { WebauthnRotateCredentialRequest } from "@bitwarden/common/auth/models/request/webauthn-rotate-credential.request";
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
@@ -231,7 +230,6 @@ class TestUserKeyRotationService extends UserKeyRotationService {
 describe("KeyRotationService", () => {
   let keyRotationService: TestUserKeyRotationService;
 
-  let mockUserVerificationService: MockProxy<UserVerificationService>;
   let mockApiService: MockProxy<UserKeyRotationApiService>;
   let mockCipherService: MockProxy<CipherService>;
   let mockFolderService: MockProxy<FolderService>;
@@ -262,7 +260,6 @@ describe("KeyRotationService", () => {
   const mockTrustedPublicKeys = [Utils.fromUtf8ToArray("test-public-key")];
 
   beforeAll(() => {
-    mockUserVerificationService = mock<UserVerificationService>();
     mockApiService = mock<UserKeyRotationApiService>();
     mockCipherService = mock<CipherService>();
     mockFolderService = mock<FolderService>();
@@ -309,7 +306,6 @@ describe("KeyRotationService", () => {
     mockKdfConfigService = mock<KdfConfigService>();
 
     keyRotationService = new TestUserKeyRotationService(
-      mockUserVerificationService,
       mockApiService,
       mockCipherService,
       mockFolderService,
