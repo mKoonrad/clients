@@ -2,6 +2,7 @@ import { mock, MockProxy } from "jest-mock-extended";
 import { BehaviorSubject } from "rxjs";
 
 import { OrganizationUserResetPasswordWithIdRequest } from "@bitwarden/admin-console/common";
+import { Account } from "@bitwarden/common/auth/abstractions/account.service";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { WebauthnRotateCredentialRequest } from "@bitwarden/common/auth/models/request/webauthn-rotate-credential.request";
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
@@ -30,6 +31,7 @@ import {
   DEFAULT_KDF_CONFIG,
   PBKDF2KdfConfig,
   KdfConfigService,
+  KdfConfig,
 } from "@bitwarden/key-management";
 import {
   AccountRecoveryTrustComponent,
@@ -45,6 +47,9 @@ import { EmergencyAccessStatusType } from "../../auth/emergency-access/enums/eme
 import { EmergencyAccessType } from "../../auth/emergency-access/enums/emergency-access-type";
 import { EmergencyAccessWithIdRequest } from "../../auth/emergency-access/request/emergency-access-update.request";
 
+import { MasterPasswordUnlockDataRequest } from "./request/master-password-unlock-data.request";
+import { UnlockDataRequest } from "./request/unlock-data.request";
+import { UserDataRequest } from "./request/userdata.request";
 import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
 import { UserKeyRotationService } from "./user-key-rotation.service";
 
@@ -112,6 +117,117 @@ function createMockWebauthn(id: string): any {
   return {
     id: id,
   } as WebauthnRotateCredentialRequest;
+}
+
+class TestUserKeyRotationService extends UserKeyRotationService {
+  override rotateUserKeyMasterPasswordAndEncryptedData(
+    currentMasterPassword: string,
+    newMasterPassword: string,
+    user: Account,
+    newMasterPasswordHint?: string,
+  ): Promise<void> {
+    return super.rotateUserKeyMasterPasswordAndEncryptedData(
+      currentMasterPassword,
+      newMasterPassword,
+      user,
+      newMasterPasswordHint,
+    );
+  }
+  override ensureIsAllowedToRotateUserKey(): Promise<void> {
+    return super.ensureIsAllowedToRotateUserKey();
+  }
+  override getNewAccountKeysV1(
+    currentUserKey: UserKey,
+    currentUserKeyWrappedPrivateKey: EncString,
+  ): Promise<{
+    userKey: UserKey;
+    asymmetricEncryptionKeys: { wrappedPrivateKey: EncString; publicKey: string };
+  }> {
+    return super.getNewAccountKeysV1(currentUserKey, currentUserKeyWrappedPrivateKey);
+  }
+  override getNewAccountKeysV2(
+    currentUserKey: UserKey,
+    currentUserKeyWrappedPrivateKey: EncString,
+  ): Promise<{
+    userKey: UserKey;
+    asymmetricEncryptionKeys: { wrappedPrivateKey: EncString; publicKey: string };
+  }> {
+    return super.getNewAccountKeysV2(currentUserKey, currentUserKeyWrappedPrivateKey);
+  }
+  override createMasterPasswordUnlockDataRequest(
+    userKey: UserKey,
+    newUnlockData: {
+      masterPassword: string;
+      masterKeySalt: string;
+      masterKeyKdfConfig: KdfConfig;
+      masterPasswordHint: string;
+    },
+  ): Promise<MasterPasswordUnlockDataRequest> {
+    return super.createMasterPasswordUnlockDataRequest(userKey, newUnlockData);
+  }
+  override getAccountUnlockDataRequest(
+    userId: UserId,
+    currentUserKey: UserKey,
+    newUserKey: UserKey,
+    masterPasswordAuthenticationAndUnlockData: {
+      masterPassword: string;
+      masterKeySalt: string;
+      masterKeyKdfConfig: KdfConfig;
+      masterPasswordHint: string;
+    },
+    trustedEmergencyAccessGranteesPublicKeys: Uint8Array[],
+    trustedOrganizationPublicKeys: Uint8Array[],
+  ): Promise<UnlockDataRequest> {
+    return super.getAccountUnlockDataRequest(
+      userId,
+      currentUserKey,
+      newUserKey,
+      masterPasswordAuthenticationAndUnlockData,
+      trustedEmergencyAccessGranteesPublicKeys,
+      trustedOrganizationPublicKeys,
+    );
+  }
+  override verifyTrust(
+    user: Account,
+  ): Promise<{
+    wasTrustDenied: boolean;
+    trustedOrganizationPublicKeys: Uint8Array[];
+    trustedEmergencyAccessUserPublicKeys: Uint8Array[];
+  }> {
+    return super.verifyTrust(user);
+  }
+  override getAccountDataRequest(
+    originalUserKey: UserKey,
+    newUnencryptedUserKey: UserKey,
+    user: Account,
+  ): Promise<UserDataRequest> {
+    return super.getAccountDataRequest(originalUserKey, newUnencryptedUserKey, user);
+  }
+  override makeNewUserKeyV1(oldUserKey: UserKey): Promise<UserKey> {
+    return super.makeNewUserKeyV1(oldUserKey);
+  }
+  override makeNewUserKeyV2(
+    oldUserKey: UserKey,
+  ): Promise<{ isUpgrading: boolean; newUserKey: UserKey }> {
+    return super.makeNewUserKeyV2(oldUserKey);
+  }
+  override isV1User(userKey: UserKey): boolean {
+    return super.isV1User(userKey);
+  }
+  override isUserWithMasterPassword(id: UserId): boolean {
+    return super.isUserWithMasterPassword(id);
+  }
+  override makeServerMasterKeyAuthenticationHash(
+    masterPassword: string,
+    masterKeyKdfConfig: KdfConfig,
+    masterKeySalt: string,
+  ): Promise<string> {
+    return super.makeServerMasterKeyAuthenticationHash(
+      masterPassword,
+      masterKeyKdfConfig,
+      masterKeySalt,
+    );
+  }
 }
 
 describe("KeyRotationService", () => {
@@ -194,7 +310,7 @@ describe("KeyRotationService", () => {
     mockCryptoFunctionService = mock<CryptoFunctionService>();
     mockKdfConfigService = mock<KdfConfigService>();
 
-    keyRotationService = new UserKeyRotationService(
+    keyRotationService = new TestUserKeyRotationService(
       mockUserVerificationService,
       mockApiService,
       mockCipherService,

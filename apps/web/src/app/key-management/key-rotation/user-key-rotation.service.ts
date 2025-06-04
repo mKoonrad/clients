@@ -189,7 +189,7 @@ export class UserKeyRotationService {
     await this.vaultTimeoutService.logOut();
   }
 
-  async ensureIsAllowedToRotateUserKey(): Promise<void> {
+  protected async ensureIsAllowedToRotateUserKey(): Promise<void> {
     if ((await this.syncService.getLastSync()) === null) {
       this.logService.info("[Userkey rotation] Client was never synced. Aborting!");
       throw new Error(
@@ -198,7 +198,7 @@ export class UserKeyRotationService {
     }
   }
 
-  async getNewAccountKeysV1(
+  protected async getNewAccountKeysV1(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
   ): Promise<{
@@ -234,7 +234,7 @@ export class UserKeyRotationService {
     };
   }
 
-  async getNewAccountKeysV2(
+  protected async getNewAccountKeysV2(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
   ): Promise<{
@@ -247,7 +247,7 @@ export class UserKeyRotationService {
     throw new Error("User encryption v2 upgrade is not supported yet");
   }
 
-  async createMasterPasswordUnlockDataRequest(
+  protected async createMasterPasswordUnlockDataRequest(
     userKey: UserKey,
     newUnlockData: MasterPasswordAuthenticationAndUnlockData,
   ): Promise<MasterPasswordUnlockDataRequest> {
@@ -276,7 +276,7 @@ export class UserKeyRotationService {
     );
   }
 
-  async getAccountUnlockDataRequest(
+  protected async getAccountUnlockDataRequest(
     userId: UserId,
     currentUserKey: UserKey,
     newUserKey: UserKey,
@@ -325,7 +325,7 @@ export class UserKeyRotationService {
     );
   }
 
-  async verifyTrust(user: Account): Promise<{
+  protected async verifyTrust(user: Account): Promise<{
     wasTrustDenied: boolean;
     trustedOrganizationPublicKeys: Uint8Array[];
     trustedEmergencyAccessUserPublicKeys: Uint8Array[];
@@ -401,7 +401,7 @@ export class UserKeyRotationService {
     };
   }
 
-  async getAccountDataRequest(
+  protected async getAccountDataRequest(
     originalUserKey: UserKey,
     newUnencryptedUserKey: UserKey,
     user: Account,
@@ -433,7 +433,7 @@ export class UserKeyRotationService {
     return new UserDataRequest(rotatedCiphers, rotatedFolders, rotatedSends);
   }
 
-  async makeNewUserKeyV1(oldUserKey: UserKey): Promise<UserKey> {
+  protected async makeNewUserKeyV1(oldUserKey: UserKey): Promise<UserKey> {
     // The user's account format is determined by the user key.
     // Being tied to the userkey ensures an all-or-nothing approach. A compromised
     // server cannot downgrade to a previous format (no signing keys) without
@@ -461,7 +461,7 @@ export class UserKeyRotationService {
     }
   }
 
-  async makeNewUserKeyV2(
+  protected async makeNewUserKeyV2(
     oldUserKey: UserKey,
   ): Promise<{ isUpgrading: boolean; newUserKey: UserKey }> {
     // The user's account format is determined by the user key.
@@ -495,16 +495,16 @@ export class UserKeyRotationService {
    * A V1 user has no signing key, and uses AES256-CBC-HMAC.
    * A V2 user has a signing key, and uses XChaCha20-Poly1305.
    */
-  isV1User(userKey: UserKey): boolean {
+  protected isV1User(userKey: UserKey): boolean {
     return userKey.inner().type === EncryptionType.AesCbc256_HmacSha256_B64;
   }
 
-  isUserWithMasterPassword(id: UserId): boolean {
+  protected isUserWithMasterPassword(id: UserId): boolean {
     // Currently, key rotation can only be activated when the user has a master password.
     return true;
   }
 
-  async makeServerMasterKeyAuthenticationHash(
+  protected async makeServerMasterKeyAuthenticationHash(
     masterPassword: string,
     masterKeyKdfConfig: KdfConfig,
     masterKeySalt: string,
