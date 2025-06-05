@@ -47,11 +47,6 @@ type MasterPasswordAuthenticationAndUnlockData = {
   masterPasswordHint: string;
 };
 
-/**
- * Implementation of the user key rotation service, with all sub functions
- * exposed for unit testing. It is wrapped by UserKeyRotationService to only
- * expose the public API.
- */
 @Injectable({ providedIn: "root" })
 export class UserKeyRotationService {
   constructor(
