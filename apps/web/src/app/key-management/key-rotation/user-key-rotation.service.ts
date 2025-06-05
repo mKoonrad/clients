@@ -175,7 +175,7 @@ export class UserKeyRotationService {
     );
 
     this.logService.info("[Userkey rotation] Posting user key rotation request to server");
-    await this.apiService.postUserKeyUpdateV2(request);
+    await this.apiService.postUserKeyUpdate(request);
     this.logService.info("[Userkey rotation] Userkey rotation request posted to server");
 
     this.toastService.showToast({

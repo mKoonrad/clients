@@ -425,7 +425,7 @@ describe("KeyRotationService", () => {
         mockUser,
         "masterPasswordHint",
       );
-      const arg = mockApiService.postUserKeyUpdateV2.mock.calls[0][0];
+      const arg = mockApiService.postUserKeyUpdate.mock.calls[0][0];
       expect(arg.oldMasterKeyAuthenticationHash).toBe("mockMasterPasswordHash");
       expect(arg.accountData.ciphers.length).toBe(2);
       expect(arg.accountData.folders.length).toBe(2);
@@ -458,7 +458,7 @@ describe("KeyRotationService", () => {
         "newMasterPassword",
         mockUser,
       );
-      expect(mockApiService.postUserKeyUpdateV2).not.toHaveBeenCalled();
+      expect(mockApiService.postUserKeyUpdate).not.toHaveBeenCalled();
     });
 
     it("returns early when account recovery trust warning dialog is declined", async () => {
@@ -470,7 +470,7 @@ describe("KeyRotationService", () => {
         "newMasterPassword",
         mockUser,
       );
-      expect(mockApiService.postUserKeyUpdateV2).not.toHaveBeenCalled();
+      expect(mockApiService.postUserKeyUpdate).not.toHaveBeenCalled();
     });
 
     it("throws if master password provided is falsey", async () => {
@@ -495,7 +495,7 @@ describe("KeyRotationService", () => {
       KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
       EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
       AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
-      mockApiService.postUserKeyUpdateV2.mockRejectedValueOnce(new Error("mockError"));
+      mockApiService.postUserKeyUpdate.mockRejectedValueOnce(new Error("mockError"));
 
       await expect(
         keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
