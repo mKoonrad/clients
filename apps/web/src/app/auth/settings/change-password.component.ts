@@ -13,14 +13,9 @@ import { UserVerificationService } from "@bitwarden/common/auth/abstractions/use
 import { PasswordRequest } from "@bitwarden/common/auth/models/request/password.request";
 import { getUserId } from "@bitwarden/common/auth/services/account.service";
 import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/key-management/master-password/abstractions/master-password.service.abstraction";
-import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import { HashPurpose } from "@bitwarden/common/platform/enums";
-import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
-import { UserId } from "@bitwarden/common/types/guid";
-import { MasterKey, UserKey } from "@bitwarden/common/types/key";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
 import { DialogService, ToastService } from "@bitwarden/components";
@@ -65,7 +60,6 @@ export class ChangePasswordComponent
     protected masterPasswordService: InternalMasterPasswordServiceAbstraction,
     accountService: AccountService,
     toastService: ToastService,
-    private configService: ConfigService,
   ) {
     super(
       i18nService,
@@ -145,17 +139,13 @@ export class ChangePasswordComponent
 
   async submit() {
     this.loading = true;
-    await this.submitNew();
-    this.loading = false;
-  }
-
-  async submitNew() {
     if (this.currentMasterPassword == null || this.currentMasterPassword === "") {
       this.toastService.showToast({
         variant: "error",
         title: this.i18nService.t("errorOccurred"),
         message: this.i18nService.t("masterPasswordRequired"),
       });
+      this.loading = false;
       return;
     }
 
@@ -168,6 +158,7 @@ export class ChangePasswordComponent
         title: this.i18nService.t("errorOccurred"),
         message: this.i18nService.t("hintEqualsPassword"),
       });
+      this.loading = false;
       return;
     }
 
@@ -177,6 +168,7 @@ export class ChangePasswordComponent
     }
 
     if (!(await this.strongPassword())) {
+      this.loading = false;
       return;
     }
 
@@ -199,6 +191,8 @@ export class ChangePasswordComponent
         title: this.i18nService.t("errorOccurred"),
         message: e.message,
       });
+    } finally {
+      this.loading = false;
     }
   }
 
@@ -261,96 +255,5 @@ export class ChangePasswordComponent
         message: this.i18nService.t("errorOccurred"),
       });
     }
-  }
-
-  async setupSubmitActions() {
-    if (this.currentMasterPassword == null || this.currentMasterPassword === "") {
-      this.toastService.showToast({
-        variant: "error",
-        title: this.i18nService.t("errorOccurred"),
-        message: this.i18nService.t("masterPasswordRequired"),
-      });
-      return false;
-    }
-
-    if (this.rotateUserKey) {
-      await this.syncService.fullSync(true);
-    }
-
-    return super.setupSubmitActions();
-  }
-
-  async performSubmitActions(
-    newMasterPasswordHash: string,
-    newMasterKey: MasterKey,
-    newUserKey: [UserKey, EncString],
-  ) {
-    const [userId, email] = await firstValueFrom(
-      this.accountService.activeAccount$.pipe(map((a) => [a?.id, a?.email])),
-    );
-
-    const masterKey = await this.keyService.makeMasterKey(
-      this.currentMasterPassword,
-      email,
-      await this.kdfConfigService.getKdfConfig(userId),
-    );
-
-    const newLocalKeyHash = await this.keyService.hashMasterKey(
-      this.masterPassword,
-      newMasterKey,
-      HashPurpose.LocalAuthorization,
-    );
-
-    const userKey = await this.masterPasswordService.decryptUserKeyWithMasterKey(masterKey, userId);
-    if (userKey == null) {
-      this.toastService.showToast({
-        variant: "error",
-        title: null,
-        message: this.i18nService.t("invalidMasterPassword"),
-      });
-      return;
-    }
-
-    const request = new PasswordRequest();
-    request.masterPasswordHash = await this.keyService.hashMasterKey(
-      this.currentMasterPassword,
-      masterKey,
-    );
-    request.masterPasswordHint = this.masterPasswordHint;
-    request.newMasterPasswordHash = newMasterPasswordHash;
-    request.key = newUserKey[1].encryptedString;
-
-    try {
-      if (this.rotateUserKey) {
-        this.formPromise = this.masterPasswordApiService.postPassword(request).then(async () => {
-          // we need to save this for local masterkey verification during rotation
-          await this.masterPasswordService.setMasterKeyHash(newLocalKeyHash, userId as UserId);
-          await this.masterPasswordService.setMasterKey(newMasterKey, userId as UserId);
-          return this.updateKey();
-        });
-      } else {
-        this.formPromise = this.masterPasswordApiService.postPassword(request);
-      }
-
-      await this.formPromise;
-
-      this.toastService.showToast({
-        variant: "success",
-        title: this.i18nService.t("masterPasswordChanged"),
-        message: this.i18nService.t("logBackIn"),
-      });
-      this.messagingService.send("logout");
-    } catch {
-      this.toastService.showToast({
-        variant: "error",
-        title: null,
-        message: this.i18nService.t("errorOccurred"),
-      });
-    }
-  }
-
-  private async updateKey() {
-    const user = await firstValueFrom(this.accountService.activeAccount$);
-    await this.keyRotationService.rotateUserKeyAndEncryptedDataLegacy(this.masterPassword, user);
   }
 }

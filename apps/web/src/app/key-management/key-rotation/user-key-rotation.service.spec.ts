@@ -2,7 +2,7 @@ import { mock, MockProxy } from "jest-mock-extended";
 import { BehaviorSubject } from "rxjs";
 
 import { OrganizationUserResetPasswordWithIdRequest } from "@bitwarden/admin-console/common";
-import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
+import { Account } from "@bitwarden/common/auth/abstractions/account.service";
 import { WebauthnRotateCredentialRequest } from "@bitwarden/common/auth/models/request/webauthn-rotate-credential.request";
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
@@ -27,9 +27,9 @@ import { FolderWithIdRequest } from "@bitwarden/common/vault/models/request/fold
 import { DialogService, ToastService } from "@bitwarden/components";
 import {
   KeyService,
-  DEFAULT_KDF_CONFIG,
   PBKDF2KdfConfig,
   KdfConfigService,
+  KdfConfig,
 } from "@bitwarden/key-management";
 import {
   AccountRecoveryTrustComponent,
@@ -45,8 +45,11 @@ import { EmergencyAccessStatusType } from "../../auth/emergency-access/enums/eme
 import { EmergencyAccessType } from "../../auth/emergency-access/enums/emergency-access-type";
 import { EmergencyAccessWithIdRequest } from "../../auth/emergency-access/request/emergency-access-update.request";
 
-import { TestableUserKeyRotationService } from "./testable-user-key-rotation.service";
+import { MasterPasswordUnlockDataRequest } from "./request/master-password-unlock-data.request";
+import { UnlockDataRequest } from "./request/unlock-data.request";
+import { UserDataRequest } from "./request/userdata.request";
 import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
+import { UserKeyRotationService } from "./user-key-rotation.service";
 
 const initialPromptedOpenTrue = jest.fn();
 initialPromptedOpenTrue.mockReturnValue({ closed: new BehaviorSubject(true) });
@@ -114,10 +117,118 @@ function createMockWebauthn(id: string): any {
   } as WebauthnRotateCredentialRequest;
 }
 
-describe("KeyRotationService", () => {
-  let keyRotationService: TestableUserKeyRotationService;
+class TestUserKeyRotationService extends UserKeyRotationService {
+  override rotateUserKeyMasterPasswordAndEncryptedData(
+    currentMasterPassword: string,
+    newMasterPassword: string,
+    user: Account,
+    newMasterPasswordHint?: string,
+  ): Promise<void> {
+    return super.rotateUserKeyMasterPasswordAndEncryptedData(
+      currentMasterPassword,
+      newMasterPassword,
+      user,
+      newMasterPasswordHint,
+    );
+  }
+  override ensureIsAllowedToRotateUserKey(): Promise<void> {
+    return super.ensureIsAllowedToRotateUserKey();
+  }
+  override getNewAccountKeysV1(
+    currentUserKey: UserKey,
+    currentUserKeyWrappedPrivateKey: EncString,
+  ): Promise<{
+    userKey: UserKey;
+    asymmetricEncryptionKeys: { wrappedPrivateKey: EncString; publicKey: string };
+  }> {
+    return super.getNewAccountKeysV1(currentUserKey, currentUserKeyWrappedPrivateKey);
+  }
+  override getNewAccountKeysV2(
+    currentUserKey: UserKey,
+    currentUserKeyWrappedPrivateKey: EncString,
+  ): Promise<{
+    userKey: UserKey;
+    asymmetricEncryptionKeys: { wrappedPrivateKey: EncString; publicKey: string };
+  }> {
+    return super.getNewAccountKeysV2(currentUserKey, currentUserKeyWrappedPrivateKey);
+  }
+  override createMasterPasswordUnlockDataRequest(
+    userKey: UserKey,
+    newUnlockData: {
+      masterPassword: string;
+      masterKeySalt: string;
+      masterKeyKdfConfig: KdfConfig;
+      masterPasswordHint: string;
+    },
+  ): Promise<MasterPasswordUnlockDataRequest> {
+    return super.createMasterPasswordUnlockDataRequest(userKey, newUnlockData);
+  }
+  override getAccountUnlockDataRequest(
+    userId: UserId,
+    currentUserKey: UserKey,
+    newUserKey: UserKey,
+    masterPasswordAuthenticationAndUnlockData: {
+      masterPassword: string;
+      masterKeySalt: string;
+      masterKeyKdfConfig: KdfConfig;
+      masterPasswordHint: string;
+    },
+    trustedEmergencyAccessGranteesPublicKeys: Uint8Array[],
+    trustedOrganizationPublicKeys: Uint8Array[],
+  ): Promise<UnlockDataRequest> {
+    return super.getAccountUnlockDataRequest(
+      userId,
+      currentUserKey,
+      newUserKey,
+      masterPasswordAuthenticationAndUnlockData,
+      trustedEmergencyAccessGranteesPublicKeys,
+      trustedOrganizationPublicKeys,
+    );
+  }
+  override verifyTrust(user: Account): Promise<{
+    wasTrustDenied: boolean;
+    trustedOrganizationPublicKeys: Uint8Array[];
+    trustedEmergencyAccessUserPublicKeys: Uint8Array[];
+  }> {
+    return super.verifyTrust(user);
+  }
+  override getAccountDataRequest(
+    originalUserKey: UserKey,
+    newUnencryptedUserKey: UserKey,
+    user: Account,
+  ): Promise<UserDataRequest> {
+    return super.getAccountDataRequest(originalUserKey, newUnencryptedUserKey, user);
+  }
+  override makeNewUserKeyV1(oldUserKey: UserKey): Promise<UserKey> {
+    return super.makeNewUserKeyV1(oldUserKey);
+  }
+  override makeNewUserKeyV2(
+    oldUserKey: UserKey,
+  ): Promise<{ isUpgrading: boolean; newUserKey: UserKey }> {
+    return super.makeNewUserKeyV2(oldUserKey);
+  }
+  override isV1User(userKey: UserKey): boolean {
+    return super.isV1User(userKey);
+  }
+  override isUserWithMasterPassword(id: UserId): boolean {
+    return super.isUserWithMasterPassword(id);
+  }
+  override makeServerMasterKeyAuthenticationHash(
+    masterPassword: string,
+    masterKeyKdfConfig: KdfConfig,
+    masterKeySalt: string,
+  ): Promise<string> {
+    return super.makeServerMasterKeyAuthenticationHash(
+      masterPassword,
+      masterKeyKdfConfig,
+      masterKeySalt,
+    );
+  }
+}
 
-  let mockUserVerificationService: MockProxy<UserVerificationService>;
+describe("KeyRotationService", () => {
+  let keyRotationService: TestUserKeyRotationService;
+
   let mockApiService: MockProxy<UserKeyRotationApiService>;
   let mockCipherService: MockProxy<CipherService>;
   let mockFolderService: MockProxy<FolderService>;
@@ -148,7 +259,6 @@ describe("KeyRotationService", () => {
   const mockTrustedPublicKeys = [Utils.fromUtf8ToArray("test-public-key")];
 
   beforeAll(() => {
-    mockUserVerificationService = mock<UserVerificationService>();
     mockApiService = mock<UserKeyRotationApiService>();
     mockCipherService = mock<CipherService>();
     mockFolderService = mock<FolderService>();
@@ -194,8 +304,7 @@ describe("KeyRotationService", () => {
     mockCryptoFunctionService = mock<CryptoFunctionService>();
     mockKdfConfigService = mock<KdfConfigService>();
 
-    keyRotationService = new TestableUserKeyRotationService(
-      mockUserVerificationService,
+    keyRotationService = new TestUserKeyRotationService(
       mockApiService,
       mockCipherService,
       mockFolderService,
@@ -219,16 +328,13 @@ describe("KeyRotationService", () => {
   });
 
   beforeEach(() => {
+    jest.clearAllMocks();
     jest.mock("@bitwarden/key-management-ui");
     jest.spyOn(PureCrypto, "make_user_key_aes256_cbc_hmac").mockReturnValue(new Uint8Array(64));
     jest.spyOn(PureCrypto, "make_user_key_xchacha20_poly1305").mockReturnValue(new Uint8Array(70));
     jest
       .spyOn(PureCrypto, "encrypt_user_key_with_master_password")
       .mockReturnValue("mockNewUserKey");
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
   });
 
   describe("rotateUserKeyAndEncryptedData", () => {
@@ -252,14 +358,6 @@ describe("KeyRotationService", () => {
       mockEncryptService.wrapDecapsulationKey.mockResolvedValue({
         encryptedString: "mockEncryptedData",
       } as any);
-
-      // Mock user verification
-      mockUserVerificationService.verifyUserByMasterPassword.mockResolvedValue({
-        masterKey: "mockMasterKey" as any,
-        kdfConfig: DEFAULT_KDF_CONFIG,
-        email: "mockEmail",
-        policyOptions: null,
-      });
 
       // Mock user key
       mockKeyService.userKey$.mockReturnValue(new BehaviorSubject("mockOriginalUserKey" as any));
@@ -299,36 +397,13 @@ describe("KeyRotationService", () => {
       // Mock Webauthn
       const webauthn = [createMockWebauthn("13"), createMockWebauthn("14")];
       mockWebauthnLoginAdminService.getRotatedData.mockResolvedValue(webauthn);
+
+      KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
+      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
+      AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
     });
 
-    it("rotates the user key and encrypted data legacy", async () => {
-      await keyRotationService.rotateUserKeyAndEncryptedDataLegacy("mockMasterPassword", mockUser);
-
-      expect(mockApiService.postUserKeyUpdate).toHaveBeenCalled();
-      const arg = mockApiService.postUserKeyUpdate.mock.calls[0][0];
-      expect(arg.key).toBe("mockNewUserKey");
-      expect(arg.privateKey).toBe("mockEncryptedData");
-      expect(arg.ciphers.length).toBe(2);
-      expect(arg.folders.length).toBe(2);
-      expect(arg.sends.length).toBe(2);
-      expect(arg.emergencyAccessKeys.length).toBe(1);
-      expect(arg.resetPasswordKeys.length).toBe(1);
-      expect(arg.webauthnKeys.length).toBe(2);
-    });
-
-    it("throws if last sync is null", async () => {
-      mockSyncService.getLastSync.mockResolvedValue(null);
-
-      await expect(
-        keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
-          "mockMasterPassword",
-          "mockNewMasterPassword",
-          mockUser,
-        ),
-      ).rejects.toThrow();
-    });
-
-    it("rotates the user key and encrypted data", async () => {
+    it("rotates the userkey and encrypted data and changes master password", async () => {
       KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
       AccountRecoveryTrustComponent.open = initialPromptedOpenTrue;
       EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
@@ -350,7 +425,7 @@ describe("KeyRotationService", () => {
         mockUser,
         "masterPasswordHint",
       );
-      const arg = mockApiService.postUserKeyUpdateV2.mock.calls[0][0];
+      const arg = mockApiService.postUserKeyUpdate.mock.calls[0][0];
       expect(arg.oldMasterKeyAuthenticationHash).toBe("mockMasterPasswordHash");
       expect(arg.accountData.ciphers.length).toBe(2);
       expect(arg.accountData.folders.length).toBe(2);
@@ -365,7 +440,6 @@ describe("KeyRotationService", () => {
       AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
       EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
       mockKdfConfigService.getKdfConfig$.mockReturnValue(new BehaviorSubject(null));
-
       await expect(
         keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
           "mockMasterPassword",
@@ -375,21 +449,33 @@ describe("KeyRotationService", () => {
       ).rejects.toThrow();
     });
 
-    it("throws if user key is null", async () => {
+    it("returns early when emergency access trust warning dialog is declined", async () => {
       KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
+      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenUntrusted;
       AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
-      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
-      mockKdfConfigService.getKdfConfig$.mockReturnValue(
-        new BehaviorSubject(new PBKDF2KdfConfig(100000)),
+      await keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
+        "mockMasterPassword",
+        "newMasterPassword",
+        mockUser,
       );
-      mockKeyService.userKey$.mockReturnValue(new BehaviorSubject(null));
+      expect(mockApiService.postUserKeyUpdate).not.toHaveBeenCalled();
+    });
 
+    it("returns early when account recovery trust warning dialog is declined", async () => {
+      KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
+      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
+      AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenUntrusted;
+      await keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
+        "mockMasterPassword",
+        "newMasterPassword",
+        mockUser,
+      );
+      expect(mockApiService.postUserKeyUpdate).not.toHaveBeenCalled();
+    });
+
+    it("throws if master password provided is falsey", async () => {
       await expect(
-        keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
-          "mockMasterPassword",
-          "mockMasterPassword1",
-          mockUser,
-        ),
+        keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData("", "", mockUser),
       ).rejects.toThrow();
     });
 
@@ -409,7 +495,7 @@ describe("KeyRotationService", () => {
       KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
       EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
       AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
-      mockApiService.postUserKeyUpdateV2.mockRejectedValueOnce(new Error("mockError"));
+      mockApiService.postUserKeyUpdate.mockRejectedValueOnce(new Error("mockError"));
 
       await expect(
         keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(

@@ -1518,7 +1518,6 @@ const safeProviders: SafeProvider[] = [
       StateProvider,
       ApiServiceAbstraction,
       OrganizationServiceAbstraction,
-      ConfigService,
       AuthServiceAbstraction,
       NotificationsService,
       MessageListener,

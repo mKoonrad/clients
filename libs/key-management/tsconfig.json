@@ -1,13 +1,5 @@
 {
-  "extends": "../shared/tsconfig",
-  "compilerOptions": {
-    "paths": {
-      "@bitwarden/admin-console/common": ["../admin-console/src/common"],
-      "@bitwarden/auth/common": ["../auth/src/common"],
-      "@bitwarden/common/*": ["../common/src/*"],
-      "@bitwarden/key-management": ["../key-management/src"]
-    }
-  },
-  "include": ["src", "spec", "../common/src/key-management/enums/signing-key-type.enum.ts"],
+  "extends": "../../tsconfig.base",
+  "include": ["src", "spec"],
   "exclude": ["node_modules", "dist"]
 }

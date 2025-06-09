@@ -184,9 +184,7 @@ export class DefaultSdkService implements SdkService {
           return () => client?.markForDisposal();
         });
       }),
-      tap({
-        finalize: () => this.sdkClientCache.delete(userId),
-      }),
+      tap({ finalize: () => this.sdkClientCache.delete(userId) }),
       shareReplay({ refCount: true, bufferSize: 1 }),
     );
 
@@ -210,9 +208,7 @@ export class DefaultSdkService implements SdkService {
       method: { decryptedKey: { decrypted_user_key: userKey.keyB64 } },
       kdfParams:
         kdfParams.kdfType === KdfType.PBKDF2_SHA256
-          ? {
-              pBKDF2: { iterations: kdfParams.iterations },
-            }
+          ? { pBKDF2: { iterations: kdfParams.iterations } }
           : {
               argon2id: {
                 iterations: kdfParams.iterations,
