@@ -28,7 +28,6 @@ import { PopupPageComponent } from "../../../platform/popup/layout/popup-page.co
 
 @Component({
   templateUrl: "settings-v2.component.html",
-  standalone: true,
   imports: [
     CommonModule,
     JslibModule,
@@ -51,7 +50,7 @@ export class SettingsV2Component implements OnInit {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  downloadBitwardenNudgeStatus$: Observable<boolean> = this.authenticatedAccount$.pipe(
+  showDownloadBitwardenNudge$: Observable<boolean> = this.authenticatedAccount$.pipe(
     switchMap((account) =>
       this.nudgesService.showNudgeBadge$(NudgeType.DownloadBitwarden, account.id),
     ),
