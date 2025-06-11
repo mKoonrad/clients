@@ -172,6 +172,7 @@ export class EncryptServiceImplementation implements EncryptService {
     key: SymmetricCryptoKey,
     _decryptContext: string = "no context",
   ): Promise<string> {
+    await SdkLoadService.Ready;
     return PureCrypto.symmetric_decrypt(encString.encryptedString, key.toEncoded());
   }
 
@@ -189,6 +190,7 @@ export class EncryptServiceImplementation implements EncryptService {
       encThing.dataBytes,
       encThing.macBytes,
     ).buffer;
+    await SdkLoadService.Ready;
     return PureCrypto.symmetric_decrypt_array_buffer(buffer, key.toEncoded());
   }
 
@@ -202,6 +204,7 @@ export class EncryptServiceImplementation implements EncryptService {
     if (encapsulationKey == null) {
       throw new Error("No encapsulationKey provided for encapsulation");
     }
+    await SdkLoadService.Ready;
     return new EncString(
       PureCrypto.encapsulate_key_unsigned(sharedKey.toEncoded(), encapsulationKey),
     );
@@ -222,6 +225,7 @@ export class EncryptServiceImplementation implements EncryptService {
       encryptedSharedKey.encryptedString,
       decapsulationKey,
     );
+    await SdkLoadService.Ready;
     return new SymmetricCryptoKey(keyBytes);
   }
 
