@@ -204,14 +204,6 @@ export class WebCryptoFunctionService implements CryptoFunctionService {
     return true;
   }
 
-  hmacFast(value: string, key: string, algorithm: "sha1" | "sha256" | "sha512"): Promise<string> {
-    const hmac = forge.hmac.create();
-    hmac.start(algorithm, key);
-    hmac.update(value);
-    const bytes = hmac.digest().getBytes();
-    return Promise.resolve(bytes);
-  }
-
   async compareFast(a: string, b: string): Promise<boolean> {
     const rand = await this.randomBytes(32);
     const bytes = new Uint32Array(rand);

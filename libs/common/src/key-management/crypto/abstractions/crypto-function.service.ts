@@ -36,17 +36,6 @@ export abstract class CryptoFunctionService {
     value: string | Uint8Array,
     algorithm: "sha1" | "sha256" | "sha512" | "md5",
   ): Promise<Uint8Array>;
-  abstract hmac(
-    value: Uint8Array,
-    key: Uint8Array,
-    algorithm: "sha1" | "sha256" | "sha512",
-  ): Promise<Uint8Array>;
-  abstract compare(a: Uint8Array, b: Uint8Array): Promise<boolean>;
-  abstract hmacFast(
-    value: Uint8Array | string,
-    key: Uint8Array | string,
-    algorithm: "sha1" | "sha256" | "sha512",
-  ): Promise<Uint8Array | string>;
   abstract compareFast(a: Uint8Array | string, b: Uint8Array | string): Promise<boolean>;
   abstract aesDecryptFastParameters(
     data: string,
@@ -65,11 +54,6 @@ export abstract class CryptoFunctionService {
     iv: Uint8Array,
     key: Uint8Array,
     mode: "cbc" | "ecb",
-  ): Promise<Uint8Array>;
-  abstract rsaEncrypt(
-    data: Uint8Array,
-    publicKey: Uint8Array,
-    algorithm: "sha1" | "sha256",
   ): Promise<Uint8Array>;
   abstract rsaDecrypt(
     data: Uint8Array,
