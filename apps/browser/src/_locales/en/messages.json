@@ -4240,11 +4240,11 @@
     "description": "Title for dialog which informs user of global uri match setting deprecation"
   },
   "uriMatchDeprecationDialogStartsWithContent": {
-    "message": "Bitwarden is no longer offering “starts with” as default match detection. New websites added will use the default match detection unless changed in the login autofill options.",
+    "message": "Bitwarden is no longer offering “starts with” as default match detection. New websites added will use base domain as the default match detection unless changed in the login autofill options.",
     "description": "Content for dialog which informs user which had starts with matching strategy as global setting of global uri match setting deprecation"
   },
   "uriMatchDeprecationDialogRegExContent": {
-    "message": "Bitwarden is no longer offering “regular expression” as default match detection. New websites added will use the default match detection unless changed in the login autofill options.",
+    "message": "Bitwarden is no longer offering “regular expression” as default match detection. New websites added will use base domain as the default match detection unless changed in the login autofill options.",
     "description": "Content for dialog which informs user which had regular expression matching strategy as global setting of global uri match setting deprecation"
   },
   "confirmContinueToBrowserSettingsTitle": {
