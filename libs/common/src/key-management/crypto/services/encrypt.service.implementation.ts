@@ -170,6 +170,7 @@ export class EncryptServiceImplementation implements EncryptService {
     if (encapsulationKey == null) {
       throw new Error("No encapsulationKey provided for encapsulation");
     }
+    await SdkLoadService.Ready;
     return new EncString(
       PureCrypto.encapsulate_key_unsigned(sharedKey.toEncoded(), encapsulationKey),
     );
@@ -186,6 +187,7 @@ export class EncryptServiceImplementation implements EncryptService {
       throw new Error("No decapsulationKey provided for decapsulation");
     }
 
+    await SdkLoadService.Ready;
     const keyBytes = PureCrypto.decapsulate_key_unsigned(
       encryptedSharedKey.encryptedString,
       decapsulationKey,
