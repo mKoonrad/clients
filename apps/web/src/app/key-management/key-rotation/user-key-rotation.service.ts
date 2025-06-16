@@ -131,15 +131,15 @@ export class UserKeyRotationService {
     let wrappedPrivateKey: EncString;
     let publicKey: string;
     let signedPublicKey: string | null = null;
-    let wrappedSigningKey: EncString | null = null;
-    let verifyingKey: string | null = null;
+    let wrappedSigningKey: SigningKey | null = null;
+    let verifyingKey: VerifyingKey | null = null;
     if (upgradeToV2FeatureFlagEnabled) {
       this.logService.info("[Userkey rotation] Using v2 account keys");
       const { userKey, asymmetricEncryptionKeys, signatureKeyPair } =
         await this.getNewAccountKeysV2(
           currentUserKey,
           currentUserKeyWrappedPrivateKey,
-          signingKey.inner(),
+          signingKey,
           user.id,
           masterKeyKdfConfig,
           user.email,
@@ -254,7 +254,7 @@ export class UserKeyRotationService {
   protected async getNewAccountKeysV2(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
-    currentSigningKey: EncString | null,
+    currentSigningKey: SigningKey | null,
     userId: UserId,
     kdfConfig: KdfConfig,
     email: string,
