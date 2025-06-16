@@ -1,32 +1,47 @@
-import { SigningKeyType } from "@bitwarden/common/key-management/enums/signing-key-type.enum";
 import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
 import { SignedPublicKey } from "@bitwarden/common/key-management/types";
+import { EncString, SignatureAlgorithm } from "@bitwarden/sdk-internal";
+
+import { PublicKeyEncryptionKeyPairRequestModel } from "../model/public-key-encryption-keypair-request.model";
+import { SignatureKeyPairRequestModel } from "../model/signature-keypair-request-request.model";
 
 // This request contains other account-owned keys that are encrypted with the user key.
 export class AccountKeysRequest {
+  /**
+   * @deprecated
+   */
   userKeyEncryptedAccountPrivateKey: string;
+  /**
+   * @deprecated
+   */
   accountPublicKey: string;
 
-  // Cleanup: These should be non-optional after the featureflag is rolled out, and users MUST upgrade https://bitwarden.atlassian.net/browse/PM-21768
-  signedPublicKeyOwnershipClaim: string | null;
-
-  userKeyEncryptedSigningKey: string | null;
-  verifyingKey: string | null;
-  signingKeyType: SigningKeyType | null;
+  publicKeyEncryptionKeyPair: PublicKeyEncryptionKeyPairRequestModel | null;
+  signatureKeyPair: SignatureKeyPairRequestModel | null;
 
   constructor(
-    userKeyEncryptedAccountPrivateKey: string,
-    accountPublicKey: string,
-    signedPublicKeyOwnershipClaim: SignedPublicKey | null,
-    userKeyEncryptedSigningKey: SigningKey | null,
+    wrappedPrivateKey: EncString,
+    publicKey: string,
+    signedPublicKey: SignedPublicKey | null,
+    wrappedSigningKey: SigningKey | null,
     verifyingKey: VerifyingKey | null,
+    signatureAlgorithm: SignatureAlgorithm | null = null,
   ) {
-    this.userKeyEncryptedAccountPrivateKey = userKeyEncryptedAccountPrivateKey;
-    this.accountPublicKey = accountPublicKey;
-    this.signedPublicKeyOwnershipClaim = signedPublicKeyOwnershipClaim;
-    this.userKeyEncryptedSigningKey = userKeyEncryptedSigningKey.inner().toString();
-    this.verifyingKey = verifyingKey.toString();
-    this.signingKeyType = verifyingKey?.algorithm();
+    this.userKeyEncryptedAccountPrivateKey = wrappedPrivateKey;
+    this.accountPublicKey = publicKey;
+    this.publicKeyEncryptionKeyPair = new PublicKeyEncryptionKeyPairRequestModel(
+      wrappedPrivateKey,
+      publicKey,
+      signedPublicKey,
+    );
+
+    if (wrappedSigningKey && verifyingKey && signatureAlgorithm) {
+      this.signatureKeyPair = new SignatureKeyPairRequestModel(
+        wrappedSigningKey,
+        verifyingKey,
+        signatureAlgorithm,
+      );
+    }
   }
 }
