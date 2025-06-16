@@ -300,7 +300,9 @@ export class UserKeyRotationService {
     });
 
     if (currentSigningKey == null) {
-      const signatureKeyPairEnrollmentResponse = sdk.crypto().make_signing_keys_for_enrollment();
+      const signatureKeyPairEnrollmentResponse = sdk
+        .crypto()
+        .make_user_signing_keys_for_enrollment();
       return {
         userKey: newUserKey,
         asymmetricEncryptionKeys: {
@@ -320,7 +322,7 @@ export class UserKeyRotationService {
         kdfParams: kdfConfig.toSdkConfig(),
         email: email,
         privateKey: currentUserKeyWrappedPrivateKey.encryptedString!,
-        signingKey: currentSigningKey.encryptedString!,
+        signingKey: currentSigningKey.inner(),
         method: {
           decryptedKey: { decrypted_user_key: newUserKey.toBase64() },
         },
