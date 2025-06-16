@@ -1,4 +1,4 @@
-import { PrivateAccountKeysResponseModel } from "@bitwarden/common/key-management/keys/response/private-account-keys.response";
+import { PrivateKeysResponseModel } from "@bitwarden/common/key-management/keys/response/private-keys.response";
 
 import { ProfileOrganizationResponse } from "../../admin-console/models/response/profile-organization.response";
 import { ProfileProviderOrganizationResponse } from "../../admin-console/models/response/profile-provider-organization.response";
@@ -22,7 +22,7 @@ export class ProfileResponse extends BaseResponse {
   // Cleanup: Can be removed after moving to accountKeys
   privateKey: string;
   // Cleanup: This should be non-optional after the server has been released for a while https://bitwarden.atlassian.net/browse/PM-21768
-  accountKeys: PrivateAccountKeysResponseModel | null;
+  accountKeys: PrivateKeysResponseModel | null;
   securityStamp: string;
   forcePasswordReset: boolean;
   usesKeyConnector: boolean;
@@ -44,9 +44,7 @@ export class ProfileResponse extends BaseResponse {
     this.key = this.getResponseProperty("Key");
     // Cleanup: This should be non-optional after the server has been released for a while https://bitwarden.atlassian.net/browse/PM-21768
     if (this.getResponseProperty("AccountKeys") != null) {
-      this.accountKeys = new PrivateAccountKeysResponseModel(
-        this.getResponseProperty("AccountKeys"),
-      );
+      this.accountKeys = new PrivateKeysResponseModel(this.getResponseProperty("AccountKeys"));
     }
     this.avatarColor = this.getResponseProperty("AvatarColor");
     this.creationDate = this.getResponseProperty("CreationDate");

@@ -182,7 +182,7 @@ export class UserKeyRotationService {
         signedPublicKey,
         wrappedSigningKey,
         verifyingKey,
-        verifyingKey.algorithm(),
+        verifyingKey !== null ? verifyingKey.algorithm() : null,
       ),
       await this.getAccountDataRequest(currentUserKey, newUserKey, user),
       await this.makeServerMasterKeyAuthenticationHash(

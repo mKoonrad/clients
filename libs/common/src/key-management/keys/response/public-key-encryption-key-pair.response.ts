@@ -3,14 +3,14 @@ import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 
 import { SignedPublicKey } from "../../types";
 
-export class AsymmetricEncryptionDataResponse {
+export class PublicKeyEncryptionKeyPairResponse {
   readonly publicKey: Uint8Array;
   readonly wrappedPrivateKey: EncString;
-  readonly signedPublicKeyOwnershipClaim: SignedPublicKey;
+  readonly signedPublicKey: SignedPublicKey;
 
   constructor(response: any) {
     this.publicKey = Utils.fromB64ToArray(response.publicKey);
     this.wrappedPrivateKey = new EncString(response.wrappedPrivateKey);
-    this.signedPublicKeyOwnershipClaim = response.signedPublicKeyOwnershipClaim;
+    this.signedPublicKey = response.signedPublicKey;
   }
 }

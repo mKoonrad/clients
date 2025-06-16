@@ -1,7 +1,7 @@
 import { SigningKey } from "../models/signing-key";
 import { VerifyingKey } from "../models/verifying-key";
 
-export class UserSigningKeyData {
+export class SignatureKeyPairResponse {
   readonly wrappedSigningKey: SigningKey;
   readonly verifyingKey: VerifyingKey;
 
