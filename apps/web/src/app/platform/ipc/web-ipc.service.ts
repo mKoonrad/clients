@@ -50,7 +50,7 @@ export class WebIpcService extends IpcService {
           return;
         }
 
-        this.communicationBackend?.deliver_message(
+        this.communicationBackend?.receive(
           new IncomingMessage(
             message.message.payload,
             message.message.destination,
