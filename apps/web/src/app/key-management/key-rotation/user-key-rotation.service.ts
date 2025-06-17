@@ -318,19 +318,19 @@ export class UserKeyRotationService {
       };
     } else {
       const sdkWithSigningKey = await this.sdkClientFactory.createSdkClient();
-      await sdkWithSigningKey.crypto().initialize_user_crypto({
+      // This SDK has the current signing key, in order to be able to decrypt the current private key / signing key
+      const client = sdkWithSigningKey.crypto();
+      await client.initialize_user_crypto({
         userId: userId,
         kdfParams: kdfConfig.toSdkConfig(),
         email: email,
         privateKey: currentUserKeyWrappedPrivateKey.encryptedString!,
         signingKey: currentSigningKey.inner(),
         method: {
-          decryptedKey: { decrypted_user_key: newUserKey.toBase64() },
+          decryptedKey: { decrypted_user_key: currentUserKey.toBase64() },
         },
       });
-      const rotatedSignatureKeys = sdkWithSigningKey
-        .crypto()
-        .get_v2_rotated_account_keys(newUserKey.toBase64());
+      const rotatedSignatureKeys = client.get_v2_rotated_account_keys(newUserKey.toBase64());
       return {
         userKey: newUserKey,
         asymmetricEncryptionKeys: {
