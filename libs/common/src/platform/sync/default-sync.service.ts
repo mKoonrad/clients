@@ -225,8 +225,11 @@ export class DefaultSyncService extends CoreSyncService {
       throw new Error("Stamp has changed");
     }
 
-    /// Key management initialization
-    await this.keyService.setMasterKeyEncryptedUserKey(response.key, response.id);
+    // Users with no master password will not have a key.
+    if (response?.key) {
+      await this.masterPasswordService.setMasterKeyEncryptedUserKey(response.key, response.id);
+    }
+
     // Cleanup: Only the first branch should be kept after the server always returns accountKeys https://bitwarden.atlassian.net/browse/PM-21768
     if (response.accountKeys != null) {
       await this.keyService.setPrivateKey(
