@@ -330,7 +330,7 @@ export class UserKeyRotationService {
       });
       const rotatedSignatureKeys = sdkWithSigningKey
         .crypto()
-        .rotate_account_keys(newUserKey.toBase64());
+        .get_v2_rotated_account_keys(newUserKey.toBase64());
       return {
         userKey: newUserKey,
         asymmetricEncryptionKeys: {
