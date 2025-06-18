@@ -8,14 +8,11 @@ import { Component, Input } from "@angular/core";
 import { CollectionView } from "@bitwarden/admin-console/common";
 import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
+import { ClientType } from "@bitwarden/common/enums";
+import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
-import {
-  CardComponent,
-  FormFieldModule,
-  SectionHeaderComponent,
-  TypographyModule,
-} from "@bitwarden/components";
+import { CardComponent, FormFieldModule, TypographyModule } from "@bitwarden/components";
 
 import { OrgIconDirective } from "../../components/org-icon.directive";
 
@@ -26,7 +23,6 @@ import { OrgIconDirective } from "../../components/org-icon.directive";
     CommonModule,
     JslibModule,
     CardComponent,
-    SectionHeaderComponent,
     TypographyModule,
     OrgIconDirective,
     FormFieldModule,
@@ -39,7 +35,13 @@ export class ItemDetailsV2Component {
   @Input() folder?: FolderView;
   @Input() hideOwner?: boolean = false;
 
+  clientType: ClientType = this.platformUtilsService.getClientType();
+
+  constructor(private platformUtilsService: PlatformUtilsService) {}
+
   get showOwnership() {
     return this.cipher.organizationId && this.organization && !this.hideOwner;
   }
+
+  protected readonly ClientType = ClientType;
 }
