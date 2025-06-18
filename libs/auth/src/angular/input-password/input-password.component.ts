@@ -285,19 +285,19 @@ export class InputPasswordComponent implements OnInit {
     }
 
     // 4. Create cryptographic keys and build a PasswordInputResult object
-    const newMasterKey = await this.keyService.makeMasterKey(
+    const newMasterKey = await this.masterPasswordService.makeMasterKey(
       newPassword,
       this.email,
       this.kdfConfig,
     );
 
-    const newServerMasterKeyHash = await this.keyService.hashMasterKey(
+    const newServerMasterKeyHash = await this.masterPasswordService.hashMasterKey(
       newPassword,
       newMasterKey,
       HashPurpose.ServerAuthorization,
     );
 
-    const newLocalMasterKeyHash = await this.keyService.hashMasterKey(
+    const newLocalMasterKeyHash = await this.masterPasswordService.hashMasterKey(
       newPassword,
       newMasterKey,
       HashPurpose.LocalAuthorization,
@@ -316,19 +316,19 @@ export class InputPasswordComponent implements OnInit {
       this.flow === InputPasswordFlow.ChangePassword ||
       this.flow === InputPasswordFlow.ChangePasswordWithOptionalUserKeyRotation
     ) {
-      const currentMasterKey = await this.keyService.makeMasterKey(
+      const currentMasterKey = await this.masterPasswordService.makeMasterKey(
         currentPassword,
         this.email,
         this.kdfConfig,
       );
 
-      const currentServerMasterKeyHash = await this.keyService.hashMasterKey(
+      const currentServerMasterKeyHash = await this.masterPasswordService.hashMasterKey(
         currentPassword,
         currentMasterKey,
         HashPurpose.ServerAuthorization,
       );
 
-      const currentLocalMasterKeyHash = await this.keyService.hashMasterKey(
+      const currentLocalMasterKeyHash = await this.masterPasswordService.hashMasterKey(
         currentPassword,
         currentMasterKey,
         HashPurpose.LocalAuthorization,
@@ -391,7 +391,7 @@ export class InputPasswordComponent implements OnInit {
     currentPassword: string,
     kdfConfig: KdfConfig,
   ): Promise<boolean> {
-    const currentMasterKey = await this.keyService.makeMasterKey(
+    const currentMasterKey = await this.masterPasswordService.makeMasterKey(
       currentPassword,
       this.email,
       kdfConfig,
