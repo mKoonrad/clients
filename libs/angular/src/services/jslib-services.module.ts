@@ -1002,10 +1002,12 @@ const safeProviders: SafeProvider[] = [
     useClass: MasterPasswordService,
     deps: [
       StateProvider,
-      StateServiceAbstraction,
       KeyGenerationServiceAbstraction,
       EncryptService,
       LogService,
+      AccountServiceAbstraction,
+      KdfConfigService,
+      CryptoFunctionServiceAbstraction,
     ],
   }),
   safeProvider({
@@ -1032,7 +1034,6 @@ const safeProviders: SafeProvider[] = [
     provide: UserVerificationServiceAbstraction,
     useClass: UserVerificationService,
     deps: [
-      KeyService,
       AccountServiceAbstraction,
       InternalMasterPasswordServiceAbstraction,
       I18nServiceAbstraction,
