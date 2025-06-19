@@ -21,7 +21,8 @@ export class DesktopAutotypeService implements OnDestroy {
   ) {}
 
   async init() {
-    let autotypeEnabled = await firstValueFrom(this.desktopSettingsService.autotypeEnabled$);
+    const autotypeEnabled = await firstValueFrom(this.desktopSettingsService.autotypeEnabled$);
+    // eslint-disable-next-line no-console
     console.log("Is Autotype enabled? -> " + autotypeEnabled);
   }
 
