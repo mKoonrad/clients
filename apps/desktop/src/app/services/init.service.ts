@@ -28,6 +28,7 @@ import { SshAgentService } from "../../autofill/services/ssh-agent.service";
 import { I18nRendererService } from "../../platform/services/i18n.renderer.service";
 import { VersionService } from "../../platform/services/version.service";
 import { NativeMessagingService } from "../../services/native-messaging.service";
+import { DesktopAutotypeService } from "../../autofill/services/desktop-autotype.service";
 
 @Injectable()
 export class InitService {
@@ -50,6 +51,7 @@ export class InitService {
     private versionService: VersionService,
     private sshAgentService: SshAgentService,
     private autofillService: DesktopAutofillService,
+    private autotypeService: DesktopAutotypeService,
     private sdkLoadService: SdkLoadService,
     private configService: ConfigService,
     private bulkEncryptService: BulkEncryptService,
@@ -100,6 +102,7 @@ export class InitService {
       containerService.attachToGlobal(this.win);
 
       await this.autofillService.init();
+      await this.autotypeService.init();
     };
   }
 }
