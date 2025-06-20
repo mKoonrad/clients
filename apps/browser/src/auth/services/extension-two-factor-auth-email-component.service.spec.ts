@@ -20,7 +20,7 @@ jest.mock("../../platform/browser/browser-popup-utils", () => ({
 // FIXME (PM-22628): Popup imports are forbidden in background
 // eslint-disable-next-line no-restricted-imports
 import { openTwoFactorAuthEmailPopout } from "../../auth/popup/utils/auth-popout-window";
-import BrowserPopupUtils from "../../platform/browser/browser-popup-utils";
+import { BrowserPopupUtils } from "../../platform/browser/browser-popup-utils";
 
 import { ExtensionTwoFactorAuthEmailComponentService } from "./extension-two-factor-auth-email-component.service";
 
