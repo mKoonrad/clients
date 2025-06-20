@@ -30,12 +30,7 @@ import {
   ToastService,
   Translation,
 } from "@bitwarden/components";
-import {
-  DEFAULT_KDF_CONFIG,
-  KdfConfig,
-  KdfConfigService,
-  KeyService,
-} from "@bitwarden/key-management";
+import { DEFAULT_KDF_CONFIG, KdfConfig, KdfConfigService } from "@bitwarden/key-management";
 
 // FIXME: remove `src` and fix import
 // eslint-disable-next-line no-restricted-imports
@@ -174,7 +169,6 @@ export class InputPasswordComponent implements OnInit {
     private formBuilder: FormBuilder,
     private i18nService: I18nService,
     private kdfConfigService: KdfConfigService,
-    private keyService: KeyService,
     private masterPasswordService: MasterPasswordServiceAbstraction,
     private platformUtilsService: PlatformUtilsService,
     private policyService: PolicyService,
