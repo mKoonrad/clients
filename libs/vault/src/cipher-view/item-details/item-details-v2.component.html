@@ -31,8 +31,8 @@
           </span>
         </span>
         <span
-          class="tw-flex tw-mr-4"
-          *ngIf="cipher.collectionIds && collections"
+          class="tw-flex"
+          *ngIf="cipher.collectionIds.length > 0 && collections"
           [attr.aria-label]="'collection' | i18n"
         >
           <ul data-testid="collections" class="tw-pl-0 tw-mb-0">
@@ -54,22 +54,30 @@
           </ul>
         </span>
         <span
+          *ngIf="cipher.folderId && folder"
           bitTypography="body2"
-          class="tw-flex tw-mr-4"
+          class="tw-flex"
           data-testid="folder"
-          [attr.aria-label]="
-            ('folder' | i18n) + folder?.name || ('folder' | i18n) + ('noneFolder' | i18n)
-          "
+          [ngClass]="{ 'tw-ml-4': cipher.collectionIds.length > 0 || organization }"
+          [attr.aria-label]="('folder' | i18n) + folder?.name"
         >
           <span
             ><i class="bwi bwi-folder bwi-lg" aria-hidden="true" [title]="'folder' | i18n"></i
           ></span>
-          <span *ngIf="cipher.folderId && folder" aria-hidden="true" class="tw-pl-1.5"
-            >{{ folder.name }}
+          <span aria-hidden="true" class="tw-pl-1.5">{{ folder.name }} </span>
+        </span>
+
+        <span
+          *ngIf="!(cipher.folderId && folder) && !organization"
+          [ngClass]="{ 'tw-ml-4': cipher.collectionIds.length > 0 || organization }"
+          bitTypography="body2"
+          data-testid="folder"
+          [attr.aria-label]="('folder' | i18n) + ('noneFolder' | i18n)"
+        >
+          <span>
+            <i class="bwi bwi-folder bwi-lg" aria-hidden="true" [title]="'folder' | i18n"></i>
           </span>
-          <span *ngIf="!(cipher.folderId && folder)" aria-hidden="true" class="tw-pl-1.5"
-            >{{ "noneFolder" | i18n }}
-          </span>
+          <span aria-hidden="true" class="tw-pl-1.5">{{ "noneFolder" | i18n }} </span>
         </span>
       </div>
     </ng-container>
@@ -119,26 +127,30 @@
           [attr.aria-label]="'collection' | i18n"
         >
           <ul data-testid="collections" [ngClass]="{ 'tw-mb-0': !cipher.folderId }" class="tw-pl-0">
-            <li
-              *ngFor="let collection of collections; let last = last"
-              class="tw-flex tw-items-center tw-list-none"
-              bitTypography="body2"
-              [ngClass]="{ 'tw-mb-3': last && cipher.folderId }"
-              [attr.aria-label]="collection.name"
+            <ng-container
+              *ngFor="let collection of collections; let first = first; let last = last"
             >
-              <i
-                class="bwi bwi-collection-shared bwi-lg"
-                aria-hidden="true"
-                [title]="'collection' | i18n"
-              ></i>
-              <span aria-hidden="true" class="tw-pl-1.5">
-                {{ collection.name }}
-              </span>
-            </li>
+              <li
+                *ngIf="first || (!first && showAllDetails)"
+                class="tw-flex tw-items-center tw-list-none"
+                bitTypography="body2"
+                [ngClass]="{ 'tw-mb-3': last && cipher.folderId, blah: first }"
+                [attr.aria-label]="collection.name"
+              >
+                <i
+                  class="bwi bwi-collection-shared bwi-lg"
+                  aria-hidden="true"
+                  [title]="'collection' | i18n"
+                ></i>
+                <span aria-hidden="true" class="tw-pl-1.5">
+                  {{ collection.name }}
+                </span>
+              </li>
+            </ng-container>
           </ul>
         </li>
         <li
-          *ngIf="cipher.folderId && folder"
+          *ngIf="cipher.folderId && folder && (!hasMultipleCollections || showAllDetails)"
           bitTypography="body2"
           class="tw-flex tw-items-center tw-list-none"
           [attr.aria-label]="('folder' | i18n) + folder.name"
@@ -147,6 +159,28 @@
           <i class="bwi bwi-folder bwi-lg" aria-hidden="true" [title]="'folder' | i18n"></i>
           <span aria-hidden="true" class="tw-pl-1.5">{{ folder.name }} </span>
         </li>
+        <ng-container *ngIf="hasMultipleCollections">
+          <button
+            type="button"
+            bitLink
+            linkType="primary"
+            class="tw-mt-1"
+            (click)="toggleShowMore()"
+            *ngIf="!showAllDetails"
+          >
+            {{ "showMore" | i18n }}
+          </button>
+          <button
+            type="button"
+            bitLink
+            linkType="primary"
+            class="tw-mt-1"
+            (click)="toggleShowMore()"
+            *ngIf="showAllDetails"
+          >
+            {{ "showLess" | i18n }}
+          </button>
+        </ng-container>
       </ul>
     </ng-container>
   </bit-card>
