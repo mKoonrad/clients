@@ -43,12 +43,9 @@ export class ItemDetailsV2Component implements OnInit {
 
   hasMultipleCollections: boolean = false;
   showAllDetails: boolean = false;
-  // clientType: ClientType = platformUtilsService.getClientType();
-  private clientType: ClientType;
+  clientType: ClientType = this.platformUtilsService.getClientType();
 
-  constructor(private platformUtilsService: PlatformUtilsService) {
-    this.clientType = this.platformUtilsService.getClientType();
-  }
+  constructor(private platformUtilsService: PlatformUtilsService) {}
 
   ngOnInit() {
     this.hasMultipleCollections = this.cipher?.collectionIds?.length > 1;
