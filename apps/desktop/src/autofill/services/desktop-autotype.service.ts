@@ -1,10 +1,5 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { Injectable, OnDestroy } from "@angular/core";
 import { firstValueFrom, Subject } from "rxjs";
-
-import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
-import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 
 import { DesktopSettingsService } from "../../platform/services/desktop-settings.service";
 
@@ -14,11 +9,7 @@ import { DesktopSettingsService } from "../../platform/services/desktop-settings
 export class DesktopAutotypeService implements OnDestroy {
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private cipherService: CipherService,
-    private logService: LogService,
-    private desktopSettingsService: DesktopSettingsService,
-  ) {}
+  constructor(private desktopSettingsService: DesktopSettingsService) {}
 
   async init() {
     const autotypeEnabled = await firstValueFrom(this.desktopSettingsService.autotypeEnabled$);
