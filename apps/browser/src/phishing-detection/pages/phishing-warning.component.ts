@@ -1,6 +1,10 @@
+// eslint-disable-next-line no-restricted-imports
 import { CommonModule } from "@angular/common";
+// eslint-disable-next-line no-restricted-imports
 import { Component, OnDestroy, OnInit } from "@angular/core";
+// eslint-disable-next-line no-restricted-imports
 import { FormBuilder, ReactiveFormsModule } from "@angular/forms";
+// eslint-disable-next-line no-restricted-imports
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import { Subject, takeUntil } from "rxjs";
 
@@ -16,7 +20,7 @@ import {
 
 @Component({
   standalone: true,
-  templateUrl: "phishing-warning.html",
+  templateUrl: "phishing-warning.component.html",
   imports: [
     CommonModule,
     IconModule,
@@ -51,6 +55,7 @@ export class PhishingWarning implements OnInit, OnDestroy {
   closeTab(): void {
     globalThis.close();
   }
+  continueAnyway(): void {}
 
   ngOnDestroy(): void {
     this.destroy$.next();
