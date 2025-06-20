@@ -5335,8 +5335,11 @@
   "phishingPageTitle":{
     "message": "Phishing website"
   },
-  "closeTab": {
+  "phishingPageCloseTab": {
     "message": "Close tab"
+  },
+  "phishingPageContinue": {
+    "message": "Continue"
   },
   "hasItemsVaultNudgeBodyOne": {
     "message": "Autofill items for the current page"
