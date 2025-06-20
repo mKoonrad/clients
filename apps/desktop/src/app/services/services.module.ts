@@ -454,7 +454,7 @@ const safeProviders: SafeProvider[] = [
   }),
   safeProvider({
     provide: DesktopAutotypeService,
-    deps: [CipherServiceAbstraction, LogService, DesktopSettingsService],
+    deps: [DesktopSettingsService],
   }),
 ];
 
