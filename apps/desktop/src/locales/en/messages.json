@@ -3960,6 +3960,6 @@
     "message": "Enable autotype shortcut"
   },
   "enableAutotypeDescription": {
-    "message": "Important: Bitwarden does not validate input locations, be sure you are in the right window and field before using the shortcut."
+    "message": "Bitwarden does not validate input locations, be sure you are in the right window and field before using the shortcut."
   }
 }
