@@ -3951,9 +3951,9 @@
     }
   },
   "enableAutotype": {
-    "message": "Enable autotype"
+    "message": "Enable autotype shortcut"
   },
   "enableAutotypeDescription": {
-    "message": "Enable autotype description"
+    "message": "Important: Bitwarden does not validate input locations, be sure you are in the right window and field before using the shortcut."
   }
 }
