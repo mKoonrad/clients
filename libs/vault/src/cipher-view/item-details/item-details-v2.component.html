@@ -68,8 +68,8 @@
         </span>
 
         <span
-          *ngIf="!(cipher.folderId && folder) && !organization"
-          [ngClass]="{ 'tw-ml-4': cipher.collectionIds?.length > 0 || organization }"
+          *ngIf="!(cipher.folderId && folder) && !cipher.organizationId"
+          [ngClass]="{ 'tw-ml-4': cipher.collectionIds?.length > 0 || cipher.organizationId }"
           bitTypography="body2"
           data-testid="folder"
           [attr.aria-label]="('folder' | i18n) + ('noneFolder' | i18n)"
