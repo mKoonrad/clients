@@ -1,6 +1,7 @@
 import { mergeMap, Subscription } from "rxjs";
 
 import { AuditService } from "@bitwarden/common/abstractions/audit.service";
+import { EventCollectionService } from "@bitwarden/common/abstractions/event/event-collection.service";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -23,6 +24,7 @@ export class PhishingDetectionService {
   private static retrySubscription: Subscription | null = null;
   private static isUpdating = false;
   private static retryCount = 0;
+  private static lastPhishingTabId: number | null = null;
 
   static initialize(
     configService: ConfigService,
@@ -30,7 +32,9 @@ export class PhishingDetectionService {
     logService: LogService,
     storageService: AbstractStorageService,
     taskSchedulerService: TaskSchedulerService,
+    eventCollectionService: EventCollectionService,
   ): void {
+    logService.info("Phishing DEBUG: initialize called");
     configService
       .getFeatureFlag$(FeatureFlag.PhishingDetection)
       .pipe(
@@ -137,10 +141,12 @@ export class PhishingDetectionService {
         this.STORAGE_KEY,
       );
       if (cachedData) {
+        PhishingDetectionService.logService.info("Phishing cachedData exists");
         this.knownPhishingDomains = new Set(cachedData.domains);
         this.lastUpdateTime = cachedData.timestamp;
       }
-
+      PhishingDetectionService.logService.info("Phishing Adding test.com");
+      this.knownPhishingDomains = new Set(["www.test.com", "www.example.com"]);
       // If cache is empty or expired, trigger an immediate update
       if (
         this.knownPhishingDomains.size === 0 ||
@@ -149,11 +155,21 @@ export class PhishingDetectionService {
         await this.updateKnownPhishingDomains();
       }
     } catch (error) {
+      // create new set for knownPhishingDomains here
+      PhishingDetectionService.logService.info("Phishing Load Cached Domains Error");
+
       this.logService.error("Failed to load cached phishing domains:", error);
     }
   }
 
   static checkUrl(inputUrl: string): boolean {
+    PhishingDetectionService.logService.info("Phishing DEBUG: checkUrl is running");
+    PhishingDetectionService.knownPhishingDomains.forEach((item) => {
+      PhishingDetectionService.logService.info(
+        "Phishing DEBUG - knownPhishingDomains item: " + item,
+      );
+    });
+
     const url = new URL(inputUrl);
 
     return url ? PhishingDetectionService.knownPhishingDomains.has(url.hostname) : false;
@@ -226,11 +242,28 @@ export class PhishingDetectionService {
   }
 
   static setupListeners(): void {
+    const handleCloseTab = async (sendResponse: (response: any) => void) => {
+      sendResponse("Closing Tab");
+    };
+    chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+      PhishingDetectionService.logService.info("Phishing DEBUG: received a message " + message);
+      if (message.command === "closePhishingWarningPage") {
+        await handleCloseTab(sendResponse);
+      }
+    });
     chrome.webNavigation.onCompleted.addListener(
       (details: chrome.webNavigation.WebNavigationFramedCallbackDetails): void => {
         const url = new URL(details.url);
         const result = PhishingDetectionService.knownPhishingDomains.has(url.hostname);
 
+        PhishingDetectionService.logService.info(
+          "Phishing DEBUG: setupListeners phish detect check result " + result,
+        );
+        PhishingDetectionService.knownPhishingDomains.forEach((item) => {
+          PhishingDetectionService.logService.info(
+            "Phishing DEBUG - knownPhishingDomains item: " + item,
+          );
+        });
         this.logService.debug("Phishing detection check", {
           details,
           result,
@@ -245,7 +278,7 @@ export class PhishingDetectionService {
   }
 
   static RedirectToWarningPage(hostname: string, tabId: number) {
-    this.logService.debug("Redirecting to warning page.");
+    PhishingDetectionService.logService.debug("Redirecting to warning page.");
 
     const phishingWarningPage = chrome.runtime.getURL(
       "popup/index.html#/security/phishing-warning",
@@ -253,10 +286,88 @@ export class PhishingDetectionService {
 
     const pageWithViewData = `${phishingWarningPage}?phishingHost=${hostname}`;
 
+    // Save a reference to the tabId for later use (e.g., to close the warning page)
+    PhishingDetectionService.lastPhishingTabId = tabId;
+    PhishingDetectionService.logService.info(
+      "PhishingDetectionService RedirectToWarningPage called",
+      tabId,
+      PhishingDetectionService.lastPhishingTabId,
+    );
+
     chrome.tabs
       .update(tabId, { url: pageWithViewData })
       .catch((error) =>
-        this.logService.error("Failed to redirect away from the phishing site.", { error }),
+        PhishingDetectionService.logService.error(
+          "Failed to redirect away from the phishing site.",
+          { error },
+        ),
       );
+  }
+
+  static requestClosePhishingWarningPage(): void {
+    // [Note] Errored as undefined
+    // PhishingDetectionService.logService.info(
+    //   "[PhishingDetectionService] requestClosePhishingWarningPage called, with last tab Id",
+    //   PhishingDetectionService.lastPhishingTabId,
+    // );
+    // [Note] Errors as undefined
+    chrome.tabs
+      .sendMessage(PhishingDetectionService.lastPhishingTabId, {
+        command: "closePhishingWarningPage",
+      })
+      .then((response) => {
+        PhishingDetectionService.logService.info(
+          "[PhishingWarning] Response from closePhishingWarningPage:",
+          response,
+        );
+      })
+      .catch((error) => {
+        PhishingDetectionService.logService.error("[PhishingWarning] Failed to close tab", {
+          error,
+        });
+      });
+    // chrome.runtime.sendMessage({ message: "closePhishingWarningPage" }).catch((error) => {
+    //   PhishingDetectionService.logService.error(
+    //     "[PhishingDetectionService] Failed to request tab close",
+    //     { error },
+    //   );
+    // });
+  }
+
+  static closePhishingWarningPage(): void {
+    // this.logService.info(
+    //   "[PhishingDetectionService] tabid on close request",
+    //   PhishingDetectionService.lastPhishingTabId,
+    // );
+    // [Note] For now, try to close the current active tab
+    // [Note] Errors with chrome.tabs.query is undefined
+    chrome.tabs
+      .query({ active: true, currentWindow: true })
+      .then((tabs) => {
+        PhishingDetectionService.logService.info("[PhishingDetectionService] tabs found", tabs);
+        return chrome.tabs.remove(tabs[0].id).catch((error) => {
+          PhishingDetectionService.logService?.error?.("Failed to close phishing warning page.", {
+            error,
+          });
+        });
+      })
+      .catch((error) => {
+        PhishingDetectionService.logService?.error?.(
+          "Failed to query tabs for closing phishing warning page.",
+          {
+            error,
+          },
+        );
+      });
+
+    // [Note] First method of closing tab by capturing the tabId when redirecting
+    // if (this.lastPhishingTabId === null) {
+    //   // this.logService.error("No phishing warning tab to close.");
+    //   return;
+    // }
+    // // this.logService.debug("Closing phishing tab.");
+    // chrome.tabs
+    //   .remove(this.lastPhishingTabId)
+    //   .catch((error) => this.logService.error("Failed to close phishing warning page.", { error }));
   }
 }

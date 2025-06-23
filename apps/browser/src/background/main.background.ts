@@ -1339,6 +1339,7 @@ export default class MainBackground {
       this.logService,
       this.storageService,
       this.taskSchedulerService,
+      this.eventCollectionService,
     );
 
     this.ipcContentScriptManagerService = new IpcContentScriptManagerService(this.configService);

@@ -55,7 +55,7 @@ import { PremiumV2Component } from "../billing/popup/settings/premium-v2.compone
 import { RemovePasswordComponent } from "../key-management/key-connector/remove-password.component";
 import { PhishingLandingIcon } from "../phishing-detection/images/phishing-landing-icon";
 import { LearnMoreComponent } from "../phishing-detection/pages/learn-more-component";
-import { PhishingWarning } from "../phishing-detection/pages/phishing-warning";
+import { PhishingWarning } from "../phishing-detection/pages/phishing-warning.component";
 import { BrowserPopupUtils } from "../platform/browser/browser-popup-utils";
 import { popupRouterCacheGuard } from "../platform/popup/view-cache/popup-router-cache.service";
 import { CredentialGeneratorHistoryComponent } from "../tools/popup/generator/credential-generator-history.component";

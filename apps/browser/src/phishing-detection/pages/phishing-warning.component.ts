@@ -1,9 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { CommonModule } from "@angular/common";
 // eslint-disable-next-line no-restricted-imports
-import { Component, OnDestroy, OnInit } from "@angular/core";
-// eslint-disable-next-line no-restricted-imports
-import { FormBuilder, ReactiveFormsModule } from "@angular/forms";
+import { Component, OnDestroy } from "@angular/core";
 // eslint-disable-next-line no-restricted-imports
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import { Subject, takeUntil } from "rxjs";
@@ -18,6 +16,8 @@ import {
   LinkModule,
 } from "@bitwarden/components";
 
+import { PhishingDetectionService } from "../background/phishing-detection.service";
+
 @Component({
   standalone: true,
   templateUrl: "phishing-warning.component.html",
@@ -26,7 +26,6 @@ import {
     IconModule,
     JslibModule,
     LinkModule,
-    ReactiveFormsModule,
     FormFieldModule,
     AsyncActionsModule,
     CheckboxModule,
@@ -34,28 +33,26 @@ import {
     RouterModule,
   ],
 })
-export class PhishingWarning implements OnInit, OnDestroy {
-  formGroup = this.formBuilder.group({
-    phishingHost: [""],
-  });
+export class PhishingWarning implements OnDestroy {
+  phishingHost = "";
 
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private formBuilder: FormBuilder,
-  ) {}
-
-  async ngOnInit(): Promise<void> {
+  constructor(private activatedRoute: ActivatedRoute) {
     this.activatedRoute.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-      this.formGroup.patchValue({ phishingHost: params.get("phishingHost") });
-      this.formGroup.get("phishingHost")?.disable();
+      this.phishingHost = params.get("phishingHost");
     });
   }
+
   closeTab(): void {
-    globalThis.close();
+    // PhishingDetectionService.requestClosePhishingWarningPage();
+    PhishingDetectionService.closePhishingWarningPage();
+    // [Note] Errors with Scripts may close only the windows that were opened by them
+    // globalThis.close();
   }
-  continueAnyway(): void {}
+  continueAnyway(): void {
+    globalThis.location.href = this.phishingHost;
+  }
 
   ngOnDestroy(): void {
     this.destroy$.next();
