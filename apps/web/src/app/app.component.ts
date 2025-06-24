@@ -15,6 +15,7 @@ import { AccountService } from "@bitwarden/common/auth/abstractions/account.serv
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { getUserId } from "@bitwarden/common/auth/services/account.service";
+import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { ProcessReloadServiceAbstraction } from "@bitwarden/common/key-management/abstractions/process-reload.service";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
 import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
@@ -35,6 +36,7 @@ import {
   MasterPasswordPolicy,
   PasswordGeneratorPolicy,
   OrganizationDataOwnershipPolicy,
+  vNextOrganizationDataOwnershipPolicy,
   RequireSsoPolicy,
   ResetPasswordPolicy,
   SendOptionsPolicy,
@@ -94,7 +96,7 @@ export class AppComponent implements OnDestroy, OnInit {
     this.destoryRef.onDestroy(() => langSubscription.unsubscribe());
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.ngZone.runOutsideAngular(() => {
       window.onmousemove = () => this.recordActivity();
       window.onmousedown = () => this.recordActivity();
@@ -243,7 +245,9 @@ export class AppComponent implements OnDestroy, OnInit {
       new PasswordGeneratorPolicy(),
       new SingleOrgPolicy(),
       new RequireSsoPolicy(),
-      new OrganizationDataOwnershipPolicy(),
+      (await this.configService.getFeatureFlag(FeatureFlag.CreateDefaultLocation))
+        ? new vNextOrganizationDataOwnershipPolicy()
+        : new OrganizationDataOwnershipPolicy(),
       new DisableSendPolicy(),
       new SendOptionsPolicy(),
     ]);

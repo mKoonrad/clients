@@ -1,5 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { Directive, Input, OnInit } from "@angular/core";
 import { UntypedFormControl, UntypedFormGroup } from "@angular/forms";
 
@@ -14,6 +12,8 @@ export abstract class BasePolicy {
   abstract type: PolicyType;
   abstract component: any;
 
+  showDescription: boolean = true;
+
   display(organization: Organization) {
     return true;
   }
@@ -21,16 +21,16 @@ export abstract class BasePolicy {
 
 @Directive()
 export abstract class BasePolicyComponent implements OnInit {
-  @Input() policyResponse: PolicyResponse;
-  @Input() policy: BasePolicy;
+  @Input() policyResponse: PolicyResponse | undefined;
+  @Input() policy: BasePolicy | undefined;
 
   enabled = new UntypedFormControl(false);
-  data: UntypedFormGroup = null;
+  data: UntypedFormGroup | undefined;
 
   ngOnInit(): void {
-    this.enabled.setValue(this.policyResponse.enabled);
+    this.enabled.setValue(this.policyResponse?.enabled);
 
-    if (this.policyResponse.data != null) {
+    if (this.policyResponse?.data != null) {
       this.loadData();
     }
   }
@@ -38,14 +38,14 @@ export abstract class BasePolicyComponent implements OnInit {
   buildRequest() {
     const request = new PolicyRequest();
     request.enabled = this.enabled.value;
-    request.type = this.policy.type;
+    request.type = this.policy?.type;
     request.data = this.buildRequestData();
 
     return Promise.resolve(request);
   }
 
   protected loadData() {
-    this.data.patchValue(this.policyResponse.data ?? {});
+    this.data?.patchValue(this.policyResponse?.data ?? {});
   }
 
   protected buildRequestData() {

@@ -5385,6 +5385,33 @@
   "organizationDataOwnership": {
     "message": "Enforce organization data ownership"
   },
+  "organizationDataOwnershipDesc": {
+    "message": "Require all items to be owned by an organization, removing the option to store items at the account level."
+  },
+  "organizationDataOwnershipContent": {
+    "message": "All items will be owned and saved to the organization, enabling organization-wide controls, visibility, and reporting. When turned on, a default collection be available for each member to store items. Learn more about managing the "
+  },
+  "organizationDataOwnershipContentAnchor":{
+    "message": "credential lifecycle"
+  },
+  "organizationDataOwnershipWarningTitle":{
+    "message": "Are you sure you want to proceed?"
+  },
+  "organizationDataOwnershipWarning1":{
+    "message": "will remain accessible to members"
+  },
+  "organizationDataOwnershipWarning2":{
+    "message": "will not be automatically selected when creating new items"
+  },
+  "organizationDataOwnershipWarning3":{
+    "message": "cannot be managed from the Admin Console until the user is offboarded"
+  },
+  "organizationDataOwnershipWarningContentTop":{
+    "message": "By turning this policy off, the defualt collection: "
+  },
+  "organizationDataOwnershipWarningContentBottom":{
+    "message": "Learn more about the "
+  },
   "personalOwnership": {
     "message": "Remove individual vault"
   },
