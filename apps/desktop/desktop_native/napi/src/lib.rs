@@ -881,8 +881,6 @@ pub mod logging {
 pub mod autotype {
     #[napi]
     pub fn register_hotkey() -> napi::Result<String, napi::Status> {
-        crate::autotype_internal::register_hotkey().map_err(|e| {
-            napi::Error::from_reason(e)
-        })
+        crate::autotype_internal::register_hotkey().map_err(|e| napi::Error::from_reason(e))
     }
 }
