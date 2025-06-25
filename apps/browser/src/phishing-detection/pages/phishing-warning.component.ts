@@ -16,8 +16,6 @@ import {
   LinkModule,
 } from "@bitwarden/components";
 
-import { PhishingDetectionService } from "../background/phishing-detection.service";
-
 @Component({
   standalone: true,
   templateUrl: "phishing-warning.component.html",
@@ -45,10 +43,17 @@ export class PhishingWarning implements OnDestroy {
   }
 
   closeTab(): void {
+    // chrome.runtime.sendMessage({ message: "closePhishingWarningPage" }).catch((error) => {
+    //   console.log("[PhishingWarning] Failed to close tab", error);
+    //   // PhishingDetectionService.logService.error(
+    //   //   "[PhishingDetectionService] Failed to request tab close",
+    //   //   { error },
+    //   // );
+    // });
     // PhishingDetectionService.requestClosePhishingWarningPage();
-    PhishingDetectionService.closePhishingWarningPage();
+    // PhishingDetectionService.closePhishingWarningPage();
     // [Note] Errors with Scripts may close only the windows that were opened by them
-    // globalThis.close();
+    globalThis.close();
   }
   continueAnyway(): void {
     globalThis.location.href = this.phishingHost;
