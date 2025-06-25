@@ -1,9 +1,17 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 
-import { CollectionAdminView, Unassigned, CollectionView } from "@bitwarden/admin-console/common";
+import {
+  CollectionAdminView,
+  Unassigned,
+  CollectionView,
+  CollectionTypes,
+} from "@bitwarden/admin-console/common";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
+import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 
 import { GroupView } from "../../../admin-console/organizations/core";
@@ -24,6 +32,10 @@ export class VaultCollectionRowComponent {
   protected RowHeightClass = RowHeightClass;
   protected Unassigned = "unassigned";
 
+  private createDefaultLocation = toSignal(
+    this.configService.getFeatureFlag$(FeatureFlag.CreateDefaultLocation),
+  );
+
   @Input() disabled: boolean;
   @Input() collection: CollectionView;
   @Input() showOwner: boolean;
@@ -41,7 +53,10 @@ export class VaultCollectionRowComponent {
   @Input() checked: boolean;
   @Output() checkedToggled = new EventEmitter<void>();
 
-  constructor(private i18nService: I18nService) {}
+  constructor(
+    private i18nService: I18nService,
+    private configService: ConfigService,
+  ) {}
 
   get collectionGroups() {
     if (!(this.collection instanceof CollectionAdminView)) {
@@ -111,5 +126,15 @@ export class VaultCollectionRowComponent {
     }
 
     return this.canEditCollection || this.canDeleteCollection;
+  }
+
+  protected get showMenu() {
+    if (
+      this.createDefaultLocation() &&
+      this.collection.type == CollectionTypes.DefaultUserCollection
+    ) {
+      return false;
+    }
+    return this.canEditCollection || this.canDeleteCollection || this.canViewCollectionInfo;
   }
 }
