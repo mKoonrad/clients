@@ -76,7 +76,7 @@ describe("ItemDetailsV2Component", () => {
   it("displays all available fields", () => {
     const itemName = fixture.debugElement.query(By.css('[data-testid="item-name"]'));
     const owner = fixture.debugElement.query(By.css('[data-testid="owner"]'));
-    const collections = fixture.debugElement.queryAll(By.css('[data-testid="collections"] li'));
+    const collections = fixture.debugElement.queryAll(By.css('[data-testid="collections"]'));
     const folderElement = fixture.debugElement.query(By.css('[data-testid="folder"]'));
 
     expect(itemName.nativeElement.textContent).toBe(cipher.name);
