@@ -2,10 +2,14 @@
   <bit-card>
     <div
       class="tw-flex tw-place-items-center"
-      [ngClass]="{ 'tw-mb-3': cipher.collectionIds?.length || showOwnership || cipher.folderId }"
+      [ngClass]="{ 'tw-mb-4': cipher.collectionIds?.length || showOwnership || cipher.folderId }"
     >
-      <app-vault-icon [cipher]="cipher"></app-vault-icon>
-      <h4 class="tw-ml-2 tw-mb-0" data-testid="item-name">{{ cipher.name }}</h4>
+      <div class="tw-size-9 tw-flex tw-items-center tw-justify-center">
+        <app-vault-icon [cipher]="cipher" [isItemView]="true"></app-vault-icon>
+      </div>
+      <h2 bitTypography="h4" class="tw-ml-2 tw-mt-2" [ngClass] data-testid="item-name">
+        {{ cipher.name }}
+      </h2>
     </div>
 
     <!--
@@ -93,9 +97,7 @@
         [attr.aria-label]="('folder' | i18n) + ('noneFolder' | i18n)"
         data-testid="folder"
       >
-        <span
-          ><i class="bwi bwi-folder bwi-lg" aria-hidden="true" [title]="'folder' | i18n"></i
-        ></span>
+        <span><i class="bwi bwi-folder" aria-hidden="true" [title]="'folder' | i18n"></i></span>
         <span aria-hidden="true" class="tw-pl-1.5">{{ "noneFolder" | i18n }} </span>
       </span>
       <ul
@@ -106,17 +108,12 @@
         <li
           *ngIf="showOwnership && organization"
           class="tw-flex tw-items-center tw-list-none"
-          [ngClass]="{ 'tw-mb-3': cipher.collectionIds }"
+          [ngClass]="{ 'tw-mb-2': cipher.collectionIds }"
           bitTypography="body2"
           [attr.aria-label]="('owner' | i18n) + organization.name"
           data-testid="owner"
         >
-          <i
-            appOrgIcon
-            [tierType]="organization.productTierType"
-            [size]="'large'"
-            [title]="'owner' | i18n"
-          ></i>
+          <i appOrgIcon [tierType]="organization.productTierType" [title]="'owner' | i18n"></i>
           <span aria-hidden="true" class="tw-pl-1.5">
             {{ organization.name }}
           </span>
@@ -134,14 +131,16 @@
                 *ngIf="first || (!first && showAllDetails)"
                 class="tw-flex tw-items-center tw-list-none"
                 bitTypography="body2"
-                [ngClass]="{ 'tw-mb-3': last && cipher.folderId, blah: first }"
+                [ngClass]="{ 'tw-mb-2': last && cipher.folderId, blah: first }"
                 [attr.aria-label]="collection.name"
               >
-                <i
-                  class="bwi bwi-collection-shared bwi-lg"
-                  aria-hidden="true"
-                  [title]="'collection' | i18n"
-                ></i>
+                <span>
+                  <i
+                    class="bwi bwi-collection-shared"
+                    aria-hidden="true"
+                    [title]="'collection' | i18n"
+                  ></i>
+                </span>
                 <span aria-hidden="true" class="tw-pl-1.5">
                   {{ collection.name }}
                 </span>
@@ -156,25 +155,27 @@
           [attr.aria-label]="('folder' | i18n) + folder.name"
           data-testid="folder"
         >
-          <i class="bwi bwi-folder bwi-lg" aria-hidden="true" [title]="'folder' | i18n"></i>
+          <i class="bwi bwi-folder" aria-hidden="true" [title]="'folder' | i18n"></i>
           <span aria-hidden="true" class="tw-pl-1.5">{{ folder.name }} </span>
         </li>
         <ng-container *ngIf="hasMultipleCollections">
           <button
+            bitTypography="body2"
             type="button"
             bitLink
             linkType="primary"
-            class="tw-mt-1"
+            class="tw-mt-1.5"
             (click)="toggleShowMore()"
             *ngIf="!showAllDetails"
           >
             {{ "showMore" | i18n }}
           </button>
           <button
+            bitTypography="body2"
             type="button"
             bitLink
             linkType="primary"
-            class="tw-mt-1"
+            class="tw-mt-1.5"
             (click)="toggleShowMore()"
             *ngIf="showAllDetails"
           >
