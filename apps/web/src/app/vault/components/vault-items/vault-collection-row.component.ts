@@ -137,8 +137,8 @@ export class VaultCollectionRowComponent {
   }
 
   private get defaultCollection() {
-    return this.createDefaultLocation()
-      ? this.collection.type == CollectionTypes.DefaultUserCollection
-      : false;
+    return (
+      this.createDefaultLocation() && this.collection.type == CollectionTypes.DefaultUserCollection
+    );
   }
 }

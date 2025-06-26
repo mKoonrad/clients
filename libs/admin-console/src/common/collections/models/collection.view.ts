@@ -51,7 +51,7 @@ export class CollectionView implements View, ITreeNodeObject {
     return (
       org?.canEditAllCiphers ||
       this.manage ||
-      (this.assigned && !this.readOnly && !(this.type == CollectionTypes.DefaultUserCollection))
+      (this.assigned && !this.readOnly && this.type != CollectionTypes.DefaultUserCollection)
     );
   }
 
@@ -86,7 +86,7 @@ export class CollectionView implements View, ITreeNodeObject {
     return (
       canDeleteManagedCollections &&
       this.manage &&
-      !(this.type == CollectionTypes.DefaultUserCollection)
+      this.type != CollectionTypes.DefaultUserCollection
     );
   }
 

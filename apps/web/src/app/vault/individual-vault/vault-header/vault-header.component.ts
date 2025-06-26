@@ -1,5 +1,12 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  Signal,
+} from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
 import { firstValueFrom, map, shareReplay } from "rxjs";
@@ -70,8 +77,9 @@ export class VaultHeaderComponent {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  private createDefaultLocation = toSignal(
+  private createDefaultLocation: Signal<boolean> = toSignal(
     this.configService.getFeatureFlag$(FeatureFlag.CreateDefaultLocation),
+    { initialValue: false },
   );
 
   /**
@@ -220,14 +228,18 @@ export class VaultHeaderComponent {
   }
 
   get showMenu(): boolean {
-    if (
-      this.createDefaultLocation() &&
-      this.collection?.node.type == CollectionTypes.DefaultUserCollection
-    ) {
+    if (this.defaultCollection) {
       return false;
     }
 
     return this.canEditCollection || this.canEditCollection;
+  }
+
+  get defaultCollection(): boolean {
+    return (
+      this.createDefaultLocation() &&
+      this.collection?.node.type == CollectionTypes.DefaultUserCollection
+    );
   }
 
   deleteCollection() {

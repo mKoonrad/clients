@@ -246,15 +246,20 @@ export class VaultHeaderComponent {
   }
 
   get showMenu(): boolean {
-    if (
-      this.createDefaultCollection() &&
-      this.collection?.node.type == CollectionTypes.DefaultUserCollection
-    ) {
+    if (this.defaultCollection) {
       return false;
     }
+
     return (
       this.collection != null &&
       (this.canEditCollection || this.canDeleteCollection || this.canViewCollectionInfo)
+    );
+  }
+
+  get defaultCollection(): boolean {
+    return (
+      this.createDefaultCollection() &&
+      this.collection?.node.type == CollectionTypes.DefaultUserCollection
     );
   }
 

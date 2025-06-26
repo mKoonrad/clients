@@ -64,7 +64,7 @@ export class CollectionAdminView extends CollectionView {
   canEditUserAccess(org: Organization): boolean {
     return (
       (org.permissions.manageUsers && org.allowAdminAccessToAllCollectionItems) ||
-      (this.canEdit(org) && !(this.type == CollectionTypes.DefaultUserCollection))
+      (this.canEdit(org) && this.type != CollectionTypes.DefaultUserCollection)
     );
   }
 
@@ -74,7 +74,7 @@ export class CollectionAdminView extends CollectionView {
   canEditGroupAccess(org: Organization): boolean {
     return (
       (org.permissions.manageGroups && org.allowAdminAccessToAllCollectionItems) ||
-      (this.canEdit(org) && !(this.type == CollectionTypes.DefaultUserCollection))
+      (this.canEdit(org) && this.type != CollectionTypes.DefaultUserCollection)
     );
   }
 
