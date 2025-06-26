@@ -14,8 +14,8 @@ import { FreeFamiliesSponsorshipPolicy } from "./billing/policies/free-families-
   standalone: false,
 })
 export class AppComponent extends BaseAppComponent implements OnInit {
-  async ngOnInit() {
-    await super.ngOnInit();
+  ngOnInit() {
+    super.ngOnInit();
 
     this.policyListService.addPolicies([
       new MaximumVaultTimeoutPolicy(),
