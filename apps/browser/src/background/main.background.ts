@@ -412,7 +412,7 @@ export default class MainBackground {
   inlineMenuFieldQualificationService: InlineMenuFieldQualificationService;
   taskService: TaskService;
   cipherEncryptionService: CipherEncryptionService;
-  restrictedItemTypesService: RestrictedItemTypesService;
+  private restrictedItemTypesService: RestrictedItemTypesService;
 
   ipcContentScriptManagerService: IpcContentScriptManagerService;
   ipcService: IpcService;
@@ -1046,13 +1046,6 @@ export default class MainBackground {
       this.sdkService,
     );
 
-    this.restrictedItemTypesService = new RestrictedItemTypesService(
-      this.configService,
-      this.accountService,
-      this.organizationService,
-      this.policyService,
-    );
-
     this.individualVaultExportService = new IndividualVaultExportService(
       this.folderService,
       this.cipherService,
@@ -1095,6 +1088,7 @@ export default class MainBackground {
           this.configService,
           new WebPushNotificationsApiService(this.apiService, this.appIdService),
           registration,
+          this.stateProvider,
         );
       } else {
         this.webPushConnectionService = new UnsupportedWebPushConnectionService();
@@ -1308,6 +1302,13 @@ export default class MainBackground {
       this.stateProvider,
     );
 
+    this.restrictedItemTypesService = new RestrictedItemTypesService(
+      this.configService,
+      this.accountService,
+      this.organizationService,
+      this.policyService,
+    );
+
     this.mainContextMenuHandler = new MainContextMenuHandler(
       this.stateService,
       this.autofillSettingsService,
@@ -1315,6 +1316,7 @@ export default class MainBackground {
       this.logService,
       this.billingAccountProfileStateService,
       this.accountService,
+      this.restrictedItemTypesService,
     );
 
     this.cipherContextMenuHandler = new CipherContextMenuHandler(
