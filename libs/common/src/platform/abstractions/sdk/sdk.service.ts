@@ -5,7 +5,6 @@ import { BitwardenClient, Uuid } from "@bitwarden/sdk-internal";
 import { UserId } from "../../../types/guid";
 import { Rc } from "../../misc/reference-counting/rc";
 import { Utils } from "../../misc/utils";
-import { UserKeyDefinition } from "../../state";
 
 export class UserNotLoggedInError extends Error {
   constructor(userId: UserId) {
@@ -77,10 +76,4 @@ export abstract class SdkService {
    * @param client The client to set for the user. If undefined, the client will be unset.
    */
   abstract setClient(userId: UserId, client: BitwardenClient | undefined): void;
-}
-
-export interface SdkRecordMapper<ClientType, SdkType> {
-  userKeyDefinition(): UserKeyDefinition<Record<string, ClientType>>;
-  toSdk(value: ClientType): SdkType;
-  fromSdk(value: SdkType): ClientType;
 }

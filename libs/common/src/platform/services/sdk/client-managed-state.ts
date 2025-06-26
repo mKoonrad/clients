@@ -4,8 +4,7 @@ import { UserId } from "@bitwarden/common/types/guid";
 import { CipherRecordMapper } from "@bitwarden/common/vault/models/view/cipher.view";
 import { StateClient, Repository } from "@bitwarden/sdk-internal";
 
-import { SdkRecordMapper } from "../../abstractions/sdk/sdk.service";
-import { StateProvider } from "../../state";
+import { StateProvider, UserKeyDefinition } from "../../state";
 
 export async function initializeState(
   userId: UserId,
@@ -16,6 +15,12 @@ export async function initializeState(
     { db_name: `bitwarden-sdk-state-${userId}` },
     new RepositoryRecord(userId, stateProvider, new CipherRecordMapper()),
   );
+}
+
+export interface SdkRecordMapper<ClientType, SdkType> {
+  userKeyDefinition(): UserKeyDefinition<Record<string, ClientType>>;
+  toSdk(value: ClientType): SdkType;
+  fromSdk(value: SdkType): ClientType;
 }
 
 class RepositoryRecord<ClientType, SdkType> implements Repository<SdkType> {

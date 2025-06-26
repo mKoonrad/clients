@@ -1,6 +1,6 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
-import { SdkRecordMapper } from "@bitwarden/common/platform/abstractions/sdk/sdk.service";
+import { SdkRecordMapper } from "@bitwarden/common/platform/services/sdk/client-managed-state";
 import { UserKeyDefinition } from "@bitwarden/common/platform/state";
 import { CipherView as SdkCipherView, Cipher as SdkCipher } from "@bitwarden/sdk-internal";
 
