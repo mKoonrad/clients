@@ -1,7 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
-import { firstValueFrom, map, Observable, shareReplay } from "rxjs";
+import { firstValueFrom, map, shareReplay } from "rxjs";
 
 import {
   Unassigned,
@@ -67,6 +68,10 @@ export class VaultHeaderComponent {
       });
     }),
     shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  private createDefaultLocation = toSignal(
+    this.configService.getFeatureFlag$(FeatureFlag.CreateDefaultLocation),
   );
 
   /**
@@ -214,14 +219,15 @@ export class VaultHeaderComponent {
     return this.collection.node.canDelete(organization);
   }
 
-  defaultCollection$(collection: TreeNode<CollectionView>): Observable<boolean> {
-    return this.configService
-      .getFeatureFlag$(FeatureFlag.CreateDefaultLocation)
-      .pipe(
-        map(
-          (enabled) => enabled && collection?.node.type === CollectionTypes.DefaultUserCollection,
-        ),
-      );
+  get showMenu(): boolean {
+    if (
+      this.createDefaultLocation() &&
+      this.collection?.node.type == CollectionTypes.DefaultUserCollection
+    ) {
+      return false;
+    }
+
+    return this.canEditCollection || this.canEditCollection;
   }
 
   deleteCollection() {

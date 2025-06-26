@@ -22,11 +22,7 @@
   </bit-breadcrumbs>
 
   <ng-container slot="title-suffix">
-    @if (
-      collection != null &&
-      (canEditCollection || canDeleteCollection) &&
-      !(defaultCollection$(collection) | async)
-    ) {
+    @if (collection != null && showMenu) {
       <ng-container>
         <button
           bitIconButton="bwi-angle-down"
