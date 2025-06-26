@@ -1,7 +1,7 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
-import { Component, DestroyRef, NgZone, OnDestroy, OnInit } from "@angular/core";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, DestroyRef, NgZone, OnDestroy, OnInit, Signal } from "@angular/core";
+import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
 import { Subject, filter, firstValueFrom, map, timeout } from "rxjs";
 
@@ -61,6 +61,11 @@ export class AppComponent implements OnDestroy, OnInit {
 
   loading = false;
 
+  private createDefaultLocation: Signal<boolean> = toSignal(
+    this.configService.getFeatureFlag$(FeatureFlag.CreateDefaultLocation),
+    { initialValue: false },
+  );
+
   constructor(
     private broadcasterService: BroadcasterService,
     private folderService: InternalFolderService,
@@ -96,7 +101,7 @@ export class AppComponent implements OnDestroy, OnInit {
     this.destoryRef.onDestroy(() => langSubscription.unsubscribe());
   }
 
-  async ngOnInit() {
+  ngOnInit() {
     this.ngZone.runOutsideAngular(() => {
       window.onmousemove = () => this.recordActivity();
       window.onmousedown = () => this.recordActivity();
@@ -245,7 +250,7 @@ export class AppComponent implements OnDestroy, OnInit {
       new PasswordGeneratorPolicy(),
       new SingleOrgPolicy(),
       new RequireSsoPolicy(),
-      (await this.configService.getFeatureFlag(FeatureFlag.CreateDefaultLocation))
+      this.createDefaultLocation()
         ? new vNextOrganizationDataOwnershipPolicy()
         : new OrganizationDataOwnershipPolicy(),
       new DisableSendPolicy(),
