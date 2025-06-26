@@ -1,9 +1,6 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
-import {
-  SdkRecordMapper,
-  uuidToString,
-} from "@bitwarden/common/platform/abstractions/sdk/sdk.service";
+import { SdkRecordMapper } from "@bitwarden/common/platform/abstractions/sdk/sdk.service";
 import { UserKeyDefinition } from "@bitwarden/common/platform/state";
 import { CipherView as SdkCipherView, Cipher as SdkCipher } from "@bitwarden/sdk-internal";
 
@@ -258,9 +255,9 @@ export class CipherView implements View, InitializerMetadata {
     }
 
     const cipherView = new CipherView();
-    cipherView.id = obj.id ? uuidToString(obj.id) : null;
-    cipherView.organizationId = obj.organizationId ? uuidToString(obj.organizationId) : null;
-    cipherView.folderId = obj.folderId ? uuidToString(obj.folderId) : null;
+    cipherView.id = obj.id ?? null;
+    cipherView.organizationId = obj.organizationId ?? null;
+    cipherView.folderId = obj.folderId ?? null;
     cipherView.name = obj.name;
     cipherView.notes = obj.notes ?? null;
     cipherView.type = obj.type;
@@ -284,7 +281,7 @@ export class CipherView implements View, InitializerMetadata {
     cipherView.fields = obj.fields?.map((f) => FieldView.fromSdkFieldView(f)) ?? null;
     cipherView.passwordHistory =
       obj.passwordHistory?.map((ph) => PasswordHistoryView.fromSdkPasswordHistoryView(ph)) ?? null;
-    cipherView.collectionIds = obj.collectionIds.map((id) => uuidToString(id)) ?? null;
+    cipherView.collectionIds = obj.collectionIds ?? null;
     cipherView.revisionDate = obj.revisionDate == null ? null : new Date(obj.revisionDate);
     cipherView.creationDate = obj.creationDate == null ? null : new Date(obj.creationDate);
     cipherView.deletedDate = obj.deletedDate == null ? null : new Date(obj.deletedDate);
