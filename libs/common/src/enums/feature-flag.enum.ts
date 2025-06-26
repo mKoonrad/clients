@@ -78,7 +78,7 @@ export const DefaultFeatureFlagValue = {
   /* Admin Console Team */
   [FeatureFlag.SeparateCustomRolePermissions]: FALSE,
   [FeatureFlag.OptimizeNestedTraverseTypescript]: FALSE,
-  [FeatureFlag.CreateDefaultLocation]: FALSE,
+  [FeatureFlag.CreateDefaultLocation]: true,
 
   /* Autofill */
   [FeatureFlag.BlockBrowserInjectionsByDomain]: FALSE,
