@@ -1,9 +1,9 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
-import { Component, DestroyRef, NgZone, OnDestroy, OnInit, Signal } from "@angular/core";
-import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
+import { Component, DestroyRef, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
-import { Subject, filter, firstValueFrom, map, timeout } from "rxjs";
+import { Subject, filter, firstValueFrom, map, of, timeout } from "rxjs";
 
 import { CollectionService } from "@bitwarden/admin-console/common";
 import { DeviceTrustToastService } from "@bitwarden/angular/auth/services/device-trust-toast.service.abstraction";
@@ -60,11 +60,6 @@ export class AppComponent implements OnDestroy, OnInit {
   private destroy$ = new Subject<void>();
 
   loading = false;
-
-  private createDefaultLocation: Signal<boolean> = toSignal(
-    this.configService.getFeatureFlag$(FeatureFlag.CreateDefaultLocation),
-    { initialValue: false },
-  );
 
   constructor(
     private broadcasterService: BroadcasterService,
@@ -242,20 +237,31 @@ export class AppComponent implements OnDestroy, OnInit {
       });
     });
 
-    this.policyListService.addPolicies([
-      new TwoFactorAuthenticationPolicy(),
-      new MasterPasswordPolicy(),
-      new RemoveUnlockWithPinPolicy(),
-      new ResetPasswordPolicy(),
-      new PasswordGeneratorPolicy(),
-      new SingleOrgPolicy(),
-      new RequireSsoPolicy(),
-      this.createDefaultLocation()
-        ? new vNextOrganizationDataOwnershipPolicy()
-        : new OrganizationDataOwnershipPolicy(),
-      new DisableSendPolicy(),
-      new SendOptionsPolicy(),
-    ]);
+    this.policyListService.addPolicies(
+      of([
+        new TwoFactorAuthenticationPolicy(),
+        new MasterPasswordPolicy(),
+        new RemoveUnlockWithPinPolicy(),
+        new ResetPasswordPolicy(),
+        new PasswordGeneratorPolicy(),
+        new SingleOrgPolicy(),
+        new RequireSsoPolicy(),
+        new DisableSendPolicy(),
+        new SendOptionsPolicy(),
+      ]),
+    );
+
+    const vNextOrganizationDataOwnershipPolicy$ = this.configService
+      .getFeatureFlag$(FeatureFlag.CreateDefaultLocation)
+      .pipe(
+        map((enabled) =>
+          enabled
+            ? [new vNextOrganizationDataOwnershipPolicy()]
+            : [new OrganizationDataOwnershipPolicy()],
+        ),
+      );
+
+    this.policyListService.addPolicies(vNextOrganizationDataOwnershipPolicy$);
   }
 
   ngOnDestroy() {

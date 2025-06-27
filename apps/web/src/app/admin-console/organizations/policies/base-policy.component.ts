@@ -12,6 +12,10 @@ export abstract class BasePolicy {
   abstract type: PolicyType;
   abstract component: any;
 
+  /**
+   * If true, the description will be reused in the policy edit modal. Set this to false if you
+   * have more complex requirements that you will implement in your template instead.
+   **/
   showDescription: boolean = true;
 
   display(organization: Organization) {
@@ -36,10 +40,15 @@ export abstract class BasePolicyComponent implements OnInit {
   }
 
   buildRequest() {
-    const request = new PolicyRequest();
-    request.enabled = this.enabled.value;
-    request.type = this.policy?.type;
-    request.data = this.buildRequestData();
+    if (!this.policy) {
+      throw new Error("Policy was not found");
+    }
+
+    const request: PolicyRequest = {
+      type: this.policy.type,
+      enabled: this.enabled.value,
+      data: this.buildRequestData(),
+    };
 
     return Promise.resolve(request);
   }

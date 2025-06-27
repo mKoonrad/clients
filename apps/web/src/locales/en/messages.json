@@ -5386,13 +5386,16 @@
     "message": "Enforce organization data ownership"
   },
   "organizationDataOwnershipDesc": {
-    "message": "Require all items to be owned by an organization, removing the option to store items at the account level."
+    "message": "Require all items to be owned by an organization, removing the option to store items at the account level.",
+    "description": "This is the policy description shown in the policy list."
   },
   "organizationDataOwnershipContent": {
-    "message": "All items will be owned and saved to the organization, enabling organization-wide controls, visibility, and reporting. When turned on, a default collection be available for each member to store items. Learn more about managing the "
+    "message": "All items will be owned and saved to the organization, enabling organization-wide controls, visibility, and reporting. When turned on, a default collection be available for each member to store items. Learn more about managing the ",
+    "description": "This will be used as part of a larger sentence, broken up to include links. The full sentence will read 'All items will be owned and saved to the organization, enabling organization-wide controls, visibility, and reporting. When turned on, a default collection be available for each member to store items. Learn more about managing the credential lifecycle.'"
   },
   "organizationDataOwnershipContentAnchor":{
-    "message": "credential lifecycle"
+    "message": "credential lifecycle",
+    "description": "This will be used as a hyperlink"
   },
   "organizationDataOwnershipWarningTitle":{
     "message": "Are you sure you want to proceed?"
@@ -5410,7 +5413,8 @@
     "message": "By turning this policy off, the defualt collection: "
   },
   "organizationDataOwnershipWarningContentBottom":{
-    "message": "Learn more about the "
+    "message": "Learn more about the ",
+    "description": "This will be used as part of a larger sentence, broken up to include links. The full sentence will read 'Learn more about the credential lifecycle.'"
   },
   "personalOwnership": {
     "message": "Remove individual vault"
