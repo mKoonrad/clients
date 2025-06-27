@@ -3,10 +3,8 @@ export { BasePolicy, BasePolicyComponent } from "./base-policy.component";
 export { DisableSendPolicy } from "./disable-send.component";
 export { MasterPasswordPolicy } from "./master-password.component";
 export { PasswordGeneratorPolicy } from "./password-generator.component";
-export {
-  vNextOrganizationDataOwnershipPolicy,
-  OrganizationDataOwnershipPolicy,
-} from "./organization-data-ownership.component";
+export { vNextOrganizationDataOwnershipPolicy } from "./vnext-organization-data-ownershipf.component";
+export { OrganizationDataOwnershipPolicy } from "./organization-data-ownership.component";
 export { RequireSsoPolicy } from "./require-sso.component";
 export { ResetPasswordPolicy } from "./reset-password.component";
 export { SendOptionsPolicy } from "./send-options.component";
