@@ -90,10 +90,14 @@ export class ConfirmKeyConnectorDomainComponent implements OnInit {
 
     this.messagingService.send("loggedIn");
 
+    await this.beforeNavigationConfirmCallback();
+
     await this.router.navigate(["/"]);
   };
 
   cancel = async () => {
     this.messagingService.send("logout");
   };
+
+  async beforeNavigationConfirmCallback() {}
 }
