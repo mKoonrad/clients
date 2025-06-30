@@ -229,7 +229,7 @@ export class DefaultSdkService implements SdkService {
       ),
     });
 
-    // This is optional to avoid having to mock it on the server
+    // This is optional to avoid having to mock it on the tests
     if (this.stateProvider) {
       // Initialize the SDK managed database and the client managed repositories.
       await initializeState(userId, client.platform().state(), this.stateProvider);
