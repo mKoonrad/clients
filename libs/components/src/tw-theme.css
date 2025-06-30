@@ -46,6 +46,7 @@
   --color-notification-100: 255 225 247;
   --color-notification-600: 192 17 118;
 
+  /*art styles deprecated, use 'illustration' instead*/
   --color-art-primary: 2 15 102;
   --color-art-accent: 44 221 223;
 
@@ -113,6 +114,7 @@
   --color-notification-100: 117 37 83;
   --color-notification-600: 255 143 208;
 
+  /*art styles deprecated, use 'illustration' instead*/
   --color-art-primary: 243 246 249;
   --color-art-accent: 44 221 233;
 
