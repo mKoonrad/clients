@@ -22,7 +22,10 @@
           isItemView(),
       }"
     >
-      <i class="tw-text-muted bwi bwi-lg {{ data.icon }}"></i>
+      <i
+        class="tw-text-muted bwi bwi-lg {{ data.icon }}"
+        [ngStyle]="{ color: isItemView() ? 'rgb(var(--color-illustration-outline))' : null }"
+      ></i>
     </div>
   </ng-container>
 </div>
