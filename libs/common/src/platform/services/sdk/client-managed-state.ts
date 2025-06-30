@@ -11,8 +11,7 @@ export async function initializeState(
   stateClient: StateClient,
   stateProvider: StateProvider,
 ): Promise<void> {
-  await stateClient.initialize_state(
-    { db_name: `bitwarden-sdk-state-${userId}` },
+  await stateClient.register_cipher_repository(
     new RepositoryRecord(userId, stateProvider, new CipherRecordMapper()),
   );
 }
