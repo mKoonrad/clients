@@ -9,8 +9,8 @@
       loading="lazy"
       [ngClass]="{
         'tw-invisible tw-absolute': !imageLoaded(),
-        'tw-size-9': isItemView(),
-        'tw-size-6': !isItemView(),
+        'tw-size-9': coloredIcon(),
+        'tw-size-6': !coloredIcon(),
       }"
       (load)="imageLoaded.set(true)"
       (error)="imageLoaded.set(false)"
@@ -19,12 +19,12 @@
       *ngIf="!data.imageEnabled || !data.image || !imageLoaded()"
       [ngClass]="{
         'tw-size-9 tw-flex tw-items-center tw-justify-center tw-bg-illustration-bg-primary tw-rounded-full':
-          isItemView(),
+          coloredIcon(),
       }"
     >
       <i
         class="tw-text-muted bwi bwi-lg {{ data.icon }}"
-        [ngStyle]="{ color: isItemView() ? 'rgb(var(--color-illustration-outline))' : null }"
+        [ngStyle]="{ color: coloredIcon() ? 'rgb(var(--color-illustration-outline))' : null }"
       ></i>
     </div>
   </ng-container>
