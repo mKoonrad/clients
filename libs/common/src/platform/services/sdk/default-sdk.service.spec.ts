@@ -7,6 +7,7 @@ import { KdfConfigService, KeyService, PBKDF2KdfConfig } from "@bitwarden/key-ma
 import { BitwardenClient } from "@bitwarden/sdk-internal";
 
 import { ObservableTracker } from "../../../../spec";
+import { ApiService } from "../../../abstractions/api.service";
 import { AccountInfo, AccountService } from "../../../auth/abstractions/account.service";
 import { UserId } from "../../../types/guid";
 import { UserKey } from "../../../types/key";
@@ -47,6 +48,7 @@ describe("DefaultSdkService", () => {
       accountService = mock<AccountService>();
       kdfConfigService = mock<KdfConfigService>();
       keyService = mock<KeyService>();
+      apiService = mock<ApiService>();
 
       // Can't use `of(mock<Environment>())` for some reason
       environmentService.environment$ = new BehaviorSubject(mock<Environment>());
@@ -58,6 +60,7 @@ describe("DefaultSdkService", () => {
         accountService,
         kdfConfigService,
         keyService,
+        apiService,
       );
     });
 
