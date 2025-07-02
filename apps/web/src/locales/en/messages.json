@@ -8229,7 +8229,7 @@
     "message": "An error occurred when trying to read the import file"
   },
   "accessedSecretWithId": {
-    "message": "Accessed secret with identifier: $SECRET_ID$",
+    "message": "Accessed a secret with identifier: $SECRET_ID$",
     "placeholders": {
       "secret_id": {
         "content": "$1",
@@ -8247,7 +8247,7 @@
     }
   },
    "editedSecretWithId": {
-    "message": "Edited a secret  with identifier: $SECRET_ID$",
+    "message": "Edited a secret with identifier: $SECRET_ID$",
     "placeholders": {
       "secret_id": {
         "content": "$1",
