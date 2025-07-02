@@ -9,7 +9,6 @@ import { CollectionView } from "@bitwarden/admin-console/common";
 import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { ClientType } from "@bitwarden/common/enums";
-import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
 import {
@@ -43,9 +42,6 @@ export class ItemDetailsV2Component implements OnInit {
 
   hasMultipleCollections: boolean = false;
   showAllDetails: boolean = false;
-  clientType: ClientType = this.platformUtilsService.getClientType();
-
-  constructor(private platformUtilsService: PlatformUtilsService) {}
 
   ngOnInit() {
     this.hasMultipleCollections = this.cipher?.collectionIds?.length > 1;
