@@ -7,7 +7,12 @@ mod registry;
 
 #[napi]
 pub mod passwords {
+    /// The error message returned when a password is not found during retrieval or deletion.
+    #[napi]
+    pub const PASSWORD_NOT_FOUND: &str = desktop_core::password::PASSWORD_NOT_FOUND;
+
     /// Fetch the stored password from the keychain.
+    /// Throws {@link Error} with message {@link PASSWORD_NOT_FOUND} if the password does not exist.
     #[napi]
     pub async fn get_password(service: String, account: String) -> napi::Result<String> {
         desktop_core::password::get_password(&service, &account)
@@ -28,6 +33,7 @@ pub mod passwords {
     }
 
     /// Delete the stored password from the keychain.
+    /// Throws {@link Error} with message {@link PASSWORD_NOT_FOUND} if the password does not exist.
     #[napi]
     pub async fn delete_password(service: String, account: String) -> napi::Result<()> {
         desktop_core::password::delete_password(&service, &account)
@@ -35,7 +41,7 @@ pub mod passwords {
             .map_err(|e| napi::Error::from_reason(e.to_string()))
     }
 
-    // Checks if the os secure storage is available
+    /// Checks if the os secure storage is available
     #[napi]
     pub async fn is_available() -> napi::Result<bool> {
         desktop_core::password::is_available()
@@ -85,6 +91,8 @@ pub mod biometrics {
         .map_err(|e| napi::Error::from_reason(e.to_string()))
     }
 
+    /// Retrieves the biometric secret for the given service and account.
+    /// Throws Error with message [`passwords::PASSWORD_NOT_FOUND`] if the secret does not exist.
     #[napi]
     pub async fn get_biometric_secret(
         service: String,
@@ -230,7 +238,7 @@ pub mod sshagent {
                                     .expect("should be able to send auth response to agent");
                             }
                             Err(e) => {
-                                println!("[SSH Agent Native Module] calling UI callback promise was rejected: {}", e);
+                                println!("[SSH Agent Native Module] calling UI callback promise was rejected: {e}");
                                 let _ = auth_response_tx_arc
                                     .lock()
                                     .await
@@ -239,7 +247,7 @@ pub mod sshagent {
                             }
                         },
                         Err(e) => {
-                            println!("[SSH Agent Native Module] calling UI callback could not create promise: {}", e);
+                            println!("[SSH Agent Native Module] calling UI callback could not create promise: {e}");
                             let _ = auth_response_tx_arc
                                 .lock()
                                 .await
