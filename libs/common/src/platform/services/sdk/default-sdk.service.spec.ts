@@ -37,6 +37,7 @@ describe("DefaultSdkService", () => {
     let accountService!: MockProxy<AccountService>;
     let kdfConfigService!: MockProxy<KdfConfigService>;
     let keyService!: MockProxy<KeyService>;
+    let apiService!: MockProxy<ApiService>;
     let service!: DefaultSdkService;
 
     beforeEach(async () => {

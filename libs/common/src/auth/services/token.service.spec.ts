@@ -849,7 +849,7 @@ describe("TokenService", () => {
           tokenService.getTokenExpirationDate = jest.fn().mockResolvedValue(expirationDate);
 
           // Act
-          const result = await tokenService.tokenSecondsRemaining(offsetSeconds);
+          const result = await tokenService.tokenSecondsRemaining(undefined, offsetSeconds);
 
           // Assert
           expect(result).toEqual(expectedSecondsRemaining);

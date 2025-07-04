@@ -47,10 +47,17 @@ const UnsetClient = Symbol("UnsetClient");
  * A token provider that exposes the access token to the SDK.
  */
 class JsTokenProvider implements TokenProvider {
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private userId?: UserId,
+  ) {}
 
   async get_access_token(): Promise<string> {
-    return await this.apiService.getActiveBearerToken();
+    if (this.userId == null) {
+      return null as any as string;
+    }
+
+    return await this.apiService.getActiveBearerToken(this.userId);
   }
 }
 
@@ -65,8 +72,8 @@ export class DefaultSdkService implements SdkService {
       await SdkLoadService.Ready;
       const settings = this.toSettings(env);
       return await this.sdkClientFactory.createSdkClient(
-        settings,
         new JsTokenProvider(this.apiService),
+        settings,
       );
     }),
     shareReplay({ refCount: true, bufferSize: 1 }),
@@ -169,8 +176,8 @@ export class DefaultSdkService implements SdkService {
 
             const settings = this.toSettings(env);
             const client = await this.sdkClientFactory.createSdkClient(
+              new JsTokenProvider(this.apiService, userId),
               settings,
-              new JsTokenProvider(this.apiService),
             );
 
             await this.initializeClient(
