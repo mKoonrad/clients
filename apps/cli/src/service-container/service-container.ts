@@ -507,6 +507,7 @@ export class ServiceContainer {
       this.logService,
       logoutCallback,
       this.vaultTimeoutSettingsService,
+      this.stateProvider,
       customUserAgent,
     );
 
