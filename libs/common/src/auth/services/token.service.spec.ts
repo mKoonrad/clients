@@ -890,7 +890,7 @@ describe("TokenService", () => {
           tokenService.tokenSecondsRemaining = jest.fn().mockResolvedValue(tokenSecondsRemaining);
 
           // Act
-          const result = await tokenService.tokenNeedsRefresh(2);
+          const result = await tokenService.tokenNeedsRefresh(undefined, 2);
 
           // Assert
           expect(result).toEqual(true);
@@ -902,7 +902,7 @@ describe("TokenService", () => {
           tokenService.tokenSecondsRemaining = jest.fn().mockResolvedValue(tokenSecondsRemaining);
 
           // Act
-          const result = await tokenService.tokenNeedsRefresh(5);
+          const result = await tokenService.tokenNeedsRefresh(undefined, 5);
 
           // Assert
           expect(result).toEqual(false);
