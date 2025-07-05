@@ -18,7 +18,7 @@ import {
 // This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
 // eslint-disable-next-line no-restricted-imports
 import {
-  DefaultLoginApprovalComponentService,
+  DefaultLoginApprovalDialogComponentService,
   DefaultLoginComponentService,
   DefaultLoginDecryptionOptionsService,
   DefaultRegistrationFinishService,
@@ -42,7 +42,7 @@ import {
   DefaultLoginSuccessHandlerService,
   DefaultLogoutService,
   InternalUserDecryptionOptionsServiceAbstraction,
-  LoginApprovalComponentServiceAbstraction,
+  LoginApprovalDialogComponentServiceAbstraction,
   LoginEmailService,
   LoginEmailServiceAbstraction,
   LoginStrategyService,
@@ -1512,8 +1512,8 @@ const safeProviders: SafeProvider[] = [
     deps: [CryptoFunctionServiceAbstraction],
   }),
   safeProvider({
-    provide: LoginApprovalComponentServiceAbstraction,
-    useClass: DefaultLoginApprovalComponentService,
+    provide: LoginApprovalDialogComponentServiceAbstraction,
+    useClass: DefaultLoginApprovalDialogComponentService,
     deps: [],
   }),
   safeProvider({
