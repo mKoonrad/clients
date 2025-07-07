@@ -53,7 +53,7 @@ export class PoliciesComponent implements OnInit {
     private policyListService: PolicyListService,
     private organizationBillingService: OrganizationBillingServiceAbstraction,
     private dialogService: DialogService,
-    private configService: ConfigService,
+    protected configService: ConfigService,
   ) {}
 
   async ngOnInit() {
