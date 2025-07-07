@@ -49,6 +49,7 @@ import { KeyService, BiometricStateService, BiometricsStatus } from "@bitwarden/
 import { SetPinComponent } from "../../auth/components/set-pin.component";
 import { SshAgentPromptType } from "../../autofill/models/ssh-agent-setting";
 import { DesktopAutofillSettingsService } from "../../autofill/services/desktop-autofill-settings.service";
+import { DesktopAutotypeService } from "../../autofill/services/desktop-autotype.service";
 import { DesktopBiometricsService } from "../../key-management/biometrics/desktop.biometrics.service";
 import { DesktopSettingsService } from "../../platform/services/desktop-settings.service";
 import { NativeMessagingManifestService } from "../services/native-messaging-manifest.service";
@@ -159,6 +160,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     private dialogService: DialogService,
     private userVerificationService: UserVerificationServiceAbstraction,
     private desktopSettingsService: DesktopSettingsService,
+    private desktopAutotypeService: DesktopAutotypeService,
     private biometricStateService: BiometricStateService,
     private biometricsService: DesktopBiometricsService,
     private desktopAutofillSettingsService: DesktopAutofillSettingsService,
@@ -339,7 +341,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.desktopSettingsService.sshAgentPromptBehavior$,
       ),
       allowScreenshots: !(await firstValueFrom(this.desktopSettingsService.preventScreenshots$)),
-      enableAutotype: await firstValueFrom(this.desktopSettingsService.autotypeEnabled$),
+      enableAutotype: await firstValueFrom(this.desktopAutotypeService.autotypeEnabled$),
       theme: await firstValueFrom(this.themeStateService.selectedTheme$),
       locale: await firstValueFrom(this.i18nService.userSetLocale$),
     };
@@ -861,7 +863,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   async saveEnableAutotype() {
-    await this.desktopSettingsService.setAutotypeEnabled(this.form.value.enableAutotype);
+    await this.desktopAutotypeService.setAutotypeEnabledState(this.form.value.enableAutotype);
   }
 
   private async generateVaultTimeoutOptions(): Promise<VaultTimeoutOption[]> {

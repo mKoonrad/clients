@@ -473,7 +473,12 @@ const safeProviders: SafeProvider[] = [
   }),
   safeProvider({
     provide: DesktopAutotypeService,
-    deps: [ConfigService, DesktopSettingsService, PlatformUtilsServiceAbstraction],
+    deps: [
+      ConfigService,
+      DesktopSettingsService,
+      GlobalStateProvider,
+      PlatformUtilsServiceAbstraction,
+    ],
   }),
 ];
 

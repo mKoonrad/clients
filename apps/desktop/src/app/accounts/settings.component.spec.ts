@@ -43,6 +43,7 @@ import { DesktopSettingsService } from "../../platform/services/desktop-settings
 import { NativeMessagingManifestService } from "../services/native-messaging-manifest.service";
 
 import { SettingsComponent } from "./settings.component";
+import { DesktopAutotypeService } from "../../autofill/services/desktop-autotype.service";
 
 describe("SettingsComponent", () => {
   let component: SettingsComponent;
@@ -68,6 +69,7 @@ describe("SettingsComponent", () => {
   const messagingService = mock<MessagingService>();
   const keyService = mock<KeyService>();
   const dialogService = mock<DialogService>();
+  const desktopAutotypeService = mock<DesktopAutotypeService>();
 
   beforeEach(async () => {
     originalIpc = (global as any).ipc;
@@ -121,6 +123,7 @@ describe("SettingsComponent", () => {
         { provide: VaultTimeoutSettingsService, useValue: vaultTimeoutSettingsService },
         { provide: ValidationService, useValue: validationService },
         { provide: MessagingService, useValue: messagingService },
+        { provide: DesktopAutotypeService, useValue: desktopAutotypeService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -152,12 +155,12 @@ describe("SettingsComponent", () => {
     desktopSettingsService.sshAgentEnabled$ = of(false);
     desktopSettingsService.sshAgentPromptBehavior$ = of(SshAgentPromptType.Always);
     desktopSettingsService.preventScreenshots$ = of(false);
-    desktopSettingsService.autotypeEnabled$ = of(false);
     domainSettingsService.showFavicons$ = of(false);
     desktopAutofillSettingsService.enableDuckDuckGoBrowserIntegration$ = of(false);
     themeStateService.selectedTheme$ = of(ThemeType.System);
     i18nService.userSetLocale$ = of("en");
     pinServiceAbstraction.isPinSet.mockResolvedValue(false);
+    desktopAutotypeService.autotypeEnabled$ = of(false);
   });
 
   afterEach(() => {
