@@ -1,6 +1,5 @@
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 
-import { CollectionTypes } from "./collection";
 import { CollectionAccessSelectionView } from "./collection-access-selection.view";
 import { CollectionAccessDetailsResponse } from "./collection.response";
 import { CollectionView } from "./collection.view";
@@ -64,7 +63,7 @@ export class CollectionAdminView extends CollectionView {
   canEditUserAccess(org: Organization): boolean {
     return (
       (org.permissions.manageUsers && org.allowAdminAccessToAllCollectionItems) ||
-      (this.canEdit(org) && this.type != CollectionTypes.DefaultUserCollection)
+      (this.canEdit(org) && !this.defaultCollection)
     );
   }
 
@@ -74,7 +73,7 @@ export class CollectionAdminView extends CollectionView {
   canEditGroupAccess(org: Organization): boolean {
     return (
       (org.permissions.manageGroups && org.allowAdminAccessToAllCollectionItems) ||
-      (this.canEdit(org) && this.type != CollectionTypes.DefaultUserCollection)
+      (this.canEdit(org) && !this.defaultCollection)
     );
   }
 
@@ -82,7 +81,7 @@ export class CollectionAdminView extends CollectionView {
    * Returns true if the user can view collection info and access in a read-only state from the Admin Console
    */
   override canViewCollectionInfo(org: Organization | undefined): boolean {
-    if (this.isUnassignedCollection) {
+    if (this.isUnassignedCollection || this.defaultCollection) {
       return false;
     }
     const isAdmin = org?.isAdmin ?? false;

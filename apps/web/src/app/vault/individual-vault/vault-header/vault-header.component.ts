@@ -1,13 +1,5 @@
 import { CommonModule } from "@angular/common";
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-  Signal,
-} from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from "@angular/core";
 import { Router } from "@angular/router";
 import { firstValueFrom, map, shareReplay } from "rxjs";
 
@@ -15,7 +7,6 @@ import {
   Unassigned,
   CollectionView,
   CollectionAdminService,
-  CollectionTypes,
 } from "@bitwarden/admin-console/common";
 import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
@@ -75,11 +66,6 @@ export class VaultHeaderComponent {
       });
     }),
     shareReplay({ bufferSize: 1, refCount: true }),
-  );
-
-  private createDefaultLocation: Signal<boolean> = toSignal(
-    this.configService.getFeatureFlag$(FeatureFlag.CreateDefaultLocation),
-    { initialValue: false },
   );
 
   /**
@@ -228,18 +214,11 @@ export class VaultHeaderComponent {
   }
 
   get showMenu(): boolean {
-    if (this.defaultCollection) {
+    if (this.collection?.node.defaultCollection) {
       return false;
     }
 
     return this.canEditCollection || this.canEditCollection;
-  }
-
-  get defaultCollection(): boolean {
-    return (
-      this.createDefaultLocation() &&
-      this.collection?.node.type == CollectionTypes.DefaultUserCollection
-    );
   }
 
   deleteCollection() {

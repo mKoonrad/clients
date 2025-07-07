@@ -4,21 +4,17 @@
 /* eslint-disable @angular-eslint/no-output-on-prefix */
 import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
 import { firstValueFrom } from "rxjs";
 
 import {
   CollectionAdminService,
   CollectionAdminView,
-  CollectionTypes,
   Unassigned,
 } from "@bitwarden/admin-console/common";
 import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { ProductTierType } from "@bitwarden/common/billing/enums";
-import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
-import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { CipherType } from "@bitwarden/common/vault/enums";
 import { TreeNode } from "@bitwarden/common/vault/models/domain/tree-node";
@@ -54,10 +50,6 @@ import { CollectionDialogTabType } from "../../shared/components/collection-dial
 export class VaultHeaderComponent {
   protected All = All;
   protected Unassigned = Unassigned;
-
-  private createDefaultCollection = toSignal(
-    this.configService.getFeatureFlag$(FeatureFlag.CreateDefaultLocation),
-  );
 
   /**
    * Boolean to determine the loading state of the header.
@@ -105,7 +97,6 @@ export class VaultHeaderComponent {
     private dialogService: DialogService,
     private collectionAdminService: CollectionAdminService,
     private router: Router,
-    private configService: ConfigService,
   ) {}
 
   get title() {
@@ -246,20 +237,13 @@ export class VaultHeaderComponent {
   }
 
   get showMenu(): boolean {
-    if (this.defaultCollection) {
+    if (this.collection?.node.defaultCollection) {
       return false;
     }
 
     return (
       this.collection != null &&
       (this.canEditCollection || this.canDeleteCollection || this.canViewCollectionInfo)
-    );
-  }
-
-  get defaultCollection(): boolean {
-    return (
-      this.createDefaultCollection() &&
-      this.collection?.node.type == CollectionTypes.DefaultUserCollection
     );
   }
 

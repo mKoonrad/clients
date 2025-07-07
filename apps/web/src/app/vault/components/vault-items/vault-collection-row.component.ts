@@ -1,16 +1,9 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { Component, EventEmitter, Input, Output } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
 
-import {
-  CollectionAdminView,
-  Unassigned,
-  CollectionView,
-  CollectionTypes,
-} from "@bitwarden/admin-console/common";
+import { CollectionAdminView, Unassigned, CollectionView } from "@bitwarden/admin-console/common";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
-import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 
@@ -31,10 +24,6 @@ import { RowHeightClass } from "./vault-items.component";
 export class VaultCollectionRowComponent {
   protected RowHeightClass = RowHeightClass;
   protected Unassigned = "unassigned";
-
-  private createDefaultLocation = toSignal(
-    this.configService.getFeatureFlag$(FeatureFlag.CreateDefaultLocation),
-  );
 
   @Input() disabled: boolean;
   @Input() collection: CollectionView;
@@ -121,7 +110,7 @@ export class VaultCollectionRowComponent {
   }
 
   protected get showCheckbox() {
-    if (this.collection?.id === Unassigned || this.defaultCollection) {
+    if (this.collection?.id === Unassigned || this.collection.defaultCollection) {
       return false; // Never show checkbox for Unassigned or the default user collection
     }
 
@@ -129,16 +118,10 @@ export class VaultCollectionRowComponent {
   }
 
   protected get showMenu() {
-    if (this.defaultCollection) {
+    if (this.collection.defaultCollection) {
       return false;
     }
 
     return this.canEditCollection || this.canDeleteCollection || this.canViewCollectionInfo;
-  }
-
-  private get defaultCollection() {
-    return (
-      this.createDefaultLocation() && this.collection.type == CollectionTypes.DefaultUserCollection
-    );
   }
 }

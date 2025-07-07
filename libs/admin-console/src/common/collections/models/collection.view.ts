@@ -48,11 +48,7 @@ export class CollectionView implements View, ITreeNodeObject {
       );
     }
 
-    return (
-      org?.canEditAllCiphers ||
-      this.manage ||
-      (this.assigned && !this.readOnly && this.type != CollectionTypes.DefaultUserCollection)
-    );
+    return org?.canEditAllCiphers || this.manage || (this.assigned && !this.readOnly);
   }
 
   /**
@@ -60,6 +56,10 @@ export class CollectionView implements View, ITreeNodeObject {
    * Does not include admin permissions - see {@link CollectionAdminView.canEdit}.
    */
   canEdit(org: Organization | undefined): boolean {
+    if (this.defaultCollection) {
+      return false;
+    }
+
     if (org?.id !== this.organizationId) {
       throw new Error(
         "Id of the organization provided does not match the org id of the collection.",
@@ -83,11 +83,7 @@ export class CollectionView implements View, ITreeNodeObject {
     const canDeleteManagedCollections = !org?.limitCollectionDeletion || org.isAdmin;
 
     // Only use individual permissions, not admin permissions
-    return (
-      canDeleteManagedCollections &&
-      this.manage &&
-      this.type != CollectionTypes.DefaultUserCollection
-    );
+    return canDeleteManagedCollections && this.manage && !this.defaultCollection;
   }
 
   /**
@@ -99,5 +95,9 @@ export class CollectionView implements View, ITreeNodeObject {
 
   static fromJSON(obj: Jsonify<CollectionView>) {
     return Object.assign(new CollectionView(new Collection()), obj);
+  }
+
+  get defaultCollection() {
+    return this.type == CollectionTypes.DefaultUserCollection;
   }
 }
