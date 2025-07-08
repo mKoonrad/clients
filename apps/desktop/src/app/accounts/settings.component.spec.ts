@@ -38,12 +38,12 @@ import { BiometricStateService, BiometricsStatus, KeyService } from "@bitwarden/
 import { SetPinComponent } from "../../auth/components/set-pin.component";
 import { SshAgentPromptType } from "../../autofill/models/ssh-agent-setting";
 import { DesktopAutofillSettingsService } from "../../autofill/services/desktop-autofill-settings.service";
+import { DesktopAutotypeService } from "../../autofill/services/desktop-autotype.service";
 import { DesktopBiometricsService } from "../../key-management/biometrics/desktop.biometrics.service";
 import { DesktopSettingsService } from "../../platform/services/desktop-settings.service";
 import { NativeMessagingManifestService } from "../services/native-messaging-manifest.service";
 
 import { SettingsComponent } from "./settings.component";
-import { DesktopAutotypeService } from "../../autofill/services/desktop-autotype.service";
 
 describe("SettingsComponent", () => {
   let component: SettingsComponent;

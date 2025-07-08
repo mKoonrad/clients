@@ -1,4 +1,4 @@
-import { combineLatest, map, Observable } from "rxjs";
+import { combineLatest, map, Observable, of } from "rxjs";
 
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
@@ -17,7 +17,7 @@ export const AUTOTYPE_ENABLED = new KeyDefinition<boolean>(
 export class DesktopAutotypeService {
   private readonly autotypeEnabledState = this.globalStateProvider.get(AUTOTYPE_ENABLED);
 
-  autotypeEnabled$: Observable<boolean>;
+  autotypeEnabled$: Observable<boolean> = of(false);
 
   constructor(
     private configService: ConfigService,
