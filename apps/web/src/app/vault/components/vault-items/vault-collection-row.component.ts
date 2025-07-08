@@ -4,7 +4,6 @@ import { Component, EventEmitter, Input, Output } from "@angular/core";
 
 import { CollectionAdminView, Unassigned, CollectionView } from "@bitwarden/admin-console/common";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
-import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 
 import { GroupView } from "../../../admin-console/organizations/core";
@@ -42,10 +41,7 @@ export class VaultCollectionRowComponent {
   @Input() checked: boolean;
   @Output() checkedToggled = new EventEmitter<void>();
 
-  constructor(
-    private i18nService: I18nService,
-    private configService: ConfigService,
-  ) {}
+  constructor(private i18nService: I18nService) {}
 
   get collectionGroups() {
     if (!(this.collection instanceof CollectionAdminView)) {
