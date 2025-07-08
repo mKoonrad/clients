@@ -51,7 +51,7 @@ import {
 import { MasterPasswordApiService } from "@bitwarden/common/auth/abstractions/master-password-api.service.abstraction";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
-import { ClientType } from "@bitwarden/common/enums";
+import { ClientType, DeviceType } from "@bitwarden/common/enums";
 import { ProcessReloadServiceAbstraction } from "@bitwarden/common/key-management/abstractions/process-reload.service";
 import { CryptoFunctionService as CryptoFunctionServiceAbstraction } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
@@ -473,12 +473,17 @@ const safeProviders: SafeProvider[] = [
   }),
   safeProvider({
     provide: DesktopAutotypeService,
-    deps: [
-      ConfigService,
-      DesktopSettingsService,
-      GlobalStateProvider,
-      PlatformUtilsServiceAbstraction,
-    ],
+    useFactory: (
+      configService: ConfigService,
+      globalStateProvider: GlobalStateProvider,
+      platformUtilsService: PlatformUtilsServiceAbstraction,
+    ) =>
+      new DesktopAutotypeService(
+        configService,
+        globalStateProvider,
+        platformUtilsService.getDevice() === DeviceType.WindowsDesktop,
+      ),
+    deps: [ConfigService, GlobalStateProvider, PlatformUtilsServiceAbstraction],
   }),
 ];
 
