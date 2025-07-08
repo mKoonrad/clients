@@ -1,68 +1,47 @@
-import { Injectable, OnDestroy } from "@angular/core";
-import { combineLatest, Subject, takeUntil } from "rxjs";
+import { combineLatest, map, Observable, of } from "rxjs";
 
-import { DeviceType } from "@bitwarden/common/enums";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
-import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
+import {
+  GlobalStateProvider,
+  AUTOTYPE_SETTINGS_DISK,
+  KeyDefinition,
+} from "@bitwarden/common/platform/state";
 
-import { DesktopSettingsService } from "../../platform/services/desktop-settings.service";
+export const AUTOTYPE_ENABLED = new KeyDefinition<boolean>(
+  AUTOTYPE_SETTINGS_DISK,
+  "autotypeEnabled",
+  { deserializer: (b) => b },
+);
 
-@Injectable({
-  providedIn: "root",
-})
-export class DesktopAutotypeService implements OnDestroy {
-  private destroy$ = new Subject<void>();
-  private isAutotypeFullyEnabled: boolean;
+export class DesktopAutotypeService {
+  private readonly autotypeEnabledState = this.globalStateProvider.get(AUTOTYPE_ENABLED);
+
+  autotypeEnabled$: Observable<boolean> = of(false);
 
   constructor(
     private configService: ConfigService,
-    private desktopSettingsService: DesktopSettingsService,
-    private platformUtilsService: PlatformUtilsService,
+    private globalStateProvider: GlobalStateProvider,
+    private isWindows: boolean,
   ) {
-    this.isAutotypeFullyEnabled = false;
-  }
-
-  async init() {
-    const isWindows = this.platformUtilsService.getDevice() === DeviceType.WindowsDesktop;
-
-    if (isWindows) {
-      combineLatest([
-        this.desktopSettingsService.autotypeEnabled$,
+    if (this.isWindows) {
+      this.autotypeEnabled$ = combineLatest([
+        this.autotypeEnabledState.state$,
         this.configService.getFeatureFlag$(FeatureFlag.WindowsDesktopAutotype),
-      ])
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(([autotypeEnabled, windowsDesktopAutotypeFeatureFlag]) => {
-          if (windowsDesktopAutotypeFeatureFlag) {
-            if (autotypeEnabled && !this.isAutotypeFullyEnabled) {
-              this.enableAutotype();
-              this.isAutotypeFullyEnabled = true;
-            } else if (!autotypeEnabled && this.isAutotypeFullyEnabled) {
-              this.disableAutotype();
-              this.isAutotypeFullyEnabled = false;
-            }
-          } else {
-            if (this.isAutotypeFullyEnabled) {
-              this.disableAutotype();
-              this.isAutotypeFullyEnabled = false;
-            }
-          }
-        });
+      ]).pipe(
+        map(
+          ([autotypeEnabled, windowsDesktopAutotypeFeatureFlag]) =>
+            autotypeEnabled && windowsDesktopAutotypeFeatureFlag,
+        ),
+      );
     }
   }
 
-  private enableAutotype() {
-    // eslint-disable-next-line no-console
-    console.log("Enabling Autotype...");
-  }
+  init() {}
 
-  private disableAutotype() {
-    // eslint-disable-next-line no-console
-    console.log("Disabling Autotype...");
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+  async setAutotypeEnabledState(enabled: boolean): Promise<void> {
+    await this.autotypeEnabledState.update(() => enabled, {
+      shouldUpdate: (currentlyEnabled) => currentlyEnabled !== enabled,
+    });
   }
 }
