@@ -1,7 +1,6 @@
 import { SignedPublicKey } from "../../types";
 import { VerifyingKey } from "../models/verifying-key";
 
-
 export class PublicAccountKeysResponseModel {
   readonly VerifyingKey: VerifyingKey;
   readonly PublicKey: string;
