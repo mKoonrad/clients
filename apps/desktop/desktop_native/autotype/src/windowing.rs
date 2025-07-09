@@ -1,6 +1,7 @@
 /*
     The `windowing` module provides a safe abstraction
-    over unsafe Win32 API functions.
+    over unsafe Win32 API functions for autotype
+    usage.
 */
 
 use std::ffi::OsString;
