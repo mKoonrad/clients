@@ -7,7 +7,7 @@ import { WebauthnRotateCredentialRequest } from "@bitwarden/common/auth/models/r
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
-import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
@@ -149,7 +149,7 @@ class TestUserKeyRotationService extends UserKeyRotationService {
   override getNewAccountKeysV2(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
-    currentSigningKey: SigningKey | null,
+    currentSigningKey: WrappedSigningKey | null,
     userId: UserId,
     kdfConfig: KdfConfig,
     email: string,
@@ -161,7 +161,7 @@ class TestUserKeyRotationService extends UserKeyRotationService {
       signedPublicKey: string;
     };
     signatureKeyPair: {
-      wrappedSigningKey: SigningKey;
+      wrappedSigningKey: WrappedSigningKey;
       verifyingKey: VerifyingKey;
     };
   }> {

@@ -1,12 +1,12 @@
-import { SigningKey } from "../models/signing-key";
+import { WrappedSigningKey } from "../models/signing-key";
 import { VerifyingKey } from "../models/verifying-key";
 
 export class SignatureKeyPairResponse {
-  readonly wrappedSigningKey: SigningKey;
+  readonly wrappedSigningKey: WrappedSigningKey;
   readonly verifyingKey: VerifyingKey;
 
   constructor(response: any) {
-    this.wrappedSigningKey = new SigningKey(response.wrappedSigningKey);
+    this.wrappedSigningKey = new WrappedSigningKey(response.wrappedSigningKey);
     this.verifyingKey = new VerifyingKey(response.verifyingKey);
   }
 }

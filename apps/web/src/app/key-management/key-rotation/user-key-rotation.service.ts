@@ -6,8 +6,10 @@ import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
-import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
+import { SecurityStateService } from "@bitwarden/common/key-management/security-state/abstractions/security-state.service";
+import { SignedSecurityState as SignedSecurityState } from "@bitwarden/common/key-management/security-state/models/security-state";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -31,7 +33,7 @@ import {
   EmergencyAccessTrustComponent,
   KeyRotationTrustInfoComponent,
 } from "@bitwarden/key-management-ui";
-import { PureCrypto, TokenProvider } from "@bitwarden/sdk-internal";
+import { PureCrypto, TokenProvider, UserCryptoV2Response } from "@bitwarden/sdk-internal";
 
 import { OrganizationUserResetPasswordService } from "../../admin-console/organizations/members/services/organization-user-reset-password/organization-user-reset-password.service";
 import { WebauthnLoginAdminService } from "../../auth/core";
@@ -49,6 +51,23 @@ type MasterPasswordAuthenticationAndUnlockData = {
   masterKeySalt: string;
   masterKeyKdfConfig: KdfConfig;
   masterPasswordHint: string;
+};
+
+type V2UserCryptographicState = {
+  userKey: UserKey;
+  publicKeyEncryptionKeyPair: {
+    wrappedPrivateKey: EncString;
+    publicKey: string;
+    signedPublicKey: string;
+  };
+  signatureKeyPair: {
+    wrappedSigningKey: WrappedSigningKey;
+    verifyingKey: VerifyingKey;
+  };
+  securityState: {
+    securityState: SignedSecurityState;
+    securityStateVersion: number;
+  };
 };
 
 /**
@@ -85,6 +104,7 @@ export class UserKeyRotationService {
     private cryptoFunctionService: CryptoFunctionService,
     private kdfConfigService: KdfConfigService,
     private sdkClientFactory: SdkClientFactory,
+    private securityStateService: SecurityStateService,
   ) {}
 
   /**
@@ -128,6 +148,7 @@ export class UserKeyRotationService {
       currentUserKey,
       currentUserKeyWrappedPrivateKey,
       signingKey,
+      securityState,
     } = await this.getCryptographicStateForUser(user);
 
     // Get new set of keys for the account.
@@ -135,6 +156,7 @@ export class UserKeyRotationService {
       currentUserKey,
       currentUserKeyWrappedPrivateKey,
       signingKey,
+      securityState,
       user.id,
       masterKeyKdfConfig,
       user.email,
@@ -192,17 +214,19 @@ export class UserKeyRotationService {
   async getRotatedAccountKeysFlagged(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
-    currentSigningKey: SigningKey | null,
+    currentSigningKey: WrappedSigningKey | null,
+    currentSecurityState: SignedSecurityState | null,
     userId: UserId,
     kdfConfig: KdfConfig,
     email: string,
     v2UpgradeEnabled: boolean,
   ): Promise<{ userKey: UserKey; accountKeysRequest: AccountKeysRequest }> {
-    if (v2UpgradeEnabled) {
+    if (v2UpgradeEnabled || !this.isV1User(currentUserKey)) {
       const keys = await this.getNewAccountKeysV2(
         currentUserKey,
         currentUserKeyWrappedPrivateKey,
         currentSigningKey,
+        currentSecurityState,
         userId,
         kdfConfig,
         email,
@@ -215,6 +239,9 @@ export class UserKeyRotationService {
           keys.publicKeyEncryptionKeyPair.signedPublicKey,
           keys.signatureKeyPair.wrappedSigningKey,
           keys.signatureKeyPair.verifyingKey,
+          keys.signatureKeyPair.verifyingKey.algorithm(),
+          keys.securityState.securityState,
+          keys.securityState.securityStateVersion,
         ),
       };
     } else {
@@ -225,8 +252,11 @@ export class UserKeyRotationService {
           keys.asymmetricEncryptionKeys.wrappedPrivateKey.encryptedString!,
           keys.asymmetricEncryptionKeys.publicKey,
           null, // No signed public key in V1
-          null, // No signing key in V1
-          null, // No verifying key in V1
+          null, // No signature key-pair in V1
+          null, // No signature key-pair in V1
+          null, // No signature key-pair algorithm in V1
+          null, // No security state in V1
+          null, // No security state in V1
         ),
       };
     }
@@ -245,7 +275,9 @@ export class UserKeyRotationService {
     // Account key rotation creates a new userkey. All downstream data and keys need to be re-encrypted under this key.
     // Further, this method is used to create new keys in the event that the key hierarchy changes, such as for the
     // creation of a new signing key pair.
-    const newUserKey = await this.makeNewUserKeyV1(currentUserKey);
+    const newUserKey = new SymmetricCryptoKey(
+      PureCrypto.make_user_key_aes256_cbc_hmac(),
+    ) as UserKey;
 
     // Re-encrypt the private key with the new user key
     // Rotation of the private key is not supported yet
@@ -271,97 +303,105 @@ export class UserKeyRotationService {
   protected async getNewAccountKeysV2(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
-    currentSigningKey: SigningKey | null,
+    currentSigningKey: WrappedSigningKey | null,
+    currentSecurityState: SignedSecurityState | null,
     userId: UserId,
     kdfConfig: KdfConfig,
     email: string,
-  ): Promise<{
-    userKey: UserKey;
-    publicKeyEncryptionKeyPair: {
-      wrappedPrivateKey: EncString;
-      publicKey: string;
-      signedPublicKey: string;
-    };
-    signatureKeyPair: {
-      wrappedSigningKey: SigningKey;
-      verifyingKey: VerifyingKey;
-    };
-  }> {
-    // Account key rotation creates a new userkey. All downstream data and keys need to be re-encrypted under this key.
-    // Further, this method is used to create new keys in the event that the key hierarchy changes, such as for the
-    // creation of a new signing key pair.
-    const { newUserKey } = await this.makeNewUserKeyV2(currentUserKey);
+  ): Promise<V2UserCryptographicState> {
+    if (this.isV1User(currentUserKey)) {
+      return this.upgradeV1UserToV2UserAccountKeys(
+        currentUserKey,
+        currentUserKeyWrappedPrivateKey,
+        userId,
+        kdfConfig,
+        email,
+      );
+    } else {
+      return this.rotateV2UserAccountKeys(
+        currentUserKey,
+        currentUserKeyWrappedPrivateKey,
+        currentSigningKey,
+        currentSecurityState,
+        userId,
+        kdfConfig,
+        email,
+      );
+    }
+  }
 
-    // Re-encrypt the private key with the new user key
-    // Rotation of the private key is not supported yet
-    const privateKey = await this.encryptService.unwrapDecapsulationKey(
-      currentUserKeyWrappedPrivateKey,
-      currentUserKey,
-    );
-    const newUserKeyWrappedPrivateKey = await this.encryptService.wrapDecapsulationKey(
-      privateKey,
-      newUserKey,
-    );
-    const publicKey = await this.cryptoFunctionService.rsaExtractPublicKey(privateKey);
-
+  protected async upgradeV1UserToV2UserAccountKeys(
+    currentUserKey: UserKey,
+    currentUserKeyWrappedPrivateKey: EncString,
+    userId: UserId,
+    kdfConfig: KdfConfig,
+    email: string,
+  ): Promise<V2UserCryptographicState> {
+    // Initialize an SDK with the current cryptographic state
     const sdk = await this.sdkClientFactory.createSdkClient(new NoopTokenProvider());
     await sdk.crypto().initialize_user_crypto({
       userId: userId,
       kdfParams: kdfConfig.toSdkConfig(),
       email: email,
-      privateKey: newUserKeyWrappedPrivateKey.encryptedString!,
-      signingKey: undefined,
+      privateKey: currentUserKeyWrappedPrivateKey.encryptedString!,
+      signingKey: null,
+      securityState: null,
       method: {
-        decryptedKey: { decrypted_user_key: newUserKey.toBase64() },
+        decryptedKey: { decrypted_user_key: currentUserKey.toBase64() },
       },
     });
 
-    if (currentSigningKey == null) {
-      const signatureKeyPairEnrollmentResponse = sdk
-        .crypto()
-        .make_user_signing_keys_for_enrollment();
-      return {
-        userKey: newUserKey,
-        publicKeyEncryptionKeyPair: {
-          wrappedPrivateKey: newUserKeyWrappedPrivateKey,
-          publicKey: Utils.fromBufferToB64(publicKey),
-          signedPublicKey: signatureKeyPairEnrollmentResponse.signedPublicKey,
-        },
-        signatureKeyPair: {
-          wrappedSigningKey: new SigningKey(signatureKeyPairEnrollmentResponse.signingKey),
-          verifyingKey: new VerifyingKey(signatureKeyPairEnrollmentResponse.verifyingKey),
-        },
-      };
-    } else {
-      const sdkWithSigningKey = await this.sdkClientFactory.createSdkClient(
-        new NoopTokenProvider(),
-      );
-      // This SDK has the current signing key, in order to be able to decrypt the current private key / signing key
-      const client = sdkWithSigningKey.crypto();
-      await client.initialize_user_crypto({
-        userId: userId,
-        kdfParams: kdfConfig.toSdkConfig(),
-        email: email,
-        privateKey: currentUserKeyWrappedPrivateKey.encryptedString!,
-        signingKey: currentSigningKey.inner(),
-        method: {
-          decryptedKey: { decrypted_user_key: currentUserKey.toBase64() },
-        },
-      });
-      const rotatedSignatureKeys = client.get_v2_rotated_account_keys(newUserKey.toBase64());
-      return {
-        userKey: newUserKey,
-        publicKeyEncryptionKeyPair: {
-          wrappedPrivateKey: new EncString(rotatedSignatureKeys.privateKey),
-          publicKey: rotatedSignatureKeys.publicKey,
-          signedPublicKey: rotatedSignatureKeys.signedPublicKey,
-        },
-        signatureKeyPair: {
-          wrappedSigningKey: new SigningKey(rotatedSignatureKeys.signingKey),
-          verifyingKey: new VerifyingKey(rotatedSignatureKeys.verifyingKey),
-        },
-      };
-    }
+    // Enroll user in v2 crypto
+    return this.fromSdkV2KeysToV2UserCryptographicState(
+      sdk.crypto().make_keys_for_user_crypto_v2(),
+    );
+  }
+
+  protected async rotateV2UserAccountKeys(
+    currentUserKey: UserKey,
+    currentUserKeyWrappedPrivateKey: EncString,
+    currentSigningKey: WrappedSigningKey | null,
+    currentSecurityState: SignedSecurityState | null,
+    userId: UserId,
+    kdfConfig: KdfConfig,
+    email: string,
+  ): Promise<V2UserCryptographicState> {
+    // Initialize an SDK with the current cryptographic state
+    const sdk = await this.sdkClientFactory.createSdkClient(new NoopTokenProvider());
+    await sdk.crypto().initialize_user_crypto({
+      userId: userId,
+      kdfParams: kdfConfig.toSdkConfig(),
+      email: email,
+      privateKey: currentUserKeyWrappedPrivateKey.encryptedString!,
+      signingKey: currentSigningKey.inner(),
+      securityState: currentSecurityState?.securityState,
+      method: {
+        decryptedKey: { decrypted_user_key: currentUserKey.toBase64() },
+      },
+    });
+
+    return this.fromSdkV2KeysToV2UserCryptographicState(sdk.crypto().get_v2_rotated_account_keys());
+  }
+
+  private fromSdkV2KeysToV2UserCryptographicState(
+    response: UserCryptoV2Response,
+  ): V2UserCryptographicState {
+    return {
+      userKey: SymmetricCryptoKey.fromString(response.userKey) as UserKey,
+      publicKeyEncryptionKeyPair: {
+        wrappedPrivateKey: new EncString(response.privateKey),
+        publicKey: response.publicKey,
+        signedPublicKey: response.signedPublicKey,
+      },
+      signatureKeyPair: {
+        wrappedSigningKey: new WrappedSigningKey(response.signingKey),
+        verifyingKey: new VerifyingKey(response.verifyingKey),
+      },
+      securityState: {
+        securityState: new SignedSecurityState(response.securityState),
+        securityStateVersion: response.securityVersion,
+      },
+    };
   }
 
   protected async createMasterPasswordUnlockDataRequest(
@@ -550,64 +590,6 @@ export class UserKeyRotationService {
     return new UserDataRequest(rotatedCiphers, rotatedFolders, rotatedSends);
   }
 
-  protected async makeNewUserKeyV1(oldUserKey: UserKey): Promise<UserKey> {
-    // The user's account format is determined by the user key.
-    // Being tied to the userkey ensures an all-or-nothing approach. A compromised
-    // server cannot downgrade to a previous format (no signing keys) without
-    // completely making the account unusable.
-    //
-    // V0: AES256-CBC (no userkey, directly using masterkey) (pre-2019 accounts)
-    //     This format is unsupported, and not secure; It is being forced migrated, and being removed
-    // V1: AES256-CBC-HMAC userkey, no signing key (2019-2025)
-    //     This format is still supported, but may be migrated in the future
-    // V2: XChaCha20-Poly1305 userkey, signing key, account security version
-    //     This is the new, modern format.
-    if (this.isV1User(oldUserKey)) {
-      this.logService.info(
-        "[Userkey rotation] Existing userkey key is AES256-CBC-HMAC; not upgrading",
-      );
-      return new SymmetricCryptoKey(PureCrypto.make_user_key_aes256_cbc_hmac()) as UserKey;
-    } else {
-      // If the feature flag is rolled back, we want to block rotation in order to be as safe as possible with the user's account.
-      this.logService.info(
-        "[Userkey rotation] Existing userkey key is XChaCha20-Poly1305, but feature flag is not enabled; aborting..",
-      );
-      throw new Error(
-        "User account crypto format is v2, but the feature flag is disabled. User key rotation cannot proceed.",
-      );
-    }
-  }
-
-  protected async makeNewUserKeyV2(
-    oldUserKey: UserKey,
-  ): Promise<{ isUpgrading: boolean; newUserKey: UserKey }> {
-    // The user's account format is determined by the user key.
-    // Being tied to the userkey ensures an all-or-nothing approach. A compromised
-    // server cannot downgrade to a previous format (no signing keys) without
-    // completely making the account unusable.
-    //
-    // V0: AES256-CBC (no userkey, directly using masterkey) (pre-2019 accounts)
-    //     This format is unsupported, and not secure; It is being forced migrated, and being removed
-    // V1: AES256-CBC-HMAC userkey, no signing key (2019-2025)
-    //     This format is still supported, but may be migrated in the future
-    // V2: XChaCha20-Poly1305 userkey, signing key, account security version
-    //     This is the new, modern format.
-    const newUserKey: UserKey = new SymmetricCryptoKey(
-      PureCrypto.make_user_key_xchacha20_poly1305(),
-    ) as UserKey;
-    const isUpgrading = this.isV1User(oldUserKey);
-    if (isUpgrading) {
-      this.logService.info(
-        "[Userkey rotation] Existing userkey key is AES256-CBC-HMAC; upgrading to XChaCha20-Poly1305",
-      );
-    } else {
-      this.logService.info(
-        "[Userkey rotation] Existing userkey key is XChaCha20-Poly1305; no upgrade needed",
-      );
-    }
-    return { isUpgrading, newUserKey };
-  }
-
   /**
    * A V1 user has no signing key, and uses AES256-CBC-HMAC.
    * A V2 user has a signing key, and uses XChaCha20-Poly1305.
@@ -643,7 +625,8 @@ export class UserKeyRotationService {
     masterKeySalt: string;
     currentUserKey: UserKey;
     currentUserKeyWrappedPrivateKey: EncString;
-    signingKey: SigningKey | null;
+    signingKey: WrappedSigningKey | null;
+    securityState: SignedSecurityState | null;
   }> {
     const masterKeyKdfConfig: KdfConfig = (await this.firstValueFromOrThrow(
       this.kdfConfigService.getKdfConfig$(user.id),
@@ -662,12 +645,16 @@ export class UserKeyRotationService {
       ))!,
     );
     const signingKey = await firstValueFrom(this.keyService.userSigningKey$(user.id));
+    const securityState = await firstValueFrom(
+      this.securityStateService.accountSecurityState$(user.id),
+    );
     return {
       masterKeyKdfConfig,
       masterKeySalt,
       currentUserKey,
       currentUserKeyWrappedPrivateKey,
       signingKey: signingKey ?? null, // Ensure signing key is null if not present
+      securityState: securityState ?? null, // Ensure security state is null if not present
     };
   }
 

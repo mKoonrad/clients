@@ -4,7 +4,7 @@ import { EncryptedOrganizationKeyData } from "@bitwarden/common/admin-console/mo
 import { ProfileOrganizationResponse } from "@bitwarden/common/admin-console/models/response/profile-organization.response";
 import { ProfileProviderOrganizationResponse } from "@bitwarden/common/admin-console/models/response/profile-provider-organization.response";
 import { ProfileProviderResponse } from "@bitwarden/common/admin-console/models/response/profile-provider.response";
-import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { KeySuffixOptions, HashPurpose } from "@bitwarden/common/platform/enums";
 import { EncryptedString, EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
@@ -294,7 +294,7 @@ export abstract class KeyService {
    * @param encryptedSigningKey An encrypted signing key
    * @param userId The user id of the user to set the signing key for
    */
-  abstract setUserSigningKey(encryptedSigningKey: SigningKey, userId: UserId): Promise<void>;
+  abstract setUserSigningKey(encryptedSigningKey: WrappedSigningKey, userId: UserId): Promise<void>;
   /**
    * Returns the private key from memory. If not available, decrypts it
    * from storage and stores it in memory
@@ -463,7 +463,7 @@ export abstract class KeyService {
    * Gets a users signing keys from local state.
    * The observable will emit null, exactly if the local state returns null.
    */
-  abstract userSigningKey$(userId: UserId): Observable<SigningKey | null>;
+  abstract userSigningKey$(userId: UserId): Observable<WrappedSigningKey | null>;
 
   /**
    * Validates that a userkey is correct for a given user

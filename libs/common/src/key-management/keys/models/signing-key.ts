@@ -5,7 +5,7 @@ import { EncString } from "@bitwarden/sdk-internal";
  * Internally, this is encrypted and needs an unlocked SDK instance for the correct user
  * to use.
  */
-export class SigningKey {
+export class WrappedSigningKey {
   private innerKey: EncString;
 
   constructor(innerKey: string) {
@@ -24,15 +24,15 @@ export class SigningKey {
   /**
    * Gets a JSON serializable version of the signing key.
    */
-  toSerializable(): SerializableUserSigningKeyPair {
-    return new SerializableUserSigningKeyPair(this.innerKey);
+  toSerializable(): SerializableWrappedUserSigningKeyPair {
+    return new SerializableWrappedUserSigningKeyPair(this.innerKey);
   }
 
   /**
    * Creates a serializable version of the signing key.
    */
-  static fromSerializable(serializable: SerializableUserSigningKeyPair): SigningKey {
-    return new SigningKey(serializable.signingKey);
+  static fromSerializable(serializable: SerializableWrappedUserSigningKeyPair): WrappedSigningKey {
+    return new WrappedSigningKey(serializable.signingKey);
   }
 }
 
@@ -41,14 +41,14 @@ export class SigningKey {
  * of the signing key, in order to be serializable with JSON typefest.
  * This is used to store the signing key to local state.
  */
-export class SerializableUserSigningKeyPair {
+export class SerializableWrappedUserSigningKeyPair {
   constructor(readonly signingKey: EncString) {}
 
-  static fromJson(obj: any): SerializableUserSigningKeyPair | null {
+  static fromJson(obj: any): SerializableWrappedUserSigningKeyPair | null {
     if (obj == null) {
       return null;
     }
 
-    return new SerializableUserSigningKeyPair(obj.signingKey);
+    return new SerializableWrappedUserSigningKeyPair(obj.signingKey);
   }
 }

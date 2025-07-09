@@ -21,7 +21,7 @@ import { ProfileProviderResponse } from "@bitwarden/common/admin-console/models/
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
-import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/key-management/master-password/abstractions/master-password.service.abstraction";
 import { VaultTimeoutStringType } from "@bitwarden/common/key-management/vault-timeout";
 import { VAULT_TIMEOUT } from "@bitwarden/common/key-management/vault-timeout/services/vault-timeout-settings.state";
@@ -990,7 +990,7 @@ export class DefaultKeyService implements KeyServiceAbstraction {
     );
   }
 
-  async setUserSigningKey(userSigningKey: SigningKey, userId: UserId): Promise<void> {
+  async setUserSigningKey(userSigningKey: WrappedSigningKey, userId: UserId): Promise<void> {
     if (userSigningKey == null) {
       throw new Error("No user signing key provided.");
     }
@@ -1004,13 +1004,13 @@ export class DefaultKeyService implements KeyServiceAbstraction {
     );
   }
 
-  userSigningKey$(userId: UserId): Observable<SigningKey | null> {
+  userSigningKey$(userId: UserId): Observable<WrappedSigningKey | null> {
     return this.stateProvider.getUser(userId, USER_KEY_ENCRYPTED_SIGNING_KEY).state$.pipe(
       map((encryptedSigningKey) => {
         if (encryptedSigningKey == null) {
           return null;
         }
-        return SigningKey.fromSerializable(encryptedSigningKey);
+        return WrappedSigningKey.fromSerializable(encryptedSigningKey);
       }),
     );
   }

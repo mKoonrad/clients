@@ -1,4 +1,4 @@
-import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
 import { EncString, SignatureAlgorithm } from "@bitwarden/sdk-internal";
 
@@ -8,7 +8,7 @@ export class SignatureKeyPairRequestModel {
   verifyingKey: string;
 
   constructor(
-    signingKey: SigningKey,
+    signingKey: WrappedSigningKey,
     verifyingKey: VerifyingKey,
     signingKeyAlgorithm: SignatureAlgorithm,
   ) {
