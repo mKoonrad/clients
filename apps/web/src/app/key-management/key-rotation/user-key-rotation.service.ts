@@ -13,6 +13,7 @@ import { ConfigService } from "@bitwarden/common/platform/abstractions/config/co
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { SdkClientFactory } from "@bitwarden/common/platform/abstractions/sdk/sdk-client-factory";
+import { SdkLoadService } from "@bitwarden/common/platform/abstractions/sdk/sdk-load.service";
 import { EncryptionType, HashPurpose } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
@@ -99,11 +100,14 @@ export class UserKeyRotationService {
     user: Account,
     newMasterPasswordHint?: string,
   ): Promise<void> {
-    this.logService.info("[UserKey Rotation] Starting user key rotation...");
+    // Key-rotation uses the SDK, so we need to ensure that the SDK is loaded / the WASM initialized.
+    await SdkLoadService.Ready;
 
     const upgradeToV2FeatureFlagEnabled = await this.configService.getFeatureFlag(
       FeatureFlag.EnrollAeadOnKeyRotation,
     );
+
+    this.logService.info("[UserKey Rotation] Starting user key rotation...");
 
     // Make sure all conditions match - e.g. account state is up to date
     await this.ensureIsAllowedToRotateUserKey();
@@ -118,59 +122,24 @@ export class UserKeyRotationService {
     }
 
     // Read current cryptographic state / settings
-    const masterKeyKdfConfig: KdfConfig = (await this.firstValueFromOrThrow(
-      this.kdfConfigService.getKdfConfig$(user.id),
-      "KDF config",
-    ))!;
-    // The masterkey salt used for deriving the masterkey always needs to be trimmed and lowercased.
-    const masterKeySalt = user.email.trim().toLowerCase();
-    const currentUserKey: UserKey = (await this.firstValueFromOrThrow(
-      this.keyService.userKey$(user.id),
-      "User key",
-    ))!;
-    const currentUserKeyWrappedPrivateKey = new EncString(
-      (await this.firstValueFromOrThrow(
-        this.keyService.userEncryptedPrivateKey$(user.id),
-        "User encrypted private key",
-      ))!,
-    );
-    const signingKey = await firstValueFrom(this.keyService.userSigningKey$(user.id));
+    const {
+      masterKeyKdfConfig,
+      masterKeySalt,
+      currentUserKey,
+      currentUserKeyWrappedPrivateKey,
+      signingKey,
+    } = await this.getCryptographicStateForUser(user);
 
-    // Update account keys
-    // This creates at least a new user key, and possibly upgrades user encryption formats
-    let newUserKey: UserKey;
-    let wrappedPrivateKey: EncString;
-    let publicKey: string;
-    let signedPublicKey: string | null = null;
-    let wrappedSigningKey: SigningKey | null = null;
-    let verifyingKey: VerifyingKey | null = null;
-    if (upgradeToV2FeatureFlagEnabled) {
-      this.logService.info("[Userkey rotation] Using v2 account keys");
-      const { userKey, asymmetricEncryptionKeys, signatureKeyPair } =
-        await this.getNewAccountKeysV2(
-          currentUserKey,
-          currentUserKeyWrappedPrivateKey,
-          signingKey,
-          user.id,
-          masterKeyKdfConfig,
-          user.email,
-        );
-      newUserKey = userKey;
-      wrappedPrivateKey = asymmetricEncryptionKeys.wrappedPrivateKey;
-      publicKey = asymmetricEncryptionKeys.publicKey;
-      signedPublicKey = asymmetricEncryptionKeys.signedPublicKey;
-      wrappedSigningKey = signatureKeyPair.wrappedSigningKey;
-      verifyingKey = signatureKeyPair.verifyingKey;
-    } else {
-      this.logService.info("[Userkey rotation] Using v1 account keys");
-      const { userKey, asymmetricEncryptionKeys } = await this.getNewAccountKeysV1(
-        currentUserKey,
-        currentUserKeyWrappedPrivateKey,
-      );
-      newUserKey = userKey;
-      wrappedPrivateKey = asymmetricEncryptionKeys.wrappedPrivateKey;
-      publicKey = asymmetricEncryptionKeys.publicKey;
-    }
+    // Get new set of keys for the account.
+    const { userKey: newUserKey, accountKeysRequest } = await this.getRotatedAccountKeysFlagged(
+      currentUserKey,
+      currentUserKeyWrappedPrivateKey,
+      signingKey,
+      user.id,
+      masterKeyKdfConfig,
+      user.email,
+      upgradeToV2FeatureFlagEnabled,
+    );
 
     // Assemble the key rotation request
     const request = new RotateUserAccountKeysRequest(
@@ -187,14 +156,7 @@ export class UserKeyRotationService {
         trustedEmergencyAccessUserPublicKeys,
         trustedOrganizationPublicKeys,
       ),
-      new AccountKeysRequest(
-        wrappedPrivateKey.encryptedString!,
-        publicKey,
-        signedPublicKey,
-        wrappedSigningKey,
-        verifyingKey,
-        verifyingKey !== null ? verifyingKey.algorithm() : null,
-      ),
+      accountKeysRequest,
       await this.getAccountDataRequest(currentUserKey, newUserKey, user),
       await this.makeServerMasterKeyAuthenticationHash(
         currentMasterPassword,
@@ -224,6 +186,49 @@ export class UserKeyRotationService {
       throw new Error(
         "The local vault is de-synced and the keys cannot be rotated. Please log out and log back in to resolve this issue.",
       );
+    }
+  }
+
+  async getRotatedAccountKeysFlagged(
+    currentUserKey: UserKey,
+    currentUserKeyWrappedPrivateKey: EncString,
+    currentSigningKey: SigningKey | null,
+    userId: UserId,
+    kdfConfig: KdfConfig,
+    email: string,
+    v2UpgradeEnabled: boolean,
+  ): Promise<{ userKey: UserKey; accountKeysRequest: AccountKeysRequest }> {
+    if (v2UpgradeEnabled) {
+      const keys = await this.getNewAccountKeysV2(
+        currentUserKey,
+        currentUserKeyWrappedPrivateKey,
+        currentSigningKey,
+        userId,
+        kdfConfig,
+        email,
+      );
+      return {
+        userKey: keys.userKey,
+        accountKeysRequest: new AccountKeysRequest(
+          keys.publicKeyEncryptionKeyPair.wrappedPrivateKey.encryptedString!,
+          keys.publicKeyEncryptionKeyPair.publicKey,
+          keys.publicKeyEncryptionKeyPair.signedPublicKey,
+          keys.signatureKeyPair.wrappedSigningKey,
+          keys.signatureKeyPair.verifyingKey,
+        ),
+      };
+    } else {
+      const keys = await this.getNewAccountKeysV1(currentUserKey, currentUserKeyWrappedPrivateKey);
+      return {
+        userKey: keys.userKey,
+        accountKeysRequest: new AccountKeysRequest(
+          keys.asymmetricEncryptionKeys.wrappedPrivateKey.encryptedString!,
+          keys.asymmetricEncryptionKeys.publicKey,
+          null, // No signed public key in V1
+          null, // No signing key in V1
+          null, // No verifying key in V1
+        ),
+      };
     }
   }
 
@@ -272,7 +277,7 @@ export class UserKeyRotationService {
     email: string,
   ): Promise<{
     userKey: UserKey;
-    asymmetricEncryptionKeys: {
+    publicKeyEncryptionKeyPair: {
       wrappedPrivateKey: EncString;
       publicKey: string;
       signedPublicKey: string;
@@ -317,7 +322,7 @@ export class UserKeyRotationService {
         .make_user_signing_keys_for_enrollment();
       return {
         userKey: newUserKey,
-        asymmetricEncryptionKeys: {
+        publicKeyEncryptionKeyPair: {
           wrappedPrivateKey: newUserKeyWrappedPrivateKey,
           publicKey: Utils.fromBufferToB64(publicKey),
           signedPublicKey: signatureKeyPairEnrollmentResponse.signedPublicKey,
@@ -346,7 +351,7 @@ export class UserKeyRotationService {
       const rotatedSignatureKeys = client.get_v2_rotated_account_keys(newUserKey.toBase64());
       return {
         userKey: newUserKey,
-        asymmetricEncryptionKeys: {
+        publicKeyEncryptionKeyPair: {
           wrappedPrivateKey: new EncString(rotatedSignatureKeys.privateKey),
           publicKey: rotatedSignatureKeys.publicKey,
           signedPublicKey: rotatedSignatureKeys.signedPublicKey,
@@ -631,6 +636,39 @@ export class UserKeyRotationService {
       masterKey,
       HashPurpose.ServerAuthorization,
     );
+  }
+
+  async getCryptographicStateForUser(user: Account): Promise<{
+    masterKeyKdfConfig: KdfConfig;
+    masterKeySalt: string;
+    currentUserKey: UserKey;
+    currentUserKeyWrappedPrivateKey: EncString;
+    signingKey: SigningKey | null;
+  }> {
+    const masterKeyKdfConfig: KdfConfig = (await this.firstValueFromOrThrow(
+      this.kdfConfigService.getKdfConfig$(user.id),
+      "KDF config",
+    ))!;
+    // The masterkey salt used for deriving the masterkey always needs to be trimmed and lowercased.
+    const masterKeySalt = user.email.trim().toLowerCase();
+    const currentUserKey: UserKey = (await this.firstValueFromOrThrow(
+      this.keyService.userKey$(user.id),
+      "User key",
+    ))!;
+    const currentUserKeyWrappedPrivateKey = new EncString(
+      (await this.firstValueFromOrThrow(
+        this.keyService.userEncryptedPrivateKey$(user.id),
+        "User encrypted private key",
+      ))!,
+    );
+    const signingKey = await firstValueFrom(this.keyService.userSigningKey$(user.id));
+    return {
+      masterKeyKdfConfig,
+      masterKeySalt,
+      currentUserKey,
+      currentUserKeyWrappedPrivateKey,
+      signingKey: signingKey ?? null, // Ensure signing key is null if not present
+    };
   }
 
   async firstValueFromOrThrow<T>(value: Observable<T>, name: string): Promise<T> {

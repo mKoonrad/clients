@@ -7,10 +7,13 @@ import { WebauthnRotateCredentialRequest } from "@bitwarden/common/auth/models/r
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
+import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
+import { SdkClientFactory } from "@bitwarden/common/platform/abstractions/sdk/sdk-client-factory";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { EncryptedString, EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
@@ -146,11 +149,30 @@ class TestUserKeyRotationService extends UserKeyRotationService {
   override getNewAccountKeysV2(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
+    currentSigningKey: SigningKey | null,
+    userId: UserId,
+    kdfConfig: KdfConfig,
+    email: string,
   ): Promise<{
     userKey: UserKey;
-    asymmetricEncryptionKeys: { wrappedPrivateKey: EncString; publicKey: string };
+    asymmetricEncryptionKeys: {
+      wrappedPrivateKey: EncString;
+      publicKey: string;
+      signedPublicKey: string;
+    };
+    signatureKeyPair: {
+      wrappedSigningKey: SigningKey;
+      verifyingKey: VerifyingKey;
+    };
   }> {
-    return super.getNewAccountKeysV2(currentUserKey, currentUserKeyWrappedPrivateKey);
+    return super.getNewAccountKeysV2(
+      currentUserKey,
+      currentUserKeyWrappedPrivateKey,
+      currentSigningKey,
+      userId,
+      kdfConfig,
+      email,
+    );
   }
   override createMasterPasswordUnlockDataRequest(
     userKey: UserKey,
@@ -248,6 +270,7 @@ describe("KeyRotationService", () => {
   let mockI18nService: MockProxy<I18nService>;
   let mockCryptoFunctionService: MockProxy<CryptoFunctionService>;
   let mockKdfConfigService: MockProxy<KdfConfigService>;
+  let mockSdkClientFactory: MockProxy<SdkClientFactory>;
 
   const mockUser = {
     id: "mockUserId" as UserId,
@@ -303,6 +326,7 @@ describe("KeyRotationService", () => {
     mockDialogService = mock<DialogService>();
     mockCryptoFunctionService = mock<CryptoFunctionService>();
     mockKdfConfigService = mock<KdfConfigService>();
+    mockSdkClientFactory = mock<SdkClientFactory>();
 
     keyRotationService = new TestUserKeyRotationService(
       mockApiService,
@@ -324,6 +348,7 @@ describe("KeyRotationService", () => {
       mockConfigService,
       mockCryptoFunctionService,
       mockKdfConfigService,
+      mockSdkClientFactory,
     );
   });
 
@@ -545,7 +570,6 @@ describe("KeyRotationService", () => {
       await expect(
         keyRotationService.getNewAccountKeysV2(
           new SymmetricCryptoKey(new Uint8Array(64)) as UserKey,
-          null,
         ),
       ).rejects.toThrow("User encryption v2 upgrade is not supported yet");
     });
