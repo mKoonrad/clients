@@ -890,6 +890,6 @@ pub mod autotype {
     #[napi]
     pub fn get_foreground_window_title() -> napi::Result<String, napi::Status> {
         crate::autotype_internal::get_foreground_window_title()
-            .map_err(|e| napi::Error::from_reason(e))
+            .map_err(napi::Error::from_reason)
     }
 }

@@ -1,7 +1,4 @@
-use windows::Win32::Foundation::HWND;
-use windows::Win32::UI::Input::KeyboardAndMouse::{RegisterHotKey, HOT_KEY_MODIFIERS, MOD_ALT};
-use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowTextLengthW};
-use windows_result::*;
+#![cfg(target_os = "windows")]
 
 mod windowing;
 

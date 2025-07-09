@@ -8,22 +8,20 @@ use std::ffi::OsString;
 use std::os::windows::ffi::OsStringExt;
 
 use windows::Win32::Foundation::HWND;
-use windows::Win32::UI::Input::KeyboardAndMouse::{RegisterHotKey, HOT_KEY_MODIFIERS, MOD_ALT};
 use windows::Win32::UI::WindowsAndMessaging::{
     GetForegroundWindow, GetWindowTextLengthW, GetWindowTextW,
 };
-use windows_result::*;
 
 /*
     Returns a handle to the foreground window.
 
     https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
 */
-pub fn get_foreground_window() -> std::result::Result<HWND, ()> {
+pub fn get_foreground_window() -> Result<HWND, ()> {
     let foreground_window_handle = unsafe { GetForegroundWindow() };
 
     if foreground_window_handle.is_invalid() {
-        return std::result::Result::Err(());
+        return Err(());
     }
 
     Ok(foreground_window_handle)
@@ -35,15 +33,15 @@ pub fn get_foreground_window() -> std::result::Result<HWND, ()> {
     https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextw
     https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror
 */
-pub fn get_window_title(window_handle: HWND) -> std::result::Result<Option<String>, ()> {
+pub fn get_window_title(window_handle: HWND) -> Result<Option<String>, ()> {
     if window_handle.is_invalid() {
-        return std::result::Result::Err(());
+        return Err(());
     }
 
     let window_title_length = get_window_title_length(window_handle)?;
     if window_title_length == 0 {
         // TODO: Future improvement is to use GetLastError
-        return std::result::Result::Ok(None);
+        return Ok(None);
     }
 
     let mut buffer: Vec<u16> = vec![0; window_title_length + 1]; // add extra space for the null character
@@ -51,7 +49,7 @@ pub fn get_window_title(window_handle: HWND) -> std::result::Result<Option<Strin
     let window_title_length = unsafe { GetWindowTextW(window_handle, &mut buffer) };
     if window_title_length == 0 {
         // TODO: Future improvement is to use GetLastError
-        return std::result::Result::Ok(None);
+        return Ok(None);
     }
 
     let window_title = OsString::from_wide(&buffer);
@@ -64,14 +62,14 @@ pub fn get_window_title(window_handle: HWND) -> std::result::Result<Option<Strin
     https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
     https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror
 */
-fn get_window_title_length(window_handle: HWND) -> std::result::Result<usize, ()> {
+fn get_window_title_length(window_handle: HWND) -> Result<usize, ()> {
     if window_handle.is_invalid() {
-        return std::result::Result::Err(());
+        return Err(());
     }
 
     match unsafe { usize::try_from(GetWindowTextLengthW(window_handle)) } {
         Ok(length) => Ok(length),
         // TODO: Future improvement is to use GetLastError
-        Err(_) => std::result::Result::Err(()),
+        Err(_) => Err(()),
     }
 }
