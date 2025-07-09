@@ -2,7 +2,7 @@
 // @ts-strict-ignore
 import { Component, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { combineLatest, firstValueFrom, lastValueFrom, map, Observable, switchMap } from "rxjs";
+import { firstValueFrom, lastValueFrom, map, Observable, switchMap } from "rxjs";
 import { first } from "rxjs/operators";
 
 import {
@@ -15,7 +15,6 @@ import { Organization } from "@bitwarden/common/admin-console/models/domain/orga
 import { PolicyResponse } from "@bitwarden/common/admin-console/models/response/policy.response";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { OrganizationBillingServiceAbstraction } from "@bitwarden/common/billing/abstractions";
-import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { DialogService } from "@bitwarden/components";
 import {
@@ -25,7 +24,7 @@ import {
 import { All } from "@bitwarden/web-vault/app/vault/individual-vault/vault-filter/shared/models/routed-vault-filter.model";
 
 import { PolicyListService } from "../../core/policy-list.service";
-import { BasePolicy, RestrictedItemTypesPolicy } from "../policies";
+import { BasePolicy } from "../policies";
 import { CollectionDialogTabType } from "../shared/components/collection-dialog";
 
 import { PolicyEditComponent, PolicyEditDialogResult } from "./policy-edit.component";
@@ -38,7 +37,7 @@ import { PolicyEditComponent, PolicyEditDialogResult } from "./policy-edit.compo
 export class PoliciesComponent implements OnInit {
   loading = true;
   organizationId: string;
-  policies$: Observable<BasePolicy[]>;
+  policies: BasePolicy[];
   protected organization$: Observable<Organization>;
 
   private orgPolicies: PolicyResponse[];
@@ -66,24 +65,24 @@ export class PoliciesComponent implements OnInit {
       this.organization$ = this.organizationService
         .organizations$(userId)
         .pipe(getOrganizationById(this.organizationId));
-      this.policies$ = this.policyListService.getPolicies();
+      this.policies = this.policyListService.getPolicies();
 
       await this.load();
 
       // Handle policies component launch from Event message
-      combineLatest([this.policies$, this.route.queryParams])
+      this.route.queryParams
         .pipe(first())
         /* eslint-disable-next-line rxjs-angular/prefer-takeuntil, rxjs/no-async-subscribe, rxjs/no-nested-subscribe */
-        .subscribe(async ([policies, qParams]) => {
+        .subscribe(async (qParams) => {
           if (qParams.policyId != null) {
             const policyIdFromEvents: string = qParams.policyId;
             for (const orgPolicy of this.orgPolicies) {
               if (orgPolicy.id === policyIdFromEvents) {
-                for (let i = 0; i < policies.length; i++) {
-                  if (policies[i].type === orgPolicy.type) {
+                for (let i = 0; i < this.policies.length; i++) {
+                  if (this.policies[i].type === orgPolicy.type) {
                     // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.edit(policies[i]);
+                    this.edit(this.policies[i]);
                     break;
                   }
                 }
@@ -96,12 +95,6 @@ export class PoliciesComponent implements OnInit {
   }
 
   async load() {
-    const removeCardItemPolicy$ = this.configService
-      .getFeatureFlag$(FeatureFlag.RemoveCardItemTypePolicy)
-      .pipe(map((enabled) => (enabled ? [new RestrictedItemTypesPolicy()] : [])));
-
-    this.policyListService.addPolicies(removeCardItemPolicy$);
-
     const response = await this.policyApiService.getPolicies(this.organizationId);
     this.orgPolicies = response.data != null && response.data.length > 0 ? response.data : [];
     this.orgPolicies.forEach((op) => {

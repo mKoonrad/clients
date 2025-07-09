@@ -1,17 +1,13 @@
-import { combineLatest, map, Observable, of } from "rxjs";
-
 import { BasePolicy } from "../organizations/policies";
 
 export class PolicyListService {
-  private policies$: Observable<BasePolicy[]> = of([]);
+  private policies: BasePolicy[] = [];
 
-  addPolicies(policies: Observable<BasePolicy[]>) {
-    this.policies$ = combineLatest([this.policies$, policies]).pipe(
-      map(([policies, newPolicies]) => policies.concat(newPolicies)),
-    );
+  addPolicies(policies: BasePolicy[]) {
+    this.policies.push(...policies);
   }
 
-  getPolicies(): Observable<BasePolicy[]> {
-    return this.policies$;
+  getPolicies(): BasePolicy[] {
+    return this.policies;
   }
 }

@@ -3,7 +3,7 @@
 import { Component, DestroyRef, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Router } from "@angular/router";
-import { Subject, filter, firstValueFrom, map, of, timeout } from "rxjs";
+import { Subject, filter, firstValueFrom, map, timeout } from "rxjs";
 
 import { CollectionService } from "@bitwarden/admin-console/common";
 import { DeviceTrustToastService } from "@bitwarden/angular/auth/services/device-trust-toast.service.abstraction";
@@ -42,6 +42,7 @@ import {
   SingleOrgPolicy,
   TwoFactorAuthenticationPolicy,
   RemoveUnlockWithPinPolicy,
+  RestrictedItemTypesPolicy,
 } from "./admin-console/organizations/policies";
 
 const BroadcasterSubscriptionId = "AppComponent";
@@ -236,21 +237,20 @@ export class AppComponent implements OnDestroy, OnInit {
       });
     });
 
-    this.policyListService.addPolicies(
-      of([
-        new TwoFactorAuthenticationPolicy(),
-        new MasterPasswordPolicy(),
-        new RemoveUnlockWithPinPolicy(),
-        new ResetPasswordPolicy(),
-        new PasswordGeneratorPolicy(),
-        new SingleOrgPolicy(),
-        new RequireSsoPolicy(),
-        new OrganizationDataOwnershipPolicy(),
-        new vNextOrganizationDataOwnershipPolicy(),
-        new DisableSendPolicy(),
-        new SendOptionsPolicy(),
-      ]),
-    );
+    this.policyListService.addPolicies([
+      new TwoFactorAuthenticationPolicy(),
+      new MasterPasswordPolicy(),
+      new RemoveUnlockWithPinPolicy(),
+      new ResetPasswordPolicy(),
+      new PasswordGeneratorPolicy(),
+      new SingleOrgPolicy(),
+      new RequireSsoPolicy(),
+      new OrganizationDataOwnershipPolicy(),
+      new vNextOrganizationDataOwnershipPolicy(),
+      new DisableSendPolicy(),
+      new SendOptionsPolicy(),
+      new RestrictedItemTypesPolicy(),
+    ]);
   }
 
   ngOnDestroy() {

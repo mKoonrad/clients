@@ -8,7 +8,7 @@ import { ConfigService } from "@bitwarden/common/platform/abstractions/config/co
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { DialogService } from "@bitwarden/components";
 
-import { LooseComponentsModule, SharedModule } from "../../../shared";
+import { SharedModule } from "../../../shared";
 
 import { BasePolicy, BasePolicyComponent } from "./base-policy.component";
 
@@ -28,7 +28,7 @@ export class vNextOrganizationDataOwnershipPolicy extends BasePolicy {
   selector: "vnext-policy-organization-data-ownership",
   templateUrl: "vnext-organization-data-ownership.component.html",
   standalone: true,
-  imports: [SharedModule, LooseComponentsModule],
+  imports: [SharedModule],
 })
 export class vNextOrganizationDataOwnershipPolicyComponent
   extends BasePolicyComponent
@@ -44,7 +44,7 @@ export class vNextOrganizationDataOwnershipPolicyComponent
   @ViewChild("dialog", { static: true }) warningContent!: TemplateRef<unknown>;
 
   async buildRequest() {
-    if (this.policyResponse?.enabled && this.policyResponse?.enabled != this.enabled.value) {
+    if (this.policyResponse?.enabled && !this.enabled.value) {
       const dialogRef = this.dialogService.open(this.warningContent);
       const result = await lastValueFrom(dialogRef.closed);
 
