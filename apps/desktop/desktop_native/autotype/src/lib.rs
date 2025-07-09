@@ -1,20 +1,18 @@
+use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Input::KeyboardAndMouse::{RegisterHotKey, HOT_KEY_MODIFIERS, MOD_ALT};
+use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowTextLengthW};
 use windows_result::*;
 
-pub fn get_focused_window() {}
+mod windowing;
 
 /*
-    A safe wrapper around the unsafe RegisterHotKey Win32 function.
-
-    https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/UI/Input/KeyboardAndMouse/fn.RegisterHotKey.html
-    https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey
+    Gets the title bar string for the foreground window.
 */
-pub fn register_hotkey() -> std::result::Result<String, String> {
-    let r = unsafe { RegisterHotKey(None, 1, MOD_ALT, 42) }; // ALT + b
+pub fn get_foreground_window_title() -> std::result::Result<String, String> {
+    let w = windowing::get_foreground_window().expect("failed to get foreground window");
+    let title = windowing::get_window_title(w)
+        .expect("failed to get window title")
+        .expect("the window doesn't have a title (or an error occurred");
 
-    if let windows_result::Result::Err(e) = r {
-        return std::result::Result::Err(e.message());
-    }
-
-    Ok(String::from("it works!"))
+    Ok(title)
 }
