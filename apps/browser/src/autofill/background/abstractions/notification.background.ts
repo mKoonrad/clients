@@ -20,7 +20,7 @@ interface NotificationQueueMessage {
 
 interface AddChangePasswordQueueMessage extends NotificationQueueMessage {
   type: "change";
-  cipherId: string;
+  cipherIds: CipherView["id"][];
   newPassword: string;
 }
 

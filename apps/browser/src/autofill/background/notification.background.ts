@@ -538,11 +538,14 @@ export default class NotificationBackground {
     message: NotificationBackgroundExtensionMessage,
     sender: chrome.runtime.MessageSender,
   ) {
+    const fnlog = (...args) => console.log("triggerChangedPasswordNotification", ...args);
+
     const changeData = message.data as ChangePasswordMessageData;
     const loginDomain = Utils.getDomain(changeData.url);
     if (loginDomain == null) {
       return false;
     }
+    fnlog({ loginDomain });
 
     if ((await this.getAuthStatus()) < AuthenticationStatus.Unlocked) {
       await this.pushChangePasswordToQueue(
@@ -554,6 +557,7 @@ export default class NotificationBackground {
       );
       return true;
     }
+    fnlog({ authStatus: await this.getAuthStatus() });
 
     let id: string = null;
     const activeUserId = await firstValueFrom(
@@ -564,6 +568,7 @@ export default class NotificationBackground {
     }
 
     const ciphers = await this.cipherService.getAllDecryptedForUrl(changeData.url, activeUserId);
+    fnlog({ ciphers }, ciphers.length);
     if (changeData.currentPassword != null) {
       const passwordMatches = ciphers.filter(
         (c) => c.login.password === changeData.currentPassword,
@@ -578,6 +583,7 @@ export default class NotificationBackground {
       await this.pushChangePasswordToQueue(id, loginDomain, changeData.newPassword, sender.tab);
       return true;
     }
+    console.log("got here");
     return false;
   }
 
