@@ -8,7 +8,8 @@ import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/a
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
 import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
-import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
+import { SecurityStateService } from "@bitwarden/common/key-management/security-state/abstractions/security-state.service";
+import { SignedSecurityState } from "@bitwarden/common/key-management/security-state/models/security-state";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -51,6 +52,8 @@ import { EmergencyAccessWithIdRequest } from "../../auth/emergency-access/reques
 import { MasterPasswordUnlockDataRequest } from "./request/master-password-unlock-data.request";
 import { UnlockDataRequest } from "./request/unlock-data.request";
 import { UserDataRequest } from "./request/userdata.request";
+import { V1UserCryptographicState } from "./types/v1-cryptographic-state";
+import { V2UserCryptographicState } from "./types/v2-cryptographic-state";
 import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
 import { UserKeyRotationService } from "./user-key-rotation.service";
 
@@ -140,35 +143,23 @@ class TestUserKeyRotationService extends UserKeyRotationService {
   override getNewAccountKeysV1(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
-  ): Promise<{
-    userKey: UserKey;
-    asymmetricEncryptionKeys: { wrappedPrivateKey: EncString; publicKey: string };
-  }> {
+  ): Promise<V1UserCryptographicState> {
     return super.getNewAccountKeysV1(currentUserKey, currentUserKeyWrappedPrivateKey);
   }
   override getNewAccountKeysV2(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
     currentSigningKey: WrappedSigningKey | null,
+    currentSecurityState: SignedSecurityState | null,
     userId: UserId,
     kdfConfig: KdfConfig,
     email: string,
-  ): Promise<{
-    userKey: UserKey;
-    asymmetricEncryptionKeys: {
-      wrappedPrivateKey: EncString;
-      publicKey: string;
-      signedPublicKey: string;
-    };
-    signatureKeyPair: {
-      wrappedSigningKey: WrappedSigningKey;
-      verifyingKey: VerifyingKey;
-    };
-  }> {
+  ): Promise<V2UserCryptographicState> {
     return super.getNewAccountKeysV2(
       currentUserKey,
       currentUserKeyWrappedPrivateKey,
       currentSigningKey,
+      currentSecurityState,
       userId,
       kdfConfig,
       email,
@@ -221,14 +212,6 @@ class TestUserKeyRotationService extends UserKeyRotationService {
   ): Promise<UserDataRequest> {
     return super.getAccountDataRequest(originalUserKey, newUnencryptedUserKey, user);
   }
-  override makeNewUserKeyV1(oldUserKey: UserKey): Promise<UserKey> {
-    return super.makeNewUserKeyV1(oldUserKey);
-  }
-  override makeNewUserKeyV2(
-    oldUserKey: UserKey,
-  ): Promise<{ isUpgrading: boolean; newUserKey: UserKey }> {
-    return super.makeNewUserKeyV2(oldUserKey);
-  }
   override isV1User(userKey: UserKey): boolean {
     return super.isV1User(userKey);
   }
@@ -271,6 +254,7 @@ describe("KeyRotationService", () => {
   let mockCryptoFunctionService: MockProxy<CryptoFunctionService>;
   let mockKdfConfigService: MockProxy<KdfConfigService>;
   let mockSdkClientFactory: MockProxy<SdkClientFactory>;
+  let mockSecurityStateService: MockProxy<SecurityStateService>;
 
   const mockUser = {
     id: "mockUserId" as UserId,
@@ -327,6 +311,7 @@ describe("KeyRotationService", () => {
     mockCryptoFunctionService = mock<CryptoFunctionService>();
     mockKdfConfigService = mock<KdfConfigService>();
     mockSdkClientFactory = mock<SdkClientFactory>();
+    mockSecurityStateService = mock<SecurityStateService>();
 
     keyRotationService = new TestUserKeyRotationService(
       mockApiService,
@@ -349,6 +334,7 @@ describe("KeyRotationService", () => {
       mockCryptoFunctionService,
       mockKdfConfigService,
       mockSdkClientFactory,
+      mockSecurityStateService,
     );
   });
 
@@ -356,7 +342,6 @@ describe("KeyRotationService", () => {
     jest.clearAllMocks();
     jest.mock("@bitwarden/key-management-ui");
     jest.spyOn(PureCrypto, "make_user_key_aes256_cbc_hmac").mockReturnValue(new Uint8Array(64));
-    jest.spyOn(PureCrypto, "make_user_key_xchacha20_poly1305").mockReturnValue(new Uint8Array(70));
     jest
       .spyOn(PureCrypto, "encrypt_user_key_with_master_password")
       .mockReturnValue("mockNewUserKey");
@@ -557,21 +542,11 @@ describe("KeyRotationService", () => {
       );
       expect(result).toEqual({
         userKey: expect.any(SymmetricCryptoKey),
-        asymmetricEncryptionKeys: {
-          wrappedPrivateKey: mockNewEncryptedPrivateKey,
+        publicKeyEncryptionKeyPair: {
+          wrappedPrivateKey: mockNewEncryptedPrivateKey.encryptedString!,
           publicKey: Utils.fromBufferToB64(new Uint8Array(400)),
         },
       });
-    });
-  });
-
-  describe("getNewAccountKeysV2", () => {
-    it("throws not supported", async () => {
-      await expect(
-        keyRotationService.getNewAccountKeysV2(
-          new SymmetricCryptoKey(new Uint8Array(64)) as UserKey,
-        ),
-      ).rejects.toThrow("User encryption v2 upgrade is not supported yet");
     });
   });
 
@@ -799,45 +774,6 @@ describe("KeyRotationService", () => {
         mockGranteeEmergencyAccessWithPublicKey.publicKey,
       ]);
       expect(trustedOrgs).toEqual([mockOrganizationUserResetPasswordEntry.publicKey]);
-    });
-  });
-
-  describe("makeNewUserKeyV1", () => {
-    it("throws if old keys is xchacha20poly1305 key", async () => {
-      await expect(
-        keyRotationService.makeNewUserKeyV1(new SymmetricCryptoKey(new Uint8Array(70)) as UserKey),
-      ).rejects.toThrow(
-        "User account crypto format is v2, but the feature flag is disabled. User key rotation cannot proceed.",
-      );
-    });
-    it("returns new user key", async () => {
-      const oldKey = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
-      const newKey = await keyRotationService.makeNewUserKeyV1(oldKey);
-      expect(newKey).toEqual(new SymmetricCryptoKey(new Uint8Array(64)));
-    });
-  });
-
-  describe("makeNewUserKeyV2", () => {
-    it("returns xchacha20poly1305 key", async () => {
-      const oldKey = new SymmetricCryptoKey(new Uint8Array(70)) as UserKey;
-      const { newUserKey } = await keyRotationService.makeNewUserKeyV2(oldKey);
-      expect(newUserKey).toEqual(new SymmetricCryptoKey(new Uint8Array(70)));
-    });
-    it("returns isUpgrading true if old key is v1", async () => {
-      const oldKey = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
-      const newKey = await keyRotationService.makeNewUserKeyV2(oldKey);
-      expect(newKey).toEqual({
-        newUserKey: new SymmetricCryptoKey(new Uint8Array(70)),
-        isUpgrading: true,
-      });
-    });
-    it("returns isUpgrading false if old key is v2", async () => {
-      const oldKey = new SymmetricCryptoKey(new Uint8Array(70)) as UserKey;
-      const newKey = await keyRotationService.makeNewUserKeyV2(oldKey);
-      expect(newKey).toEqual({
-        newUserKey: new SymmetricCryptoKey(new Uint8Array(70)),
-        isUpgrading: false,
-      });
     });
   });
 

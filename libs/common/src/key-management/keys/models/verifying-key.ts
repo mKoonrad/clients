@@ -1,3 +1,4 @@
+import { SdkLoadService } from "@bitwarden/common/platform/abstractions/sdk/sdk-load.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { PureCrypto } from "@bitwarden/sdk-internal";
 
@@ -23,7 +24,8 @@ export class VerifyingKey {
   /**
    * Returns the algorithm of the underlying signature scheme of the verifying key.
    */
-  algorithm(): SigningKeyAlgorithm {
+  async algorithm(): Promise<SigningKeyAlgorithm> {
+    await SdkLoadService.Ready;
     return PureCrypto.key_algorithm_for_verifying_key(Utils.fromB64ToArray(this.innerKey));
   }
 }

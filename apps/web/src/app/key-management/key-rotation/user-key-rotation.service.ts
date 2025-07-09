@@ -7,7 +7,6 @@ import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/a
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
 import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
-import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
 import { SecurityStateService } from "@bitwarden/common/key-management/security-state/abstractions/security-state.service";
 import { SignedSecurityState as SignedSecurityState } from "@bitwarden/common/key-management/security-state/models/security-state";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
@@ -33,7 +32,7 @@ import {
   EmergencyAccessTrustComponent,
   KeyRotationTrustInfoComponent,
 } from "@bitwarden/key-management-ui";
-import { PureCrypto, TokenProvider, UserCryptoV2Response } from "@bitwarden/sdk-internal";
+import { PureCrypto, TokenProvider } from "@bitwarden/sdk-internal";
 
 import { OrganizationUserResetPasswordService } from "../../admin-console/organizations/members/services/organization-user-reset-password/organization-user-reset-password.service";
 import { WebauthnLoginAdminService } from "../../auth/core";
@@ -44,6 +43,11 @@ import { MasterPasswordUnlockDataRequest } from "./request/master-password-unloc
 import { RotateUserAccountKeysRequest } from "./request/rotate-user-account-keys.request";
 import { UnlockDataRequest } from "./request/unlock-data.request";
 import { UserDataRequest } from "./request/userdata.request";
+import { V1UserCryptographicState } from "./types/v1-cryptographic-state";
+import {
+  fromSdkV2KeysToV2UserCryptographicState,
+  V2UserCryptographicState,
+} from "./types/v2-cryptographic-state";
 import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
 
 type MasterPasswordAuthenticationAndUnlockData = {
@@ -51,23 +55,6 @@ type MasterPasswordAuthenticationAndUnlockData = {
   masterKeySalt: string;
   masterKeyKdfConfig: KdfConfig;
   masterPasswordHint: string;
-};
-
-type V2UserCryptographicState = {
-  userKey: UserKey;
-  publicKeyEncryptionKeyPair: {
-    wrappedPrivateKey: EncString;
-    publicKey: string;
-    signedPublicKey: string;
-  };
-  signatureKeyPair: {
-    wrappedSigningKey: WrappedSigningKey;
-    verifyingKey: VerifyingKey;
-  };
-  securityState: {
-    securityState: SignedSecurityState;
-    securityStateVersion: number;
-  };
 };
 
 /**
@@ -233,46 +220,26 @@ export class UserKeyRotationService {
       );
       return {
         userKey: keys.userKey,
-        accountKeysRequest: new AccountKeysRequest(
-          keys.publicKeyEncryptionKeyPair.wrappedPrivateKey.encryptedString!,
-          keys.publicKeyEncryptionKeyPair.publicKey,
-          keys.publicKeyEncryptionKeyPair.signedPublicKey,
-          keys.signatureKeyPair.wrappedSigningKey,
-          keys.signatureKeyPair.verifyingKey,
-          keys.signatureKeyPair.verifyingKey.algorithm(),
-          keys.securityState.securityState,
-          keys.securityState.securityStateVersion,
-        ),
+        accountKeysRequest: await AccountKeysRequest.fromV2CryptographicState(keys),
       };
     } else {
       const keys = await this.getNewAccountKeysV1(currentUserKey, currentUserKeyWrappedPrivateKey);
       return {
         userKey: keys.userKey,
-        accountKeysRequest: new AccountKeysRequest(
-          keys.asymmetricEncryptionKeys.wrappedPrivateKey.encryptedString!,
-          keys.asymmetricEncryptionKeys.publicKey,
-          null, // No signed public key in V1
-          null, // No signature key-pair in V1
-          null, // No signature key-pair in V1
-          null, // No signature key-pair algorithm in V1
-          null, // No security state in V1
-          null, // No security state in V1
-        ),
+        accountKeysRequest: AccountKeysRequest.fromV1CryptographicState(keys),
       };
     }
   }
 
+  /**
+   * This method rotates the user key of a V1 user and re-encrypts the private key.
+   * @deprecated Removed after roll-out of V2 encryption.
+   */
   protected async getNewAccountKeysV1(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
-  ): Promise<{
-    userKey: UserKey;
-    asymmetricEncryptionKeys: {
-      wrappedPrivateKey: EncString;
-      publicKey: string;
-    };
-  }> {
-    // Account key rotation creates a new userkey. All downstream data and keys need to be re-encrypted under this key.
+  ): Promise<V1UserCryptographicState> {
+    // Account key rotation creates a new user key. All downstream data and keys need to be re-encrypted under this key.
     // Further, this method is used to create new keys in the event that the key hierarchy changes, such as for the
     // creation of a new signing key pair.
     const newUserKey = new SymmetricCryptoKey(
@@ -293,13 +260,16 @@ export class UserKeyRotationService {
 
     return {
       userKey: newUserKey,
-      asymmetricEncryptionKeys: {
-        wrappedPrivateKey: newUserKeyWrappedPrivateKey,
+      publicKeyEncryptionKeyPair: {
+        wrappedPrivateKey: newUserKeyWrappedPrivateKey.encryptedString!,
         publicKey: Utils.fromBufferToB64(publicKey),
       },
     };
   }
 
+  /**
+   * This method either enrolls a user from v1 encryption to v2 encryption, rotating the user key, or rotates the keys of a v2 user, staying on v2.
+   */
   protected async getNewAccountKeysV2(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
@@ -330,6 +300,10 @@ export class UserKeyRotationService {
     }
   }
 
+  /**
+   * Upgrades a V1 user to a V2 user by creating a new user key, re-encrypting the private key, generating a signature key-pair, and
+   * finally creating a signed security state.
+   */
   protected async upgradeV1UserToV2UserAccountKeys(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
@@ -351,17 +325,17 @@ export class UserKeyRotationService {
       },
     });
 
-    // Enroll user in v2 crypto
-    return this.fromSdkV2KeysToV2UserCryptographicState(
-      sdk.crypto().make_keys_for_user_crypto_v2(),
-    );
+    return fromSdkV2KeysToV2UserCryptographicState(sdk.crypto().make_keys_for_user_crypto_v2());
   }
 
+  /**
+   * Generates a new user key for a v2 user, and re-encrypts the private key, signing key.
+   */
   protected async rotateV2UserAccountKeys(
     currentUserKey: UserKey,
     currentUserKeyWrappedPrivateKey: EncString,
-    currentSigningKey: WrappedSigningKey | null,
-    currentSecurityState: SignedSecurityState | null,
+    currentSigningKey: WrappedSigningKey,
+    currentSecurityState: SignedSecurityState,
     userId: UserId,
     kdfConfig: KdfConfig,
     email: string,
@@ -374,36 +348,18 @@ export class UserKeyRotationService {
       email: email,
       privateKey: currentUserKeyWrappedPrivateKey.encryptedString!,
       signingKey: currentSigningKey.inner(),
-      securityState: currentSecurityState?.securityState,
+      securityState: currentSecurityState.securityState,
       method: {
         decryptedKey: { decrypted_user_key: currentUserKey.toBase64() },
       },
     });
 
-    return this.fromSdkV2KeysToV2UserCryptographicState(sdk.crypto().get_v2_rotated_account_keys());
+    return fromSdkV2KeysToV2UserCryptographicState(sdk.crypto().get_v2_rotated_account_keys());
   }
 
-  private fromSdkV2KeysToV2UserCryptographicState(
-    response: UserCryptoV2Response,
-  ): V2UserCryptographicState {
-    return {
-      userKey: SymmetricCryptoKey.fromString(response.userKey) as UserKey,
-      publicKeyEncryptionKeyPair: {
-        wrappedPrivateKey: new EncString(response.privateKey),
-        publicKey: response.publicKey,
-        signedPublicKey: response.signedPublicKey,
-      },
-      signatureKeyPair: {
-        wrappedSigningKey: new WrappedSigningKey(response.signingKey),
-        verifyingKey: new VerifyingKey(response.verifyingKey),
-      },
-      securityState: {
-        securityState: new SignedSecurityState(response.securityState),
-        securityStateVersion: response.securityVersion,
-      },
-    };
-  }
-
+  /**
+   * Generates a new request for updating the master-password unlock/authentication data.
+   */
   protected async createMasterPasswordUnlockDataRequest(
     userKey: UserKey,
     newUnlockData: MasterPasswordAuthenticationAndUnlockData,
@@ -433,6 +389,10 @@ export class UserKeyRotationService {
     );
   }
 
+  /**
+   * Re-generates the accounts unlock methods, including master-password, passkey, trusted device, emergency access, and organization account recovery
+   * for the new user key.
+   */
   protected async getAccountUnlockDataRequest(
     userId: UserId,
     currentUserKey: UserKey,
@@ -482,6 +442,9 @@ export class UserKeyRotationService {
     );
   }
 
+  /**
+   * Verifies the trust of the organizations and emergency access users by prompting the user. Denying any of these will return early.
+   */
   protected async verifyTrust(user: Account): Promise<{
     wasTrustDenied: boolean;
     trustedOrganizationPublicKeys: Uint8Array[];
@@ -558,6 +521,9 @@ export class UserKeyRotationService {
     };
   }
 
+  /**
+   * Re-encrypts the account data owned by the user, such as ciphers, folders, and sends with the new user key.
+   */
   protected async getAccountDataRequest(
     originalUserKey: UserKey,
     newUnencryptedUserKey: UserKey,

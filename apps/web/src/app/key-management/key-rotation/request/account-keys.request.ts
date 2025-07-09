@@ -1,12 +1,9 @@
-import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
-import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
-import { SignedSecurityState } from "@bitwarden/common/key-management/security-state/models/security-state";
 import { SecurityStateRequest } from "@bitwarden/common/key-management/security-state/request/security-state.request";
-import { SignedPublicKey } from "@bitwarden/common/key-management/types";
-import { EncString, SignatureAlgorithm } from "@bitwarden/sdk-internal";
 
 import { PublicKeyEncryptionKeyPairRequestModel } from "../model/public-key-encryption-keypair-request.model";
 import { SignatureKeyPairRequestModel } from "../model/signature-keypair-request-request.model";
+import { V1UserCryptographicState } from "../types/v1-cryptographic-state";
+import { V2UserCryptographicState } from "../types/v2-cryptographic-state";
 
 // This request contains other account-owned keys that are encrypted with the user key.
 export class AccountKeysRequest {
@@ -23,31 +20,42 @@ export class AccountKeysRequest {
   signatureKeyPair: SignatureKeyPairRequestModel | null = null;
   securityState: SecurityStateRequest | null = null;
 
-  constructor(
-    wrappedPrivateKey: EncString,
-    publicKey: string,
-    signedPublicKey: SignedPublicKey | null,
-    wrappedSigningKey: WrappedSigningKey | null,
-    verifyingKey: VerifyingKey | null,
-    signatureAlgorithm: SignatureAlgorithm | null = null,
-    securityState: SignedSecurityState | null = null,
-    securityVersion: number | null = null,
-  ) {
-    this.userKeyEncryptedAccountPrivateKey = wrappedPrivateKey;
-    this.accountPublicKey = publicKey;
-    this.publicKeyEncryptionKeyPair = new PublicKeyEncryptionKeyPairRequestModel(
-      wrappedPrivateKey,
-      publicKey,
-      signedPublicKey,
+  constructor() {}
+
+  static fromV1CryptographicState(state: V1UserCryptographicState): AccountKeysRequest {
+    const request = new AccountKeysRequest();
+    request.userKeyEncryptedAccountPrivateKey = state.publicKeyEncryptionKeyPair.wrappedPrivateKey;
+    request.accountPublicKey = state.publicKeyEncryptionKeyPair.publicKey;
+    request.publicKeyEncryptionKeyPair = new PublicKeyEncryptionKeyPairRequestModel(
+      state.publicKeyEncryptionKeyPair.wrappedPrivateKey,
+      state.publicKeyEncryptionKeyPair.publicKey,
+      null,
     );
 
-    if (wrappedSigningKey && verifyingKey && signatureAlgorithm) {
-      this.signatureKeyPair = new SignatureKeyPairRequestModel(
-        wrappedSigningKey,
-        verifyingKey,
-        signatureAlgorithm,
-      );
-      this.securityState = new SecurityStateRequest(securityState.securityState, securityVersion);
-    }
+    return request;
+  }
+
+  static async fromV2CryptographicState(
+    state: V2UserCryptographicState,
+  ): Promise<AccountKeysRequest> {
+    const request = new AccountKeysRequest();
+    request.userKeyEncryptedAccountPrivateKey = state.publicKeyEncryptionKeyPair.wrappedPrivateKey!;
+    request.accountPublicKey = state.publicKeyEncryptionKeyPair.publicKey;
+    request.publicKeyEncryptionKeyPair = new PublicKeyEncryptionKeyPairRequestModel(
+      state.publicKeyEncryptionKeyPair.wrappedPrivateKey,
+      state.publicKeyEncryptionKeyPair.publicKey,
+      state.publicKeyEncryptionKeyPair.signedPublicKey,
+    );
+    request.signatureKeyPair = new SignatureKeyPairRequestModel(
+      state.signatureKeyPair.wrappedSigningKey,
+      state.signatureKeyPair.verifyingKey,
+      await state.signatureKeyPair.verifyingKey.algorithm(),
+    );
+    request.securityState = new SecurityStateRequest(
+      state.securityState.securityState.securityState,
+      state.securityState.securityStateVersion,
+    );
+
+    return request;
   }
 }
