@@ -18,7 +18,7 @@ export class AccountKeysRequest {
   accountPublicKey: string;
 
   publicKeyEncryptionKeyPair: PublicKeyEncryptionKeyPairRequestModel | null;
-  signatureKeyPair: SignatureKeyPairRequestModel | null;
+  signatureKeyPair: SignatureKeyPairRequestModel | null = null;
 
   constructor(
     wrappedPrivateKey: EncString,

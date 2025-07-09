@@ -275,9 +275,9 @@ export class UserKeyRotationService {
     asymmetricEncryptionKeys: {
       wrappedPrivateKey: EncString;
       publicKey: string;
-      signedPublicKey?: string | null;
+      signedPublicKey: string;
     };
-    signatureKeyPair?: {
+    signatureKeyPair: {
       wrappedSigningKey: SigningKey;
       verifyingKey: VerifyingKey;
     };
@@ -305,7 +305,7 @@ export class UserKeyRotationService {
       kdfParams: kdfConfig.toSdkConfig(),
       email: email,
       privateKey: newUserKeyWrappedPrivateKey.encryptedString!,
-      signingKey: null,
+      signingKey: undefined,
       method: {
         decryptedKey: { decrypted_user_key: newUserKey.toBase64() },
       },
