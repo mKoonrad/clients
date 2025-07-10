@@ -306,7 +306,16 @@ export class Main {
         process.platform === "win32",
       ),
     );
-    this.mainDesktopAutotypeService.init();
+
+    app
+      .whenReady()
+      .then(() => {
+        this.mainDesktopAutotypeService.init();
+      })
+      .catch((reason) => {
+        // eslint-disable-next-line no-console
+        console.log("Autotype Issue: " + reason);
+      });
   }
 
   bootstrap() {
