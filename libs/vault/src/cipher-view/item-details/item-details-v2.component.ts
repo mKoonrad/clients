@@ -89,7 +89,7 @@ export class ItemDetailsV2Component implements OnChanges {
   }
 
   hasSmallScreen() {
-    return this.document.documentElement.clientWidth < 640;
+    return this.document.documentElement.clientWidth < 681;
   }
 
   setItemsForSmallScreen() {
