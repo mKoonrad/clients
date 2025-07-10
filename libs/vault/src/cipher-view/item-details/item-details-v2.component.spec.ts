@@ -1,3 +1,4 @@
+import { ComponentRef } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { of } from "rxjs";
@@ -19,6 +20,7 @@ import { ItemDetailsV2Component } from "./item-details-v2.component";
 describe("ItemDetailsV2Component", () => {
   let component: ItemDetailsV2Component;
   let fixture: ComponentFixture<ItemDetailsV2Component>;
+  let componentRef: ComponentRef<ItemDetailsV2Component>;
 
   const cipher = {
     id: "cipher1",
@@ -66,30 +68,31 @@ describe("ItemDetailsV2Component", () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(ItemDetailsV2Component);
     component = fixture.componentInstance;
-    component.cipher = cipher;
-    component.organization = organization;
-    component.collections = [collection, collection2];
-    component.folder = folder;
+    componentRef = fixture.componentRef;
+    componentRef.setInput("cipher", cipher);
+    componentRef.setInput("organization", organization);
+    componentRef.setInput("collections", [collection, collection2]);
+    componentRef.setInput("folder", folder);
+    jest.spyOn(component, "hasSmallScreen").mockReturnValue(false); // Mocking small screen check
     fixture.detectChanges();
   });
 
   it("displays all available fields", () => {
     const itemName = fixture.debugElement.query(By.css('[data-testid="item-name"]'));
-    const owner = fixture.debugElement.query(By.css('[data-testid="owner"]'));
-    const collections = fixture.debugElement.queryAll(By.css('[data-testid="collections"]'));
-    const folderElement = fixture.debugElement.query(By.css('[data-testid="folder"]'));
+    const itemDetailsList = fixture.debugElement.queryAll(
+      By.css('[data-testid="item-details-list"]'),
+    );
 
-    expect(itemName.nativeElement.textContent).toBe(cipher.name);
-    expect(owner.nativeElement.textContent.trim()).toBe(organization.name);
-    expect(collections.map((c) => c.nativeElement.textContent.trim())).toEqual([
-      collection.name,
-      collection2.name,
-    ]);
-    expect(folderElement.nativeElement.textContent.trim()).toBe(folder.name);
+    expect(itemName.nativeElement.textContent.trim()).toEqual(cipher.name);
+    expect(itemDetailsList.length).toBe(4); // Organization, Collection, Collection2, Folder
+    expect(itemDetailsList[0].nativeElement.textContent.trim()).toContain(organization.name);
+    expect(itemDetailsList[1].nativeElement.textContent.trim()).toContain(collection.name);
+    expect(itemDetailsList[2].nativeElement.textContent.trim()).toContain(collection2.name);
+    expect(itemDetailsList[3].nativeElement.textContent.trim()).toContain(folder.name);
   });
 
   it("does not render owner when `hideOwner` is true", () => {
-    component.hideOwner = true;
+    componentRef.setInput("hideOwner", true);
     fixture.detectChanges();
 
     const owner = fixture.debugElement.query(By.css('[data-testid="owner"]'));

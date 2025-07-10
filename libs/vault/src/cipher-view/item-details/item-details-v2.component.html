@@ -19,6 +19,7 @@
             bitTypography="body2"
             [attr.aria-label]="getAriaLabel(item)"
             [ngClass]="{ 'tw-mb-2': last && isSmallScreen }"
+            data-testid="item-details-list"
           >
             @if (isOrgIcon(item)) {
               <i
