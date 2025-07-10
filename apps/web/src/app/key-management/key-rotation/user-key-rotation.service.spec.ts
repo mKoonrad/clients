@@ -52,6 +52,7 @@ import { EmergencyAccessStatusType } from "../../auth/emergency-access/enums/eme
 import { EmergencyAccessType } from "../../auth/emergency-access/enums/emergency-access-type";
 import { EmergencyAccessWithIdRequest } from "../../auth/emergency-access/request/emergency-access-update.request";
 
+import { AccountKeysRequest } from "./request/account-keys.request";
 import { MasterPasswordUnlockDataRequest } from "./request/master-password-unlock-data.request";
 import { UnlockDataRequest } from "./request/unlock-data.request";
 import { UserDataRequest } from "./request/userdata.request";
@@ -239,9 +240,7 @@ class TestUserKeyRotationService extends UserKeyRotationService {
       masterKeySalt,
     );
   }
-  override getCryptographicStateForUser(
-    user: Account,
-  ): Promise<{
+  override getCryptographicStateForUser(user: Account): Promise<{
     masterKeyKdfConfig: KdfConfig;
     masterKeySalt: string;
     cryptographicState: V1CryptographicStateParameters | V2CryptographicStateParameters;
@@ -1095,6 +1094,117 @@ describe("KeyRotationService", () => {
       await expect(keyRotationService.getCryptographicStateForUser(mockUser)).rejects.toThrow(
         "Unsupported user key type",
       );
+    });
+  });
+
+  describe("getRotatedAccountKeysFlagged", () => {
+    const userId = "mockUserId" as UserId;
+    const kdfConfig = new PBKDF2KdfConfig(100000);
+    const masterKeySalt = "mockSalt";
+    const v1Params = {
+      version: 1,
+      userKey: TEST_VECTOR_USER_KEY_V1,
+      publicKeyEncryptionKeyPair: {
+        wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V1),
+        publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+      },
+    } as V1CryptographicStateParameters;
+    const v2Params = {
+      version: 2,
+      userKey: TEST_VECTOR_USER_KEY_V2,
+      publicKeyEncryptionKeyPair: {
+        wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V2),
+        publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+      },
+      signingKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
+      securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+    } as V2CryptographicStateParameters;
+
+    beforeEach(() => {
+      jest.spyOn(keyRotationService, "getNewAccountKeysV1").mockResolvedValue({
+        userKey: TEST_VECTOR_USER_KEY_V1,
+        publicKeyEncryptionKeyPair: {
+          wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V1_ROTATED,
+          publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+        },
+      });
+      jest.spyOn(keyRotationService, "getNewAccountKeysV2").mockResolvedValue({
+        userKey: TEST_VECTOR_USER_KEY_V2,
+        publicKeyEncryptionKeyPair: {
+          wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+          publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+          signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
+        },
+        signatureKeyPair: {
+          wrappedSigningKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
+          verifyingKey: new VerifyingKey(TEST_VECTOR_VERIFYING_KEY_V2),
+        },
+        securityState: {
+          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+          securityStateVersion: 2,
+        },
+      });
+      jest
+        .spyOn(AccountKeysRequest, "fromV1CryptographicState")
+        .mockReturnValue("v1Request" as any);
+      jest
+        .spyOn(AccountKeysRequest, "fromV2CryptographicState")
+        .mockResolvedValue("v2Request" as any);
+    });
+
+    it("returns v2 keys and request if v2UpgradeEnabled is true", async () => {
+      const result = await keyRotationService.getRotatedAccountKeysFlagged(
+        userId,
+        kdfConfig,
+        masterKeySalt,
+        v1Params,
+        true,
+      );
+      expect(keyRotationService.getNewAccountKeysV2).toHaveBeenCalledWith(
+        userId,
+        kdfConfig,
+        masterKeySalt,
+        v1Params,
+      );
+      expect(result).toEqual({
+        userKey: TEST_VECTOR_USER_KEY_V2,
+        accountKeysRequest: "v2Request",
+      });
+    });
+
+    it("returns v2 keys and request if params.version is 2", async () => {
+      const result = await keyRotationService.getRotatedAccountKeysFlagged(
+        userId,
+        kdfConfig,
+        masterKeySalt,
+        v2Params,
+        false,
+      );
+      expect(keyRotationService.getNewAccountKeysV2).toHaveBeenCalledWith(
+        userId,
+        kdfConfig,
+        masterKeySalt,
+        v2Params,
+      );
+      expect(result).toEqual({
+        userKey: TEST_VECTOR_USER_KEY_V2,
+        accountKeysRequest: "v2Request",
+      });
+    });
+
+    it("returns v1 keys and request if v2UpgradeEnabled is false and params.version is 1", async () => {
+      const result = await keyRotationService.getRotatedAccountKeysFlagged(
+        userId,
+        kdfConfig,
+        masterKeySalt,
+        v1Params,
+        false,
+      );
+      expect(keyRotationService.getNewAccountKeysV1).toHaveBeenCalledWith(v1Params);
+      expect(result).toEqual({
+        userKey: TEST_VECTOR_USER_KEY_V1,
+        accountKeysRequest: "v1Request",
+      });
     });
   });
 });
