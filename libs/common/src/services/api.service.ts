@@ -243,8 +243,8 @@ export class ApiService implements ApiServiceAbstraction {
     return Promise.reject(new ErrorResponse(responseJson, response.status, true));
   }
 
-  async refreshIdentityToken(): Promise<any> {
-    const userId = await firstValueFrom(this.stateProvider.activeUserId$);
+  async refreshIdentityToken(userId?: UserId): Promise<any> {
+    userId ??= await firstValueFrom(this.stateProvider.activeUserId$);
     try {
       await this.refreshToken(userId);
     } catch (e) {
