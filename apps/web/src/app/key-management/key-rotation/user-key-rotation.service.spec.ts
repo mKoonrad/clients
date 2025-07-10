@@ -8,6 +8,7 @@ import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/a
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
 import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
 import { SecurityStateService } from "@bitwarden/common/key-management/security-state/abstractions/security-state.service";
 import { SignedSecurityState } from "@bitwarden/common/key-management/security-state/models/security-state";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
@@ -35,13 +36,14 @@ import {
   PBKDF2KdfConfig,
   KdfConfigService,
   KdfConfig,
+  KdfType,
 } from "@bitwarden/key-management";
 import {
   AccountRecoveryTrustComponent,
   EmergencyAccessTrustComponent,
   KeyRotationTrustInfoComponent,
 } from "@bitwarden/key-management-ui";
-import { PureCrypto } from "@bitwarden/sdk-internal";
+import { BitwardenClient, PureCrypto } from "@bitwarden/sdk-internal";
 
 import { OrganizationUserResetPasswordService } from "../../admin-console/organizations/members/services/organization-user-reset-password/organization-user-reset-password.service";
 import { WebauthnLoginAdminService } from "../../auth";
@@ -56,7 +58,11 @@ import { UserDataRequest } from "./request/userdata.request";
 import { V1UserCryptographicState } from "./types/v1-cryptographic-state";
 import { V2UserCryptographicState } from "./types/v2-cryptographic-state";
 import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
-import { UserKeyRotationService } from "./user-key-rotation.service";
+import {
+  UserKeyRotationService,
+  V1CryptographicStateParameters,
+  V2CryptographicStateParameters,
+} from "./user-key-rotation.service";
 
 const initialPromptedOpenTrue = jest.fn();
 initialPromptedOpenTrue.mockReturnValue({ closed: new BehaviorSubject(true) });
@@ -124,10 +130,20 @@ function createMockWebauthn(id: string): any {
   } as WebauthnRotateCredentialRequest;
 }
 
-const TEST_VECTOR_PRIVATE_KEY_V1 = "2.AAAw2vTUePO+CCyokcIfVw==|DTBNlJ5yVsV2Bsk3UU3H6Q==|YvFBff5gxWqM+UsFB6BKimKxhC32AtjF3IStpU1Ijwg=";
+const TEST_VECTOR_USER_KEY_V1 = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
+const TEST_VECTOR_PRIVATE_KEY_V1 =
+  "2.AAAw2vTUePO+CCyokcIfVw==|DTBNlJ5yVsV2Bsk3UU3H6Q==|YvFBff5gxWqM+UsFB6BKimKxhC32AtjF3IStpU1Ijwg=";
+const TEST_VECTOR_PUBLIC_KEY_V1 = Utils.fromBufferToB64(new Uint8Array(400));
+const TEST_VECTOR_PRIVATE_KEY_V1_ROTATED =
+  "2.AAAw2vTUePO+CCyokcIfVw==|DTBNlJ5yVsV2Bsk3UU3H6Q==|AAAAff5gxWqM+UsFB6BKimKxhC32AtjF3IStpU1Ijwg=";
+
+const TEST_VECTOR_USER_KEY_V2 = new SymmetricCryptoKey(new Uint8Array(70)) as UserKey;
 const TEST_VECTOR_PRIVATE_KEY_V2 = "7.AAAw2vTUePO+CCyokcIfVw==";
 const TEST_VECTOR_SIGNING_KEY_V2 = "7.AAAw2vTUePO+CCyokcIfVw==";
+const TEST_VECTOR_VERIFYING_KEY_V2 = "AAAw2vTUePO+CCyokcIfVw==";
 const TEST_VECTOR_SECURITY_STATE_V2 = "AAAw2vTUePO+CCyokcIfVw==";
+const TEST_VECTOR_PUBLIC_KEY_V2 = Utils.fromBufferToB64(new Uint8Array(400));
+const TEST_VECTOR_SIGNED_PUBLIC_KEY_V2 = "AAAw2vTUePO+CCyokcIfVw==";
 
 class TestUserKeyRotationService extends UserKeyRotationService {
   override rotateUserKeyMasterPasswordAndEncryptedData(
@@ -147,29 +163,17 @@ class TestUserKeyRotationService extends UserKeyRotationService {
     return super.ensureIsAllowedToRotateUserKey();
   }
   override getNewAccountKeysV1(
-    currentUserKey: UserKey,
-    currentUserKeyWrappedPrivateKey: EncString,
+    cryptographicStateParameters: V1CryptographicStateParameters,
   ): Promise<V1UserCryptographicState> {
-    return super.getNewAccountKeysV1(currentUserKey, currentUserKeyWrappedPrivateKey);
+    return super.getNewAccountKeysV1(cryptographicStateParameters);
   }
   override getNewAccountKeysV2(
-    currentUserKey: UserKey,
-    currentUserKeyWrappedPrivateKey: EncString,
-    currentSigningKey: WrappedSigningKey | null,
-    currentSecurityState: SignedSecurityState | null,
     userId: UserId,
     kdfConfig: KdfConfig,
     email: string,
+    cryptographicStateParameters: V1CryptographicStateParameters | V2CryptographicStateParameters,
   ): Promise<V2UserCryptographicState> {
-    return super.getNewAccountKeysV2(
-      currentUserKey,
-      currentUserKeyWrappedPrivateKey,
-      currentSigningKey,
-      currentSecurityState,
-      userId,
-      kdfConfig,
-      email,
-    );
+    return super.getNewAccountKeysV2(userId, kdfConfig, email, cryptographicStateParameters);
   }
   override createMasterPasswordUnlockDataRequest(
     userKey: UserKey,
@@ -235,7 +239,13 @@ class TestUserKeyRotationService extends UserKeyRotationService {
       masterKeySalt,
     );
   }
-  override getCryptographicStateForUser(user: Account): Promise<{ masterKeyKdfConfig: KdfConfig; masterKeySalt: string; currentUserKey: UserKey; currentUserKeyWrappedPrivateKey: EncString; signingKey: WrappedSigningKey | null; securityState: SignedSecurityState | null; }> {
+  override getCryptographicStateForUser(
+    user: Account,
+  ): Promise<{
+    masterKeyKdfConfig: KdfConfig;
+    masterKeySalt: string;
+    cryptographicState: V1CryptographicStateParameters | V2CryptographicStateParameters;
+  }> {
     return super.getCryptographicStateForUser(user);
   }
 }
@@ -273,6 +283,9 @@ describe("KeyRotationService", () => {
   };
 
   const mockTrustedPublicKeys = [Utils.fromUtf8ToArray("test-public-key")];
+
+  const mockMakeKeysForUserCryptoV2 = jest.fn();
+  const mockGetV2RotatedAccountKeys = jest.fn();
 
   beforeAll(() => {
     mockApiService = mock<UserKeyRotationApiService>();
@@ -320,6 +333,15 @@ describe("KeyRotationService", () => {
     mockCryptoFunctionService = mock<CryptoFunctionService>();
     mockKdfConfigService = mock<KdfConfigService>();
     mockSdkClientFactory = mock<SdkClientFactory>();
+    mockSdkClientFactory.createSdkClient.mockResolvedValue({
+      crypto: () => {
+        return {
+          initialize_user_crypto: jest.fn(),
+          make_keys_for_user_crypto_v2: mockMakeKeysForUserCryptoV2,
+          get_v2_rotated_account_keys: mockGetV2RotatedAccountKeys,
+        } as any;
+      },
+    } as BitwardenClient);
     mockSecurityStateService = mock<SecurityStateService>();
 
     keyRotationService = new TestUserKeyRotationService(
@@ -527,13 +549,9 @@ describe("KeyRotationService", () => {
   });
 
   describe("getNewAccountKeysV1", () => {
-    const currentUserKey = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
-    const mockEncryptedPrivateKey = new EncString(
-      "2.eh465OrUcluL9UpnCOUTAg==|2HXNXwrLwAjUfZ/U75c92rZEltt1eHxjMkp/ADAmx346oT1+GaQvaL1QIV/9Om0T72m8AnlO92iUfWdhbA/ifHZ+lhFoUVeyw1M88CMzktbVcq42rFoK7SGHSAGdTL3ccUWKI8yCCQJhpt2X6a/5+T7ey5k2CqvylKyOtkiCnVeLmYqETn5BM9Rl3tEgJW1yDLuSJ+L+Qh9xnk/Z3zJUV5HAs+YwjKwuSNrd00SXjDyx8rBEstD9MKI+lrk7to/q90vqKqCucAj/dzUpVtHe88al2AAlBVwQ13HUPdNFOyti6niUgCAWx+DzRqlhkFvl/z/rtxtQsyqq/3Eh/EL54ylxKzAya0ev9EaIOm/dD1aBmI58p4Bs0eMOCIKJjtw+Cmdql+RhCtKtumgFShqyXv+LfD/FgUsdTVNExk3YNhgwPR4jOaMa/j9LCrBMCLKxdAhQyBe7T3qoX1fBBirvY6t77ifMu1YEQ6DfmFphVSwDH5C9xGeTSh5IELSf0tGVtlWUe9RffDDzccD0L1lR8U+dqzoSTYCuXvhEhQptdIW6fpH/47u0M5MiI97/d35A7Et2I1gjHp7WF3qsY20ellBueu7ZL5P1BmqPXl58yaBBXJaCutYHDfIucspqdZmfBGEbdRT4wmuZRON0J8zLmUejM0VR/2MOmpfyYQXnJhTfrvnZ1bOg1aMhUxJ2vhDNPXUFm5b+vwsho4GEvcLAKq9WwbvOJ/sK7sEVfTfEO2IG+0X6wkWm7RpR6Wq9FGKSrv2PSjMAYnb+z3ETeWiaaiD+tVFxa2AaqsbOuX092/86GySpHES7cFWhQ/YMOgj6egUi8mEC0CqMXYsx0TTJDsn16oP+XB3a2WoRqzE0YBozp2aMXxhVf/jMZ03BmEmRQu5B+Sq1gMEZwtIfJ+srkZLMYlLjvVw92FRoFy+N6ytPiyf6RMHMUnJ3vEZSBogaElYoQAtFJ5kK811CUzb78zEHH8xWtPrCZn9zZfvf/zaWxo7fpV8VwAwUeHXHcQMraZum5QeO+5tLRUYrLm85JNelGfmUA3BjfNyFbfb32PhkWWd0CbDaPME48uIriVK32pNEtvtR/+I/f3YgA/jP9kSlDvbzG/OAg/AFBIpNwKUzsu4+va8mI+O5FDufw5D74WwdGJ9DeyEb2CHtWMR1VwtFKL0ZZsqltNf8EkBeJ5RtTNtAMM8ie4dDZaKC96ymQHKrdB4hjkAr0F1XFsU4XdOa9Nbkdcm/7KoNc6bE6oJtG9lqE8h+1CysfcbfJ7am+hvDFzT0IPmp3GDSMAk+e6xySgFQw0C/SZ7LQsxPa1s6hc+BOtTn0oClZnU7Mowxv+z+xURJj4Yp3Cy6tAoia1jEQSs6lSMNKPf9bi3xFKtPl4143hwhpvTAzJUcski9OVGd7Du+VyxwIrvLqp5Ct/oNrESVJpf1EDCs9xT1EW+PiSkRmHXoZ1t5MOLFEiMAZL2+bNe3A2661oJeMtps8zrfCVc251OUE1WvqWePlTOs5TDVqdwDH88J6rHLsbaf33Mxh5DP8gMfZQxE44Nsp6H0/Szfkss5UmFwBEpHjl1GJMWDnB3u2d+l1CSkLoB6C+diAUlY6wL/VwJBeMPHZTf6amQIS2B/lo/CnvV/E3k=|uuoY4b7xwMYBNIZi85KBsaHmNqtJl5FrKxZI9ugeNwc=",
-    );
-    const mockNewEncryptedPrivateKey = new EncString(
-      "2.ab465OrUcluL9UpnCOUTAg==|4HXNXwrLwAjUfZ/U75c92rZEltt1eHxjMkp/ADAmx346oT1+GaQvaL1QIV/9Om0T72m8AnlO92iUfWdhbA/ifHZ+lhFoUVeyw1M88CMzktbVcq42rFoK7SGHSAGdTL3ccUWKI8yCCQJhpt2X6a/5+T7ey5k2CqvylKyOtkiCnVeLmYqETn5BM9Rl3tEgJW1yDLuSJ+L+Qh9xnk/Z3zJUV5HAs+YwjKwuSNrd00SXjDyx8rBEstD9MKI+lrk7to/q90vqKqCucAj/dzUpVtHe88al2AAlBVwQ13HUPdNFOyti6niUgCAWx+DzRqlhkFvl/z/rtxtQsyqq/3Eh/EL54ylxKzAya0ev9EaIOm/dD1aBmI58p4Bs0eMOCIKJjtw+Cmdql+RhCtKtumgFShqyXv+LfD/FgUsdTVNExk3YNhgwPR4jOaMa/j9LCrBMCLKxdAhQyBe7T3qoX1fBBirvY6t77ifMu1YEQ6DfmFphVSwDH5C9xGeTSh5IELSf0tGVtlWUe9RffDDzccD0L1lR8U+dqzoSTYCuXvhEhQptdIW6fpH/47u0M5MiI97/d35A7Et2I1gjHp7WF3qsY20ellBueu7ZL5P1BmqPXl58yaBBXJaCutYHDfIucspqdZmfBGEbdRT4wmuZRON0J8zLmUejM0VR/2MOmpfyYQXnJhTfrvnZ1bOg1aMhUxJ2vhDNPXUFm5b+vwsho4GEvcLAKq9WwbvOJ/sK7sEVfTfEO2IG+0X6wkWm7RpR6Wq9FGKSrv2PSjMAYnb+z3ETeWiaaiD+tVFxa2AaqsbOuX092/86GySpHES7cFWhQ/YMOgj6egUi8mEC0CqMXYsx0TTJDsn16oP+XB3a2WoRqzE0YBozp2aMXxhVf/jMZ03BmEmRQu5B+Sq1gMEZwtIfJ+srkZLMYlLjvVw92FRoFy+N6ytPiyf6RMHMUnJ3vEZSBogaElYoQAtFJ5kK811CUzb78zEHH8xWtPrCZn9zZfvf/zaWxo7fpV8VwAwUeHXHcQMraZum5QeO+5tLRUYrLm85JNelGfmUA3BjfNyFbfb32PhkWWd0CbDaPME48uIriVK32pNEtvtR/+I/f3YgA/jP9kSlDvbzG/OAg/AFBIpNwKUzsu4+va8mI+O5FDufw5D74WwdGJ9DeyEb2CHtWMR1VwtFKL0ZZsqltNf8EkBeJ5RtTNtAMM8ie4dDZaKC96ymQHKrdB4hjkAr0F1XFsU4XdOa9Nbkdcm/7KoNc6bE6oJtG9lqE8h+1CysfcbfJ7am+hvDFzT0IPmp3GDSMAk+e6xySgFQw0C/SZ7LQsxPa1s6hc+BOtTn0oClZnU7Mowxv+z+xURJj4Yp3Cy6tAoia1jEQSs6lSMNKPf9bi3xFKtPl4143hwhpvTAzJUcski9OVGd7Du+VyxwIrvLqp5Ct/oNrESVJpf1EDCs9xT1EW+PiSkRmHXoZ1t5MOLFEiMAZL2+bNe3A2661oJeMtps8zrfCVc251OUE1WvqWePlTOs5TDVqdwDH88J6rHLsbaf33Mxh5DP8gMfZQxE44Nsp6H0/Szfkss5UmFwBEpHjl1GJMWDnB3u2d+l1CSkLoB6C+diAUlY6wL/VwJBeMPHZTf6amQIS2B/lo/CnvV/E3k=|uuoY4b7xwMYBNIZi85KBsaHmNqtJl5FrKxZI9ugeNwc=",
-    );
+    const currentUserKey = TEST_VECTOR_USER_KEY_V1;
+    const mockEncryptedPrivateKey = new EncString(TEST_VECTOR_PRIVATE_KEY_V1);
+    const mockNewEncryptedPrivateKey = new EncString(TEST_VECTOR_PRIVATE_KEY_V1_ROTATED);
     beforeAll(() => {
       mockEncryptService.unwrapDecapsulationKey.mockResolvedValue(new Uint8Array(200));
       mockEncryptService.wrapDecapsulationKey.mockResolvedValue(mockNewEncryptedPrivateKey);
@@ -545,15 +563,108 @@ describe("KeyRotationService", () => {
     });
 
     it("returns new account keys", async () => {
-      const result = await keyRotationService.getNewAccountKeysV1(
-        currentUserKey,
-        mockEncryptedPrivateKey,
-      );
+      const result = await keyRotationService.getNewAccountKeysV1({
+        version: 1,
+        userKey: currentUserKey,
+        publicKeyEncryptionKeyPair: {
+          wrappedPrivateKey: mockEncryptedPrivateKey,
+          publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+        },
+      });
       expect(result).toEqual({
         userKey: expect.any(SymmetricCryptoKey),
         publicKeyEncryptionKeyPair: {
           wrappedPrivateKey: mockNewEncryptedPrivateKey.encryptedString!,
           publicKey: Utils.fromBufferToB64(new Uint8Array(400)),
+        },
+      });
+    });
+  });
+
+  describe("getNewAccountKeysV2", () => {
+    it("rotates a v2 user", async () => {
+      mockGetV2RotatedAccountKeys.mockReturnValue({
+        userKey: TEST_VECTOR_USER_KEY_V2.toBase64(),
+        privateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+        publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+        signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
+        signingKey: TEST_VECTOR_SIGNING_KEY_V2,
+        verifyingKey: TEST_VECTOR_VERIFYING_KEY_V2,
+        securityState: TEST_VECTOR_SECURITY_STATE_V2,
+        securityVersion: 2,
+      });
+      const result = await keyRotationService.getNewAccountKeysV2(
+        "userid" as UserId,
+        new PBKDF2KdfConfig(600_000),
+        "mockuseremail",
+        {
+          version: 2,
+          userKey: TEST_VECTOR_USER_KEY_V2,
+          publicKeyEncryptionKeyPair: {
+            wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V2),
+            publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+          },
+          signingKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
+          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+        },
+      );
+      expect(mockGetV2RotatedAccountKeys).toHaveBeenCalled();
+      expect(result).toEqual({
+        userKey: TEST_VECTOR_USER_KEY_V2,
+        publicKeyEncryptionKeyPair: {
+          wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+          publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+          signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
+        },
+        signatureKeyPair: {
+          wrappedSigningKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
+          verifyingKey: new VerifyingKey(TEST_VECTOR_VERIFYING_KEY_V2),
+        },
+        securityState: {
+          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+          securityStateVersion: 2,
+        },
+      });
+    });
+    it("upgrades v1 user to v2 user", async () => {
+      mockMakeKeysForUserCryptoV2.mockReturnValue({
+        userKey: TEST_VECTOR_USER_KEY_V2.toBase64(),
+        privateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+        publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+        signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
+        signingKey: TEST_VECTOR_SIGNING_KEY_V2,
+        verifyingKey: TEST_VECTOR_VERIFYING_KEY_V2,
+        securityState: TEST_VECTOR_SECURITY_STATE_V2,
+        securityVersion: 2,
+      });
+      const result = await keyRotationService.getNewAccountKeysV2(
+        "userid" as UserId,
+        new PBKDF2KdfConfig(600_000),
+        "mockuseremail",
+        {
+          version: 1,
+          userKey: TEST_VECTOR_USER_KEY_V1,
+          publicKeyEncryptionKeyPair: {
+            wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V1),
+            publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+          },
+        },
+      );
+      expect(mockMakeKeysForUserCryptoV2).toHaveBeenCalled();
+      expect(result).toEqual({
+        userKey: TEST_VECTOR_USER_KEY_V2,
+        publicKeyEncryptionKeyPair: {
+          wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+          publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+          signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
+        },
+        signatureKeyPair: {
+          wrappedSigningKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
+          verifyingKey: new VerifyingKey(TEST_VECTOR_VERIFYING_KEY_V2),
+        },
+        securityState: {
+          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+          securityStateVersion: 2,
         },
       });
     });
@@ -565,7 +676,7 @@ describe("KeyRotationService", () => {
         new SymmetricCryptoKey(new Uint8Array(32)) as MasterKey,
       );
       mockKeyService.hashMasterKey.mockResolvedValue("mockMasterPasswordHash");
-      const newKey = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
+      const newKey = TEST_VECTOR_USER_KEY_V1;
       const userAccount = mockUser;
       const masterPasswordUnlockData =
         await keyRotationService.createMasterPasswordUnlockDataRequest(newKey, {
@@ -577,13 +688,13 @@ describe("KeyRotationService", () => {
       expect(masterPasswordUnlockData).toEqual({
         masterKeyEncryptedUserKey: "mockNewUserKey",
         email: "mockEmail",
-        kdfType: 0,
+        kdfType: KdfType.PBKDF2_SHA256,
         kdfIterations: 600_000,
         masterKeyAuthenticationHash: "mockMasterPasswordHash",
         masterPasswordHint: "mockMasterPasswordHint",
       });
       expect(PureCrypto.encrypt_user_key_with_master_password).toHaveBeenCalledWith(
-        new SymmetricCryptoKey(new Uint8Array(64)).toEncoded(),
+        TEST_VECTOR_USER_KEY_V1.toEncoded(),
         "mockMasterPassword",
         userAccount.email,
         new PBKDF2KdfConfig(600_000).toSdkConfig(),
@@ -856,13 +967,17 @@ describe("KeyRotationService", () => {
   });
 
   describe("isV1UserKey", () => {
-    const v1Key = new SymmetricCryptoKey(new Uint8Array(64));
-    const v2Key = new SymmetricCryptoKey(new Uint8Array(70));
+    const aes256CbcHmacV1UserKey = new SymmetricCryptoKey(new Uint8Array(64));
+    const coseV2UserKey = new SymmetricCryptoKey(new Uint8Array(70));
     it("returns true for v1 key", () => {
-      expect(keyRotationService.isV1User(v1Key as UserKey)).toBe(true);
+      expect(keyRotationService.isV1User(aes256CbcHmacV1UserKey as UserKey)).toBe(true);
     });
     it("returns false for v2 key", () => {
-      expect(keyRotationService.isV1User(v2Key as UserKey)).toBe(false);
+      expect(keyRotationService.isV1User(coseV2UserKey as UserKey)).toBe(false);
+    });
+    it("returns false for 32 byte AES256-CBC key", () => {
+      const aes256CbcKey = new SymmetricCryptoKey(new Uint8Array(32)) as UserKey;
+      expect(keyRotationService.isV1User(aes256CbcKey)).toBe(false);
     });
   });
 
@@ -881,8 +996,8 @@ describe("KeyRotationService", () => {
       expect(masterKeyAuthenticationHash).toBe("mockMasterPasswordHash");
       expect(mockKeyService.makeMasterKey).toHaveBeenCalledWith(
         "mockMasterPassword",
-        new PBKDF2KdfConfig(600_000),
         "mockEmail",
+        new PBKDF2KdfConfig(600_000),
       );
       expect(mockKeyService.hashMasterKey).toHaveBeenCalledWith(
         "mockMasterPassword",
@@ -893,39 +1008,11 @@ describe("KeyRotationService", () => {
   });
 
   describe("getCryptographicStateForUser", () => {
-    it("returns the cryptographic state for v1 user", async () => {
+    beforeEach(() => {
       mockKdfConfigService.getKdfConfig$.mockReturnValue(
         new BehaviorSubject(new PBKDF2KdfConfig(100000)),
       );
-      mockKeyService.userKey$.mockReturnValue(
-        new BehaviorSubject(new SymmetricCryptoKey(new Uint8Array(64)) as UserKey),
-      );
-      mockKeyService.userEncryptedPrivateKey$.mockReturnValue(
-        new BehaviorSubject(TEST_VECTOR_PRIVATE_KEY_V1 as EncryptedString),
-      );
-      mockKeyService.userSigningKey$.mockReturnValue(
-        new BehaviorSubject(null),
-      );
-      mockSecurityStateService.accountSecurityState$.mockReturnValue(
-        new BehaviorSubject(null),
-      );
-      const cryptographicState = await keyRotationService.getCryptographicStateForUser(mockUser);
-      expect(cryptographicState).toEqual({
-        masterKeyKdfConfig: new PBKDF2KdfConfig(100000),
-        masterKeySalt: "mockemail", // the email is lowercased to become the salt 
-        currentUserKey: new SymmetricCryptoKey(new Uint8Array(64)) as UserKey,
-        currentUserKeyWrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V1),
-        signingKey: null,
-        securityState: null
-      });
-    });
-    it("returns the cryptographic state for v2 user", async () => {
-      mockKdfConfigService.getKdfConfig$.mockReturnValue(
-        new BehaviorSubject(new PBKDF2KdfConfig(100000)),
-      );
-      mockKeyService.userKey$.mockReturnValue(
-        new BehaviorSubject(new SymmetricCryptoKey(new Uint8Array(70)) as UserKey),
-      );
+      mockKeyService.userKey$.mockReturnValue(new BehaviorSubject(TEST_VECTOR_USER_KEY_V2));
       mockKeyService.userEncryptedPrivateKey$.mockReturnValue(
         new BehaviorSubject(TEST_VECTOR_PRIVATE_KEY_V2 as EncryptedString),
       );
@@ -935,16 +1022,79 @@ describe("KeyRotationService", () => {
       mockSecurityStateService.accountSecurityState$.mockReturnValue(
         new BehaviorSubject(new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2)),
       );
+      mockCryptoFunctionService.rsaExtractPublicKey.mockResolvedValue(new Uint8Array(400));
+    });
+
+    it("returns the cryptographic state for v1 user", async () => {
+      mockKeyService.userKey$.mockReturnValue(
+        new BehaviorSubject(new SymmetricCryptoKey(new Uint8Array(64)) as UserKey),
+      );
+      mockKeyService.userEncryptedPrivateKey$.mockReturnValue(
+        new BehaviorSubject(TEST_VECTOR_PRIVATE_KEY_V1 as EncryptedString),
+      );
+      mockKeyService.userSigningKey$.mockReturnValue(new BehaviorSubject(null));
+      mockSecurityStateService.accountSecurityState$.mockReturnValue(new BehaviorSubject(null));
+
       const cryptographicState = await keyRotationService.getCryptographicStateForUser(mockUser);
       expect(cryptographicState).toEqual({
         masterKeyKdfConfig: new PBKDF2KdfConfig(100000),
-        masterKeySalt: "mockemail", // the email is lowercased to become the salt 
-        currentUserKey: new SymmetricCryptoKey(new Uint8Array(70)) as UserKey,
-        currentUserKeyWrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V2),
-        signingKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
-        securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2)
+        masterKeySalt: "mockemail", // the email is lowercased to become the salt
+        cryptographicState: {
+          version: 1,
+          userKey: TEST_VECTOR_USER_KEY_V1,
+          publicKeyEncryptionKeyPair: {
+            wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V1),
+            publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+          },
+        },
       });
     });
-  });
 
+    it("returns the cryptographic state for v2 user", async () => {
+      const cryptographicState = await keyRotationService.getCryptographicStateForUser(mockUser);
+      expect(cryptographicState).toEqual({
+        masterKeyKdfConfig: new PBKDF2KdfConfig(100000),
+        masterKeySalt: "mockemail", // the email is lowercased to become the salt
+        cryptographicState: {
+          version: 2,
+          userKey: TEST_VECTOR_USER_KEY_V1,
+          publicKeyEncryptionKeyPair: {
+            wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V2),
+            publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+          },
+          signingKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
+          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+        },
+      });
+    });
+
+    it("throws if no kdf config is found", async () => {
+      mockKdfConfigService.getKdfConfig$.mockReturnValue(new BehaviorSubject(null));
+      await expect(keyRotationService.getCryptographicStateForUser(mockUser)).rejects.toThrow(
+        "Failed to get KDF config",
+      );
+    });
+
+    it("throws if current user key is not found", async () => {
+      mockKeyService.userKey$.mockReturnValue(new BehaviorSubject(null));
+      await expect(keyRotationService.getCryptographicStateForUser(mockUser)).rejects.toThrow(
+        "Failed to get User key",
+      );
+    });
+
+    it("throws if private key is not found", async () => {
+      mockKeyService.userEncryptedPrivateKey$.mockReturnValue(new BehaviorSubject(null));
+      await expect(keyRotationService.getCryptographicStateForUser(mockUser)).rejects.toThrow(
+        "Failed to get Private key",
+      );
+    });
+
+    it("throws if user key is not AES256-CBC-HMAC or COSE", async () => {
+      const invalidKey = new SymmetricCryptoKey(new Uint8Array(32)) as UserKey;
+      mockKeyService.userKey$.mockReturnValue(new BehaviorSubject(invalidKey));
+      await expect(keyRotationService.getCryptographicStateForUser(mockUser)).rejects.toThrow(
+        "Unsupported user key type",
+      );
+    });
+  });
 });
