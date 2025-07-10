@@ -64,6 +64,8 @@ class NoopTokenProvider implements TokenProvider {
   constructor() {}
 
   async get_access_token(): Promise<string | undefined> {
+    // Ignore from the test coverage, since this is called by the SDK
+    /* istanbul ignore next */
     return undefined;
   }
 }

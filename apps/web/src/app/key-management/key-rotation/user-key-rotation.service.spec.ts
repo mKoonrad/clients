@@ -16,6 +16,7 @@ import { ConfigService } from "@bitwarden/common/platform/abstractions/config/co
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { SdkClientFactory } from "@bitwarden/common/platform/abstractions/sdk/sdk-client-factory";
+import { SdkLoadService } from "@bitwarden/common/platform/abstractions/sdk/sdk-load.service";
 import { HashPurpose } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { EncryptedString, EncString } from "@bitwarden/common/platform/models/domain/enc-string";
@@ -375,9 +376,13 @@ describe("KeyRotationService", () => {
     jest
       .spyOn(PureCrypto, "encrypt_user_key_with_master_password")
       .mockReturnValue("mockNewUserKey");
+    Object.defineProperty(SdkLoadService, "Ready", {
+      value: Promise.resolve(),
+      configurable: true,
+    });
   });
 
-  describe("rotateUserKeyAndEncryptedData", () => {
+  describe("rotateUserKeyMasterPasswordAndEncryptedData", () => {
     let privateKey: BehaviorSubject<UserPrivateKey | null>;
     let keyPair: BehaviorSubject<{ privateKey: UserPrivateKey; publicKey: UserPublicKey }>;
 
@@ -873,27 +878,29 @@ describe("KeyRotationService", () => {
       expect(wasTrustDenied).toBe(true);
     });
 
-    it("returns trusted keys if all dialogs are accepted", async () => {
-      KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
-      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
-      AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
-      mockEmergencyAccessService.getPublicKeys.mockResolvedValue([
-        mockGranteeEmergencyAccessWithPublicKey,
-      ]);
-      mockResetPasswordService.getPublicKeys.mockResolvedValue([
-        mockOrganizationUserResetPasswordEntry,
-      ]);
-      const {
-        wasTrustDenied,
-        trustedOrganizationPublicKeys: trustedOrgs,
-        trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
-      } = await keyRotationService.verifyTrust(mockUser);
-      expect(wasTrustDenied).toBe(false);
-      expect(trustedEmergencyAccessUsers).toEqual([
-        mockGranteeEmergencyAccessWithPublicKey.publicKey,
-      ]);
-      expect(trustedOrgs).toEqual([mockOrganizationUserResetPasswordEntry.publicKey]);
-    });
+    test.each([
+      [[mockGranteeEmergencyAccessWithPublicKey], []],
+      [[], [mockOrganizationUserResetPasswordEntry]],
+      [[], []],
+      [[mockGranteeEmergencyAccessWithPublicKey], [mockOrganizationUserResetPasswordEntry]],
+    ])(
+      "returns trusted keys when dialogs are open and public keys are provided",
+      async (emUsers, orgs) => {
+        KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
+        EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
+        AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
+        mockEmergencyAccessService.getPublicKeys.mockResolvedValue(emUsers);
+        mockResetPasswordService.getPublicKeys.mockResolvedValue(orgs);
+        const {
+          wasTrustDenied,
+          trustedOrganizationPublicKeys: trustedOrgs,
+          trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
+        } = await keyRotationService.verifyTrust(mockUser);
+        expect(wasTrustDenied).toBe(false);
+        expect(trustedEmergencyAccessUsers).toEqual(emUsers.map((e) => e.publicKey));
+        expect(trustedOrgs).toEqual(orgs.map((o) => o.publicKey));
+      },
+    );
   });
 
   describe("getAccountDataRequest", () => {
@@ -1038,7 +1045,7 @@ describe("KeyRotationService", () => {
       expect(cryptographicState).toEqual({
         masterKeyKdfConfig: new PBKDF2KdfConfig(100000),
         masterKeySalt: "mockemail", // the email is lowercased to become the salt
-        cryptographicState: {
+        cryptographicStateParameters: {
           version: 1,
           userKey: TEST_VECTOR_USER_KEY_V1,
           publicKeyEncryptionKeyPair: {
@@ -1054,9 +1061,9 @@ describe("KeyRotationService", () => {
       expect(cryptographicState).toEqual({
         masterKeyKdfConfig: new PBKDF2KdfConfig(100000),
         masterKeySalt: "mockemail", // the email is lowercased to become the salt
-        cryptographicState: {
+        cryptographicStateParameters: {
           version: 2,
-          userKey: TEST_VECTOR_USER_KEY_V1,
+          userKey: TEST_VECTOR_USER_KEY_V2,
           publicKeyEncryptionKeyPair: {
             wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V2),
             publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
@@ -1205,6 +1212,23 @@ describe("KeyRotationService", () => {
         userKey: TEST_VECTOR_USER_KEY_V1,
         accountKeysRequest: "v1Request",
       });
+    });
+  });
+
+  describe("ensureIsAllowedToRotateUserKey", () => {
+    it("resolves if last sync exists", async () => {
+      mockSyncService.getLastSync.mockResolvedValue(new Date());
+      await expect(keyRotationService.ensureIsAllowedToRotateUserKey()).resolves.toBeUndefined();
+    });
+
+    it("throws if last sync is null", async () => {
+      mockSyncService.getLastSync.mockResolvedValue(null);
+      await expect(keyRotationService.ensureIsAllowedToRotateUserKey()).rejects.toThrow(
+        /de-synced|log out and log back in/i,
+      );
+      expect(mockLogService.info).toHaveBeenCalledWith(
+        "[Userkey rotation] Client was never synced. Aborting!",
+      );
     });
   });
 });
