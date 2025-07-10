@@ -12,11 +12,11 @@ import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { SecurityTask, SecurityTaskStatus, TaskService } from "@bitwarden/common/vault/tasks";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
+import { InlineMenuFormFieldData } from "../services/abstractions/autofill-overlay-content.service";
 import { generateDomainMatchPatterns, isInvalidResponseStatusCode } from "../utils";
 
 import {
   ActiveFormSubmissionRequests,
-  ModifyLoginCipherFormData,
   ModifyLoginCipherFormDataForTab,
   OverlayNotificationsBackground as OverlayNotificationsBackgroundInterface,
   OverlayNotificationsExtensionMessage,
@@ -29,7 +29,7 @@ import { T } from "@angular/cdk/portal-directives.d-BoG39gYN";
 type LoginSecurityTaskInfo = {
   securityTask: SecurityTask;
   cipher: CipherView;
-  uri: ModifyLoginCipherFormData["uri"];
+  uri: InlineMenuFormFieldData["uri"];
 };
 
 export class OverlayNotificationsBackground implements OverlayNotificationsBackgroundInterface {
@@ -394,7 +394,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
   private setupNotificationInitTrigger = async (
     tabId: number,
     requestId: string,
-    modifyLoginData: ModifyLoginCipherFormData,
+    modifyLoginData: InlineMenuFormFieldData,
   ) => {
     this.clearNotificationFallbackTimeout();
 
@@ -419,7 +419,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
   private delayNotificationInitUntilTabIsComplete = async (
     tabId: chrome.webRequest.ResourceRequest["tabId"],
     requestId: chrome.webRequest.ResourceRequest["requestId"],
-    modifyLoginData: ModifyLoginCipherFormData,
+    modifyLoginData: InlineMenuFormFieldData,
   ) => {
     const handleWebNavigationOnCompleted = async () => {
       chrome.webNavigation.onCompleted.removeListener(handleWebNavigationOnCompleted);
@@ -439,7 +439,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
    */
   private triggerNotificationInit = async (
     requestId: chrome.webRequest.ResourceRequest["requestId"],
-    modifyLoginData: ModifyLoginCipherFormData,
+    modifyLoginData: InlineMenuFormFieldData,
     tab: chrome.tabs.Tab,
   ) => {
     let result: string;
@@ -517,9 +517,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
    *
    * @param modifyLoginData - The modified login form data
    */
-  private shouldAttemptChangedPasswordNotification = (
-    modifyLoginData: ModifyLoginCipherFormData,
-  ) => {
+  private shouldAttemptChangedPasswordNotification = (modifyLoginData: InlineMenuFormFieldData) => {
     console.log("attemptChangedPassword", !!modifyLoginData?.newPassword);
     return modifyLoginData?.newPassword;
   };
@@ -542,9 +540,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
    *
    * @param modifyLoginData - The modified login form data
    */
-  private shouldAttemptAtRiskPasswordNotification = (
-    modifyLoginData: ModifyLoginCipherFormData,
-  ) => {
+  private shouldAttemptAtRiskPasswordNotification = (modifyLoginData: InlineMenuFormFieldData) => {
     return !modifyLoginData.newPassword;
   };
 
@@ -555,7 +551,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
    * @param activeUserId - The currently logged in user ID
    */
   private async getSecurityTaskAndCipherForLoginData(
-    modifyLoginData: ModifyLoginCipherFormData,
+    modifyLoginData: InlineMenuFormFieldData,
     activeUserId: UserId,
   ): Promise<LoginSecurityTaskInfo | null> {
     const tasks: SecurityTask[] = await this.notificationBackground.getSecurityTasks(activeUserId);
