@@ -41,6 +41,18 @@
             </span>
           </span>
         }
+        @if (allItems.length === 0) {
+          <span
+            class="tw-flex tw-items-center tw-mt-2 tw-mr-4"
+            bitTypography="body2"
+            [attr.aria-label]="'noneFolder' | i18n"
+          >
+            <i class="bwi bwi-folder bwi-lg" aria-hidden="true" [title]="'folder' | i18n"></i>
+            <span aria-hidden="true" class="tw-pl-1.5">
+              {{ "noneFolder" | i18n }}
+            </span>
+          </span>
+        }
         @if (isSmallScreen && allItems.length > 2) {
           <button
             bitTypography="body2"
