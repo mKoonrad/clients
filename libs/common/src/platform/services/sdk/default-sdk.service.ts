@@ -52,9 +52,9 @@ class JsTokenProvider implements TokenProvider {
     private userId?: UserId,
   ) {}
 
-  async get_access_token(): Promise<string> {
+  async get_access_token(): Promise<string | undefined> {
     if (this.userId == null) {
-      return null as any as string;
+      return undefined;
     }
 
     return await this.apiService.getActiveBearerToken(this.userId);
