@@ -3,11 +3,11 @@
     <div
       class="tw-flex tw-place-items-center"
       [ngClass]="{
-        'tw-mb-2': cipher().collectionIds?.length || showOwnership || cipher().folderId,
+        'tw-mb-2': allItems.length > 0,
       }"
     >
       <app-vault-icon [cipher]="cipher()" [coloredIcon]="true"></app-vault-icon>
-      <h2 bitTypography="h4" class="tw-ml-2 tw-mt-2" data-testid="item-name">
+      <h2 bitTypography="h4" class="tw-ml-4 tw-mt-2" data-testid="item-name">
         {{ cipher().name }}
       </h2>
     </div>
@@ -15,7 +15,7 @@
       <div class="tw-flex tw-flex-col md:tw-flex-row md:tw-flex-wrap">
         @for (item of showItems; track item.id; let last = $last) {
           <span
-            class="tw-flex tw-items-center tw-list-none tw-mt-2 tw-mr-4"
+            class="tw-flex tw-items-center tw-mt-2 tw-mr-4"
             bitTypography="body2"
             [attr.aria-label]="getAriaLabel(item)"
             [ngClass]="{ 'tw-mb-2': last && isSmallScreen }"

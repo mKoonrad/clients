@@ -40,13 +40,12 @@ export class ItemDetailsV2Component implements OnChanges {
   folder = input<FolderView | undefined>();
   collections = input<CollectionView[] | undefined>();
 
-  hasMultipleCollections: boolean = false;
   showAllDetails: boolean = false;
 
   // Array to hold all details of item. Organization, Collections, and Folder
   allItems: any[] = [];
 
-  // Array to hold the display pieces of the item details (dependent on length of array and screen size)
+  // Array to hold the display pieces of the item details (dependent on allItems and screen size)
   showItems: any[] = [];
 
   // Inject the document to check for screen size
@@ -57,7 +56,6 @@ export class ItemDetailsV2Component implements OnChanges {
 
   ngOnChanges() {
     this.allItems = [];
-    this.hasMultipleCollections = this.cipher().collectionIds?.length > 1;
     this.isSmallScreen = this.hasSmallScreen();
 
     if (this.showOwnership && this.organization()) {
@@ -70,6 +68,8 @@ export class ItemDetailsV2Component implements OnChanges {
       this.allItems.push(this.folder());
     }
     this.showItems = [...this.allItems];
+
+    // If the screen is small, we only show the first two items
     if (this.isSmallScreen && this.allItems.length > 2) {
       this.setItemsForSmallScreen();
     }
