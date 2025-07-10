@@ -167,6 +167,7 @@ pub mod clipboards {
 pub mod sshagent {
     use std::sync::Arc;
 
+    use desktop_core::ssh_agent::BitwardenSshKey;
     use napi::{
         bindgen_prelude::Promise,
         threadsafe_function::{ErrorStrategy::CalleeHandled, ThreadsafeFunction},
@@ -175,7 +176,7 @@ pub mod sshagent {
 
     #[napi]
     pub struct SshAgentState {
-        state: desktop_core::ssh_agent::BitwardenDesktopAgent,
+        state: desktop_core::ssh_agent::BitwardenDesktopAgent<BitwardenSshKey>,
     }
 
     #[napi(object)]
