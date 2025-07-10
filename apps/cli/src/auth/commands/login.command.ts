@@ -333,15 +333,14 @@ export class LoginCommand {
         );
       }
 
-      if (response.requiresKeyConnectorDomainConfirmation != null) {
+      // Check if Key Connector domain confirmation is required
+      const domainConfirmation = await firstValueFrom(
+        this.keyConnectorService.requiresDomainConfirmation$(response.userId),
+      );
+      if (domainConfirmation != null) {
         const command = new ConfirmKeyConnectorDomainCommand(
           response.userId,
-          response.requiresKeyConnectorDomainConfirmation.organizationId,
-          response.requiresKeyConnectorDomainConfirmation.keyConnectorUrl,
-          response.requiresKeyConnectorDomainConfirmation.kdf,
-          response.requiresKeyConnectorDomainConfirmation.kdfIterations,
-          response.requiresKeyConnectorDomainConfirmation.kdfMemory,
-          response.requiresKeyConnectorDomainConfirmation.kdfParallelism,
+          domainConfirmation.keyConnectorUrl,
           this.keyConnectorService,
           this.logoutCallback,
           this.i18nService,

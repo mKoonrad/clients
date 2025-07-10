@@ -3,6 +3,7 @@ import { Component } from "@angular/core";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { KeyConnectorService } from "@bitwarden/common/key-management/key-connector/abstractions/key-connector.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
@@ -25,9 +26,18 @@ export class ConfirmKeyConnectorDomainComponent extends BaseConfirmKeyConnectorD
     keyConnectorService: KeyConnectorService,
     messagingService: MessagingService,
     syncService: SyncService,
+    accountService: AccountService,
     private routerService: RouterService,
   ) {
-    super(route, router, logService, keyConnectorService, messagingService, syncService);
+    super(
+      route,
+      router,
+      logService,
+      keyConnectorService,
+      messagingService,
+      syncService,
+      accountService,
+    );
   }
 
   override async beforeNavigationConfirmCallback() {

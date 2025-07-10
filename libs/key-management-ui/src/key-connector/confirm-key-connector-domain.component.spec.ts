@@ -1,12 +1,14 @@
-import { ActivatedRoute, ActivatedRouteSnapshot, Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { mock } from "jest-mock-extended";
+import { of } from "rxjs";
 
 import { KeyConnectorService } from "@bitwarden/common/key-management/key-connector/abstractions/key-connector.service";
+import { KeyConnectorDomainConfirmation } from "@bitwarden/common/key-management/key-connector/models/key-connector-domain-confirmation";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { SyncService } from "@bitwarden/common/platform/sync";
+import { mockAccountServiceWith } from "@bitwarden/common/spec";
 import { UserId } from "@bitwarden/common/types/guid";
-import { KdfType } from "@bitwarden/key-management";
 
 import { ConfirmKeyConnectorDomainComponent } from "./confirm-key-connector-domain.component";
 
@@ -14,12 +16,9 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
   let component: ConfirmKeyConnectorDomainComponent;
 
   const userId = "test-user-id" as UserId;
-  const organizationId = "test-organization-id";
-  const keyConnectorUrl = "https://key-connector-url.com";
-  const kdfType = KdfType.Argon2id;
-  const kdfIterations = 10;
-  const kdfMemory = 64;
-  const kdfParallelism = 4;
+  const confirmation: KeyConnectorDomainConfirmation = {
+    keyConnectorUrl: "https://key-connector-url.com",
+  };
 
   const mockRoute = mock<ActivatedRoute>();
   const mockRouter = mock<Router>();
@@ -27,10 +26,13 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
   const mockKeyConnectorService = mock<KeyConnectorService>();
   const mockLogService = mock<LogService>();
   const mockMessagingService = mock<MessagingService>();
+  let mockAccountService = mockAccountServiceWith(userId);
   const beforeNavigationConfirmCallback = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    mockAccountService = mockAccountServiceWith(userId);
 
     component = new ConfirmKeyConnectorDomainComponent(
       mockRoute,
@@ -39,44 +41,41 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
       mockKeyConnectorService,
       mockMessagingService,
       mockSyncService,
+      mockAccountService,
     );
 
     jest
       .spyOn(component, "beforeNavigationConfirmCallback")
       .mockImplementation(beforeNavigationConfirmCallback);
 
-    mockRoute.snapshot = mock<ActivatedRouteSnapshot>();
-    mockRoute.snapshot.queryParamMap.get = jest.fn((key) => mockQueryParamMapGet(key));
+    // Mock key connector service to return data from state
+    mockKeyConnectorService.requiresDomainConfirmation$.mockReturnValue(of(confirmation));
   });
 
   describe("ngOnInit", () => {
-    it.each([["userId"], ["organizationId"], ["keyConnectorUrl"], ["kdf"], ["kdfIterations"]])(
-      "should logout when missing %s parameter",
-      async (missingKey) => {
-        mockRoute.snapshot.queryParamMap.get = jest.fn((key) => {
-          if (key === missingKey) {
-            return null;
-          }
-          return mockQueryParamMapGet(key);
-        });
+    it("should logout when no active account", async () => {
+      mockAccountService.activeAccount$ = of(null);
 
-        await component.ngOnInit();
+      await component.ngOnInit();
 
-        expect(mockMessagingService.send).toHaveBeenCalledWith("logout");
-        expect(component.loading).toEqual(true);
-      },
-    );
+      expect(mockMessagingService.send).toHaveBeenCalledWith("logout");
+      expect(component.loading).toEqual(true);
+    });
 
-    it("Should set component properties correctly", async () => {
+    it("should logout when confirmation is null", async () => {
+      mockKeyConnectorService.requiresDomainConfirmation$.mockReturnValue(of(null));
+
+      await component.ngOnInit();
+
+      expect(mockMessagingService.send).toHaveBeenCalledWith("logout");
+      expect(component.loading).toEqual(true);
+    });
+
+    it("should set component properties correctly", async () => {
       await component.ngOnInit();
 
       expect(component.userId).toEqual(userId);
-      expect(component.organizationId).toEqual(organizationId);
-      expect(component.keyConnectorUrl).toEqual(keyConnectorUrl);
-      expect(component.kdf).toEqual(kdfType);
-      expect(component.kdfIterations).toEqual(kdfIterations);
-      expect(component.kdfMemory).toEqual(kdfMemory);
-      expect(component.kdfParallelism).toEqual(kdfParallelism);
+      expect(component.keyConnectorUrl).toEqual(confirmation.keyConnectorUrl);
       expect(component.loading).toEqual(false);
     });
   });
@@ -87,15 +86,7 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
 
       await component.confirm();
 
-      expect(mockKeyConnectorService.convertNewSsoUserToKeyConnector).toHaveBeenCalledWith(
-        organizationId,
-        userId,
-        keyConnectorUrl,
-        kdfType,
-        kdfIterations,
-        kdfMemory,
-        kdfParallelism,
-      );
+      expect(mockKeyConnectorService.convertNewSsoUserToKeyConnector).toHaveBeenCalledWith(userId);
       expect(mockSyncService.fullSync).toHaveBeenCalledWith(true);
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/"]);
       expect(mockMessagingService.send).toHaveBeenCalledWith("loggedIn");
@@ -126,25 +117,4 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
       expect(mockKeyConnectorService.convertNewSsoUserToKeyConnector).not.toHaveBeenCalled();
     });
   });
-
-  function mockQueryParamMapGet(key: string) {
-    switch (key) {
-      case "userId":
-        return userId;
-      case "organizationId":
-        return organizationId;
-      case "keyConnectorUrl":
-        return keyConnectorUrl;
-      case "kdf":
-        return kdfType.toString();
-      case "kdfIterations":
-        return kdfIterations.toString();
-      case "kdfMemory":
-        return kdfMemory.toString();
-      case "kdfParallelism":
-        return kdfParallelism.toString();
-      default:
-        return null;
-    }
-  }
 });

@@ -112,15 +112,10 @@ export class PasswordLoginStrategy extends LoginStrategy {
     return result;
   }
 
-  protected override async setMasterKey(
-    response: IdentityTokenResponse,
-    userId: UserId,
-  ): Promise<null> {
+  protected override async setMasterKey(response: IdentityTokenResponse, userId: UserId) {
     const { masterKey, localMasterKeyHash } = this.cache.value;
     await this.masterPasswordService.setMasterKey(masterKey, userId);
     await this.masterPasswordService.setMasterKeyHash(localMasterKeyHash, userId);
-
-    return null;
   }
 
   protected override async setUserKey(

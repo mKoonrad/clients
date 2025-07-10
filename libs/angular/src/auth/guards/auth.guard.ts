@@ -56,6 +56,14 @@ export const authGuard: CanActivateFn = async (
   }
 
   const userId = (await firstValueFrom(accountService.activeAccount$)).id;
+
+  if (
+    !routerState.url.includes("confirm-key-connector-domain") &&
+    (await firstValueFrom(keyConnectorService.requiresDomainConfirmation$(userId))) != null
+  ) {
+    return router.createUrlTree(["/confirm-key-connector-domain"]);
+  }
+
   const forceSetPasswordReason = await firstValueFrom(
     masterPasswordService.forceSetPasswordReason$(userId),
   );

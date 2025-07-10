@@ -125,8 +125,9 @@ export class SsoLoginStrategy extends LoginStrategy {
       // The presence of a masterKeyEncryptedUserKey indicates that the user has already been provisioned in Key Connector.
       const newSsoUser = tokenResponse.key == null;
       if (newSsoUser) {
-        return {
-          requiresKeyConnectorDomainConfirmation: {
+        // Store Key Connector domain confirmation data in state instead of AuthResult
+        await this.keyConnectorService.setNewSsoUserKeyConnectorConversionData(
+          {
             kdf: tokenResponse.kdf,
             kdfIterations: tokenResponse.kdfIterations,
             kdfMemory: tokenResponse.kdfMemory,
@@ -134,14 +135,13 @@ export class SsoLoginStrategy extends LoginStrategy {
             keyConnectorUrl: this.getKeyConnectorUrl(tokenResponse),
             organizationId: this.cache.value.orgId,
           },
-        };
+          userId,
+        );
       } else {
         const keyConnectorUrl = this.getKeyConnectorUrl(tokenResponse);
         await this.keyConnectorService.setMasterKeyFromUrl(keyConnectorUrl, userId);
       }
     }
-
-    return null;
   }
 
   /**

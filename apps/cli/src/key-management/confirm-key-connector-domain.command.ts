@@ -3,7 +3,6 @@ import * as inquirer from "inquirer";
 import { KeyConnectorService } from "@bitwarden/common/key-management/key-connector/abstractions/key-connector.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { UserId } from "@bitwarden/common/types/guid";
-import { KdfType } from "@bitwarden/key-management";
 
 import { Response } from "../models/response";
 import { MessageResponse } from "../models/response/message.response";
@@ -11,12 +10,7 @@ import { MessageResponse } from "../models/response/message.response";
 export class ConfirmKeyConnectorDomainCommand {
   constructor(
     private readonly userId: UserId,
-    private readonly organizationId: string,
     private readonly keyConnectorUrl: string,
-    private readonly kdf: KdfType,
-    private readonly kdfIterations: number,
-    private readonly kdfMemory: number,
-    private readonly kdfParallelism: number,
     private keyConnectorService: KeyConnectorService,
     private logout: () => Promise<void>,
     private i18nService: I18nService,
@@ -53,15 +47,7 @@ export class ConfirmKeyConnectorDomainCommand {
 
     if (answer.confirm === "confirmed") {
       try {
-        await this.keyConnectorService.convertNewSsoUserToKeyConnector(
-          this.organizationId,
-          this.userId,
-          this.keyConnectorUrl,
-          this.kdf,
-          this.kdfIterations,
-          this.kdfMemory,
-          this.kdfParallelism,
-        );
+        await this.keyConnectorService.convertNewSsoUserToKeyConnector(this.userId);
       } catch (e) {
         await this.logout();
         throw e;

@@ -1,11 +1,10 @@
 import { Observable } from "rxjs";
 
-// This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
-// eslint-disable-next-line no-restricted-imports
-import { KdfType } from "@bitwarden/key-management";
+import { NewSsoUserKeyConnectorConversion } from "@bitwarden/common/key-management/key-connector/models/new-sso-user-key-connector-conversion";
 
 import { Organization } from "../../../admin-console/models/domain/organization";
 import { UserId } from "../../../types/guid";
+import { KeyConnectorDomainConfirmation } from "../models/key-connector-domain-confirmation";
 
 export abstract class KeyConnectorService {
   abstract setMasterKeyFromUrl(keyConnectorUrl: string, userId: UserId): Promise<void>;
@@ -16,17 +15,18 @@ export abstract class KeyConnectorService {
 
   abstract migrateUser(keyConnectorUrl: string, userId: UserId): Promise<void>;
 
-  abstract convertNewSsoUserToKeyConnector(
-    orgId: string,
-    userId: UserId,
-    keyConnectorUrl: string,
-    kdf: KdfType,
-    kdfIterations: number,
-    kdfMemory?: number,
-    kdfParallelism?: number,
-  ): Promise<void>;
+  abstract convertNewSsoUserToKeyConnector(userId: UserId): Promise<void>;
 
   abstract setUsesKeyConnector(enabled: boolean, userId: UserId): Promise<void>;
+
+  abstract setNewSsoUserKeyConnectorConversionData(
+    conversion: NewSsoUserKeyConnectorConversion,
+    userId: UserId,
+  ): Promise<void>;
+
+  abstract requiresDomainConfirmation$(
+    userId: UserId,
+  ): Observable<KeyConnectorDomainConfirmation | null>;
 
   abstract convertAccountRequired$: Observable<boolean>;
 }

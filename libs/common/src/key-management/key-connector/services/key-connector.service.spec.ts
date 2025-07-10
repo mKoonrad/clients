@@ -25,8 +25,13 @@ import { OrganizationId, UserId } from "../../../types/guid";
 import { MasterKey, UserKey } from "../../../types/key";
 import { FakeMasterPasswordService } from "../../master-password/services/fake-master-password.service";
 import { KeyConnectorUserKeyRequest } from "../models/key-connector-user-key.request";
+import { NewSsoUserKeyConnectorConversion } from "../models/new-sso-user-key-connector-conversion";
 
-import { USES_KEY_CONNECTOR, KeyConnectorService } from "./key-connector.service";
+import {
+  USES_KEY_CONNECTOR,
+  NEW_SSO_USER_KEY_CONNECTOR_CONVERSION,
+  KeyConnectorService,
+} from "./key-connector.service";
 
 describe("KeyConnectorService", () => {
   let keyConnectorService: KeyConnectorService;
@@ -52,6 +57,13 @@ describe("KeyConnectorService", () => {
   });
 
   const keyConnectorUrl = "https://key-connector-url.com";
+
+  const conversion: NewSsoUserKeyConnectorConversion = {
+    kdf: KdfType.PBKDF2_SHA256,
+    kdfIterations: 600_000,
+    keyConnectorUrl: keyConnectorUrl,
+    organizationId: mockOrgId,
+  };
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -441,15 +453,21 @@ describe("KeyConnectorService", () => {
             ? new PBKDF2KdfConfig(kdfIterations)
             : new Argon2KdfConfig(kdfIterations, kdfMemory, kdfParallelism);
 
-        await keyConnectorService.convertNewSsoUserToKeyConnector(
-          mockOrgId,
+        const conversion: NewSsoUserKeyConnectorConversion = {
+          kdf: kdfType,
+          kdfIterations: kdfIterations,
+          kdfMemory: kdfMemory,
+          kdfParallelism: kdfParallelism,
+          keyConnectorUrl: keyConnectorUrl,
+          organizationId: mockOrgId,
+        };
+        const conversionState = stateProvider.singleUser.getFake(
           mockUserId,
-          keyConnectorUrl,
-          kdfType,
-          kdfIterations,
-          kdfMemory,
-          kdfParallelism,
+          NEW_SSO_USER_KEY_CONNECTOR_CONVERSION,
         );
+        conversionState.nextState(conversion);
+
+        await keyConnectorService.convertNewSsoUserToKeyConnector(mockUserId);
 
         expect(keyGenerationService.createKey).toHaveBeenCalledWith(512);
         expect(keyService.makeMasterKey).toHaveBeenCalledWith(
@@ -482,21 +500,24 @@ describe("KeyConnectorService", () => {
             new KeysRequest(mockKeyPair[0], mockKeyPair[1].encryptedString!),
           ),
         );
+
+        // Verify that conversion data is cleared from conversionState
+        expect(await firstValueFrom(conversionState.state$)).toBeNull();
       },
     );
 
     it("handles api error", async () => {
       apiService.postUserKeyToKeyConnector.mockRejectedValue(new Error("API error"));
 
-      await expect(
-        keyConnectorService.convertNewSsoUserToKeyConnector(
-          mockOrgId,
-          mockUserId,
-          keyConnectorUrl,
-          KdfType.PBKDF2_SHA256,
-          600_000,
-        ),
-      ).rejects.toThrow(new Error("Key Connector error"));
+      const conversionState = stateProvider.singleUser.getFake(
+        mockUserId,
+        NEW_SSO_USER_KEY_CONNECTOR_CONVERSION,
+      );
+      conversionState.nextState(conversion);
+
+      await expect(keyConnectorService.convertNewSsoUserToKeyConnector(mockUserId)).rejects.toThrow(
+        new Error("Key Connector error"),
+      );
 
       expect(keyGenerationService.createKey).toHaveBeenCalledWith(512);
       expect(keyService.makeMasterKey).toHaveBeenCalledWith(
@@ -520,8 +541,89 @@ describe("KeyConnectorService", () => {
         new KeyConnectorUserKeyRequest(Utils.fromBufferToB64(mockMasterKey.inner().encryptionKey)),
       );
       expect(apiService.postSetKeyConnectorKey).not.toHaveBeenCalled();
+      expect(await firstValueFrom(conversionState.state$)).toEqual(conversion);
 
       expect(logoutCallback).toHaveBeenCalledWith("keyConnectorError");
+    });
+
+    it("should throw error when conversion data is null", async () => {
+      const conversionState = stateProvider.singleUser.getFake(
+        mockUserId,
+        NEW_SSO_USER_KEY_CONNECTOR_CONVERSION,
+      );
+      conversionState.nextState(null);
+
+      await expect(keyConnectorService.convertNewSsoUserToKeyConnector(mockUserId)).rejects.toThrow(
+        new Error("Key Connector conversion not found"),
+      );
+
+      // Verify that no key generation or API calls were made
+      expect(keyGenerationService.createKey).not.toHaveBeenCalled();
+      expect(keyService.makeMasterKey).not.toHaveBeenCalled();
+      expect(apiService.postUserKeyToKeyConnector).not.toHaveBeenCalled();
+      expect(apiService.postSetKeyConnectorKey).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("setNewSsoUserKeyConnectorConversionData", () => {
+    it("should store Key Connector domain confirmation data in state", async () => {
+      const state = stateProvider.singleUser.getFake(
+        mockUserId,
+        NEW_SSO_USER_KEY_CONNECTOR_CONVERSION,
+      );
+      state.nextState(null);
+
+      await keyConnectorService.setNewSsoUserKeyConnectorConversionData(conversion, mockUserId);
+
+      expect(await firstValueFrom(state.state$)).toEqual(conversion);
+    });
+
+    it("should overwrite existing Key Connector domain confirmation data", async () => {
+      const state = stateProvider.singleUser.getFake(
+        mockUserId,
+        NEW_SSO_USER_KEY_CONNECTOR_CONVERSION,
+      );
+      const existingConversion: NewSsoUserKeyConnectorConversion = {
+        kdf: KdfType.Argon2id,
+        kdfIterations: 3,
+        kdfMemory: 64,
+        kdfParallelism: 4,
+        keyConnectorUrl: "https://old.example.com",
+        organizationId: "old-org-id" as OrganizationId,
+      };
+      state.nextState(existingConversion);
+
+      await keyConnectorService.setNewSsoUserKeyConnectorConversionData(conversion, mockUserId);
+
+      expect(await firstValueFrom(state.state$)).toEqual(conversion);
+    });
+  });
+
+  describe("requiresDomainConfirmation$", () => {
+    it("should return observable of key connector domain confirmation value when set", async () => {
+      const state = stateProvider.singleUser.getFake(
+        mockUserId,
+        NEW_SSO_USER_KEY_CONNECTOR_CONVERSION,
+      );
+      state.nextState(conversion);
+
+      const data$ = keyConnectorService.requiresDomainConfirmation$(mockUserId);
+      const data = await firstValueFrom(data$);
+
+      expect(data).toEqual({ keyConnectorUrl: conversion.keyConnectorUrl });
+    });
+
+    it("should return observable of null value when no data is set", async () => {
+      const state = stateProvider.singleUser.getFake(
+        mockUserId,
+        NEW_SSO_USER_KEY_CONNECTOR_CONVERSION,
+      );
+      state.nextState(null);
+
+      const data$ = keyConnectorService.requiresDomainConfirmation$(mockUserId);
+      const data = await firstValueFrom(data$);
+
+      expect(data).toBeNull();
     });
   });
 
