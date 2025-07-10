@@ -736,6 +736,7 @@ export default class MainBackground {
       (logoutReason: LogoutReason, userId?: UserId) => this.logout(logoutReason, userId),
       this.vaultTimeoutSettingsService,
       { createRequest: (url, request) => new Request(url, request) },
+      this.stateProvider,
     );
 
     const sdkClientFactory = flagEnabled("sdk")
