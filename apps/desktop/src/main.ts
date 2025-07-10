@@ -313,8 +313,7 @@ export class Main {
         this.mainDesktopAutotypeService.init();
       })
       .catch((reason) => {
-        // eslint-disable-next-line no-console
-        console.log("Autotype Issue: " + reason);
+        this.logService.error("Error initializing autotype", reason);
       });
   }
 
