@@ -1,4 +1,4 @@
-import { ActivatedRoute, Router } from "@angular/router";
+import { Router } from "@angular/router";
 import { mock } from "jest-mock-extended";
 import { of } from "rxjs";
 
@@ -20,7 +20,6 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
     keyConnectorUrl: "https://key-connector-url.com",
   };
 
-  const mockRoute = mock<ActivatedRoute>();
   const mockRouter = mock<Router>();
   const mockSyncService = mock<SyncService>();
   const mockKeyConnectorService = mock<KeyConnectorService>();
@@ -35,7 +34,6 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
     mockAccountService = mockAccountServiceWith(userId);
 
     component = new ConfirmKeyConnectorDomainComponent(
-      mockRoute,
       mockRouter,
       mockLogService,
       mockKeyConnectorService,

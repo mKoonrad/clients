@@ -1,5 +1,5 @@
 import { Directive, OnInit } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
+import { Router } from "@angular/router";
 import { firstValueFrom } from "rxjs";
 
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
@@ -17,8 +17,6 @@ export class ConfirmKeyConnectorDomainComponent implements OnInit {
   userId!: UserId;
 
   constructor(
-    // TODO remove
-    private route: ActivatedRoute,
     private router: Router,
     private logService: LogService,
     private keyConnectorService: KeyConnectorService,
@@ -36,16 +34,16 @@ export class ConfirmKeyConnectorDomainComponent implements OnInit {
       return;
     }
 
-    const confirmationData = await firstValueFrom(
+    const confirmation = await firstValueFrom(
       this.keyConnectorService.requiresDomainConfirmation$(this.userId),
     );
-    if (confirmationData == null) {
+    if (confirmation == null) {
       this.logService.info("[confirm-key-connector-domain] missing required parameters");
       this.messagingService.send("logout");
       return;
     }
 
-    this.keyConnectorUrl = confirmationData.keyConnectorUrl;
+    this.keyConnectorUrl = confirmation.keyConnectorUrl;
 
     this.loading = false;
   }
