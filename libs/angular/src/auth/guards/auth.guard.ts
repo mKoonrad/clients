@@ -39,7 +39,42 @@ export const authGuard: CanActivateFn = async (
     return false;
   }
 
-  if (authStatus === AuthenticationStatus.Locked) {
+  const userId = (await firstValueFrom(accountService.activeAccount$)).id;
+  const forceSetPasswordReason = await firstValueFrom(
+    masterPasswordService.forceSetPasswordReason$(userId),
+  );
+
+  const isSetInitialPasswordFlagOn = await configService.getFeatureFlag(
+    FeatureFlag.PM16117_SetInitialPasswordRefactor,
+  );
+
+  // User JIT provisioned into a master-password-encryption org
+  if (
+    authStatus === AuthenticationStatus.Locked &&
+    forceSetPasswordReason === ForceSetPasswordReason.SsoNewJitProvisionedUser &&
+    !routerState.url.includes("set-initial-password") &&
+    isSetInitialPasswordFlagOn
+  ) {
+    return router.createUrlTree(["/set-initial-password"]);
+  }
+
+  // TDE Offboarding on untrusted device
+  if (
+    authStatus === AuthenticationStatus.Locked &&
+    forceSetPasswordReason === ForceSetPasswordReason.TdeOffboardingUntrustedDevice &&
+    !routerState.url.includes("set-initial-password") &&
+    isSetInitialPasswordFlagOn
+  ) {
+    return router.createUrlTree(["/set-initial-password"]);
+  }
+
+  // We must add exemptions for the SsoNewJitProvisionedUser and TdeOffboardingUntrustedDevice scenarios as
+  // the "set-initial-password" route is guarded by the authGuard.
+  if (
+    authStatus === AuthenticationStatus.Locked &&
+    forceSetPasswordReason !== ForceSetPasswordReason.SsoNewJitProvisionedUser &&
+    forceSetPasswordReason !== ForceSetPasswordReason.TdeOffboardingUntrustedDevice
+  ) {
     if (routerState != null) {
       messagingService.send("lockedUrl", { url: routerState.url });
     }
@@ -55,25 +90,12 @@ export const authGuard: CanActivateFn = async (
     return router.createUrlTree(["/remove-password"]);
   }
 
-  const userId = (await firstValueFrom(accountService.activeAccount$)).id;
-
   if (
     !routerState.url.includes("confirm-key-connector-domain") &&
     (await firstValueFrom(keyConnectorService.requiresDomainConfirmation$(userId))) != null
   ) {
     return router.createUrlTree(["/confirm-key-connector-domain"]);
   }
-
-  const forceSetPasswordReason = await firstValueFrom(
-    masterPasswordService.forceSetPasswordReason$(userId),
-  );
-
-  const isSetInitialPasswordFlagOn = await configService.getFeatureFlag(
-    FeatureFlag.PM16117_SetInitialPasswordRefactor,
-  );
-  const isChangePasswordFlagOn = await configService.getFeatureFlag(
-    FeatureFlag.PM16117_ChangeExistingPasswordRefactor,
-  );
 
   // TDE org user has "manage account recovery" permission
   if (
@@ -86,7 +108,7 @@ export const authGuard: CanActivateFn = async (
     return router.createUrlTree([route]);
   }
 
-  // TDE Offboarding
+  // TDE Offboarding on trusted device
   if (
     forceSetPasswordReason === ForceSetPasswordReason.TdeOffboarding &&
     !routerState.url.includes("update-temp-password") &&
@@ -95,6 +117,10 @@ export const authGuard: CanActivateFn = async (
     const route = isSetInitialPasswordFlagOn ? "/set-initial-password" : "/update-temp-password";
     return router.createUrlTree([route]);
   }
+
+  const isChangePasswordFlagOn = await configService.getFeatureFlag(
+    FeatureFlag.PM16117_ChangeExistingPasswordRefactor,
+  );
 
   // Post- Account Recovery or Weak Password on login
   if (
