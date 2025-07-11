@@ -275,7 +275,6 @@ export abstract class LoginStrategy {
     }
 
     await this.setMasterKey(response, userId);
-
     await this.setUserKey(response, userId);
     await this.setPrivateKey(response, userId);
 
