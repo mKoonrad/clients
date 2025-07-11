@@ -3,7 +3,6 @@ import { mock } from "jest-mock-extended";
 
 import { KeyConnectorService } from "@bitwarden/common/key-management/key-connector/abstractions/key-connector.service";
 import { UserId } from "@bitwarden/common/types/guid";
-import { KdfType } from "@bitwarden/key-management";
 
 import { Response } from "../models/response";
 import { MessageResponse } from "../models/response/message.response";
@@ -21,12 +20,7 @@ describe("ConfirmKeyConnectorDomainCommand", () => {
   let command: ConfirmKeyConnectorDomainCommand;
 
   const userId = "test-user-id" as UserId;
-  const organizationId = "test-organization-id";
   const keyConnectorUrl = "https://keyconnector.example.com";
-  const kdf = KdfType.Argon2id;
-  const kdfIterations = 10;
-  const kdfMemory = 64;
-  const kdfParallelism = 4;
 
   const keyConnectorService = mock<KeyConnectorService>();
   const logout = jest.fn();
@@ -35,12 +29,7 @@ describe("ConfirmKeyConnectorDomainCommand", () => {
   beforeEach(async () => {
     command = new ConfirmKeyConnectorDomainCommand(
       userId,
-      organizationId,
       keyConnectorUrl,
-      kdf,
-      kdfIterations,
-      kdfMemory,
-      kdfParallelism,
       keyConnectorService,
       logout,
       i18nService,
@@ -115,15 +104,7 @@ describe("ConfirmKeyConnectorDomainCommand", () => {
 
       expect(response).not.toBeNull();
       expect(response.success).toEqual(true);
-      expect(keyConnectorService.convertNewSsoUserToKeyConnector).toHaveBeenCalledWith(
-        organizationId,
-        userId,
-        keyConnectorUrl,
-        kdf,
-        kdfIterations,
-        kdfMemory,
-        kdfParallelism,
-      );
+      expect(keyConnectorService.convertNewSsoUserToKeyConnector).toHaveBeenCalledWith(userId);
     });
 
     it("should logout and throw error if convert new sso user to key connector failed", async () => {
