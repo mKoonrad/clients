@@ -2,8 +2,7 @@
 
 #lock-page,
 #set-password-page,
-#remove-password-page,
-#confirm-key-connector-domain-page {
+#remove-password-page {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -27,8 +26,7 @@
 #register-page,
 #hint-page,
 #update-temp-password-page,
-#remove-password-page,
-#confirm-key-connector-domain-page {
+#remove-password-page {
   padding-top: 20px;
 
   .content {
@@ -106,8 +104,7 @@
 }
 
 #set-password-page,
-#remove-password-page,
-#confirm-key-connector-domain-page {
+#remove-password-page {
   .content {
     width: 500px;
 
@@ -165,8 +162,7 @@
   }
 }
 
-#remove-password-page,
-#confirm-key-connector-domain-page {
+#remove-password-page {
   .content > p {
     margin-bottom: 20px;
   }
