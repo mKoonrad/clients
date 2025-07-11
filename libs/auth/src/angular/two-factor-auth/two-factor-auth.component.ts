@@ -454,7 +454,6 @@ export class TwoFactorAuthComponent implements OnInit, OnDestroy {
         this.keyConnectorService.requiresDomainConfirmation$(authResult.userId),
       )) != null
     ) {
-      this.logService.debug("Key Connector domain confirmation required");
       await this.router.navigate(["confirm-key-connector-domain"]);
       return;
     }

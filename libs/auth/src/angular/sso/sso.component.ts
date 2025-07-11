@@ -440,7 +440,6 @@ export class SsoComponent implements OnInit {
           this.keyConnectorService.requiresDomainConfirmation$(authResult.userId),
         )) != null
       ) {
-        this.logService.debug("Key Connector domain confirmation required");
         await this.router.navigate(["confirm-key-connector-domain"]);
         return;
       }
