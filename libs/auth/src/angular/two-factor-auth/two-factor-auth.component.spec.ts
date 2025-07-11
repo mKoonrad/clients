@@ -443,6 +443,24 @@ describe("TwoFactorAuthComponent", () => {
           });
         });
       });
+
+      it("navigates to /confirm-key-connector-domain when Key Connector is enabled and user has no master password", async () => {
+        selectedUserDecryptionOptions.next(mockUserDecryptionOpts.noMasterPasswordWithKeyConnector);
+        mockKeyConnnectorService.requiresDomainConfirmation$.mockReturnValue(
+          of({
+            keyConnectorUrl:
+              mockUserDecryptionOpts.noMasterPasswordWithKeyConnector.keyConnectorOption!
+                .keyConnectorUrl,
+          }),
+        );
+        const authResult = new AuthResult();
+        authResult.userId = userId;
+        mockLoginStrategyService.logInTwoFactor.mockResolvedValue(authResult);
+
+        await component.submit(token, remember);
+
+        expect(mockRouter.navigate).toHaveBeenCalledWith(["confirm-key-connector-domain"]);
+      });
     });
   });
 });
