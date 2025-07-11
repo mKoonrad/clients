@@ -43,7 +43,7 @@ import {
 } from "@bitwarden/auth/angular";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { AnonLayoutWrapperComponent, AnonLayoutWrapperData, Icons } from "@bitwarden/components";
-import { LockComponent } from "@bitwarden/key-management-ui";
+import { LockComponent, ConfirmKeyConnectorDomainComponent } from "@bitwarden/key-management-ui";
 
 import { AccountSwitcherComponent } from "../auth/popup/account-switching/account-switcher.component";
 import { fido2AuthGuard } from "../auth/popup/guards/fido2-auth.guard";
@@ -56,7 +56,6 @@ import { BlockedDomainsComponent } from "../autofill/popup/settings/blocked-doma
 import { ExcludedDomainsComponent } from "../autofill/popup/settings/excluded-domains.component";
 import { NotificationsSettingsComponent } from "../autofill/popup/settings/notifications.component";
 import { PremiumV2Component } from "../billing/popup/settings/premium-v2.component";
-import { ConfirmKeyConnectorDomainComponent } from "../key-management/key-connector/confirm-key-connector-domain.component";
 import { RemovePasswordComponent } from "../key-management/key-connector/remove-password.component";
 import BrowserPopupUtils from "../platform/browser/browser-popup-utils";
 import { popupRouterCacheGuard } from "../platform/popup/view-cache/popup-router-cache.service";
@@ -188,12 +187,6 @@ const routes: Routes = [
     path: "remove-password",
     component: RemovePasswordComponent,
     canActivate: [authGuard],
-    data: { elevation: 1 } satisfies RouteDataProperties,
-  },
-  {
-    path: "confirm-key-connector-domain",
-    component: ConfirmKeyConnectorDomainComponent,
-    canActivate: [],
     data: { elevation: 1 } satisfies RouteDataProperties,
   },
   {
@@ -646,6 +639,24 @@ const routes: Routes = [
           hideIcon: true,
           hideFooter: true,
         },
+      },
+    ],
+  },
+  {
+    path: "confirm-key-connector-domain",
+    component: ExtensionAnonLayoutWrapperComponent,
+    canActivate: [],
+    data: { elevation: 1 } satisfies RouteDataProperties,
+    children: [
+      {
+        path: "",
+        component: ConfirmKeyConnectorDomainComponent,
+        data: {
+          pageTitle: {
+            key: "confirmKeyConnectorDomain",
+          },
+          showBackButton: true,
+        } satisfies ExtensionAnonLayoutWrapperData,
       },
     ],
   },

@@ -26,7 +26,7 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
   const mockLogService = mock<LogService>();
   const mockMessagingService = mock<MessagingService>();
   let mockAccountService = mockAccountServiceWith(userId);
-  const beforeNavigationConfirmCallback = jest.fn();
+  const onBeforeNavigation = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -42,9 +42,7 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
       mockAccountService,
     );
 
-    jest
-      .spyOn(component, "beforeNavigationConfirmCallback")
-      .mockImplementation(beforeNavigationConfirmCallback);
+    jest.spyOn(component, "onBeforeNavigation").mockImplementation(onBeforeNavigation);
 
     // Mock key connector service to return data from state
     mockKeyConnectorService.requiresDomainConfirmation$.mockReturnValue(of(confirmation));
@@ -88,7 +86,7 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
       expect(mockSyncService.fullSync).toHaveBeenCalledWith(true);
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/"]);
       expect(mockMessagingService.send).toHaveBeenCalledWith("loggedIn");
-      expect(beforeNavigationConfirmCallback).toHaveBeenCalled();
+      expect(onBeforeNavigation).toHaveBeenCalled();
 
       expect(
         mockKeyConnectorService.convertNewSsoUserToKeyConnector.mock.invocationCallOrder[0],
@@ -97,9 +95,9 @@ describe("ConfirmKeyConnectorDomainComponent", () => {
         mockMessagingService.send.mock.invocationCallOrder[0],
       );
       expect(mockMessagingService.send.mock.invocationCallOrder[0]).toBeLessThan(
-        beforeNavigationConfirmCallback.mock.invocationCallOrder[0],
+        onBeforeNavigation.mock.invocationCallOrder[0],
       );
-      expect(beforeNavigationConfirmCallback.mock.invocationCallOrder[0]).toBeLessThan(
+      expect(onBeforeNavigation.mock.invocationCallOrder[0]).toBeLessThan(
         mockRouter.navigate.mock.invocationCallOrder[0],
       );
     });

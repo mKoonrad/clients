@@ -1,4 +1,5 @@
-import { Directive, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { Component, Input, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
 import { firstValueFrom } from "rxjs";
 
@@ -9,12 +10,21 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { SyncService } from "@bitwarden/common/platform/sync";
 import { UserId } from "@bitwarden/common/types/guid";
+import { BitActionDirective, ButtonModule } from "@bitwarden/components";
+import { I18nPipe } from "@bitwarden/ui-common";
 
-@Directive()
+@Component({
+  selector: "confirm-key-connector-domain",
+  templateUrl: "confirm-key-connector-domain.component.html",
+  standalone: true,
+  imports: [CommonModule, ButtonModule, I18nPipe, BitActionDirective],
+})
 export class ConfirmKeyConnectorDomainComponent implements OnInit {
   loading = true;
   keyConnectorUrl!: string;
   userId!: UserId;
+
+  @Input() onBeforeNavigation: () => Promise<void> = async () => {};
 
   constructor(
     private router: Router,
@@ -55,7 +65,7 @@ export class ConfirmKeyConnectorDomainComponent implements OnInit {
 
     this.messagingService.send("loggedIn");
 
-    await this.beforeNavigationConfirmCallback();
+    await this.onBeforeNavigation();
 
     await this.router.navigate(["/"]);
   };
@@ -63,6 +73,4 @@ export class ConfirmKeyConnectorDomainComponent implements OnInit {
   cancel = async () => {
     this.messagingService.send("logout");
   };
-
-  async beforeNavigationConfirmCallback() {}
 }

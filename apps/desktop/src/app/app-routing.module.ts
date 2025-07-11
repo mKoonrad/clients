@@ -42,12 +42,11 @@ import {
 } from "@bitwarden/auth/angular";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { AnonLayoutWrapperComponent, AnonLayoutWrapperData, Icons } from "@bitwarden/components";
-import { LockComponent } from "@bitwarden/key-management-ui";
+import { LockComponent, ConfirmKeyConnectorDomainComponent } from "@bitwarden/key-management-ui";
 
 import { maxAccountsGuardFn } from "../auth/guards/max-accounts.guard";
 import { SetPasswordComponent } from "../auth/set-password.component";
 import { UpdateTempPasswordComponent } from "../auth/update-temp-password.component";
-import { ConfirmKeyConnectorDomainComponent } from "../key-management/key-connector/confirm-key-connector-domain.component";
 import { RemovePasswordComponent } from "../key-management/key-connector/remove-password.component";
 import { VaultV2Component } from "../vault/app/vault/vault-v2.component";
 
@@ -129,11 +128,6 @@ const routes: Routes = [
     path: "remove-password",
     component: RemovePasswordComponent,
     canActivate: [authGuard],
-  },
-  {
-    path: "confirm-key-connector-domain",
-    component: ConfirmKeyConnectorDomainComponent,
-    canActivate: [],
   },
   {
     path: "passkeys",
@@ -356,6 +350,16 @@ const routes: Routes = [
           canAccessFeature(FeatureFlag.PM16117_ChangeExistingPasswordRefactor),
           authGuard,
         ],
+      },
+      {
+        path: "confirm-key-connector-domain",
+        component: ConfirmKeyConnectorDomainComponent,
+        canActivate: [],
+        data: {
+          pageTitle: {
+            key: "confirmKeyConnectorDomain",
+          },
+        } satisfies RouteDataProperties & AnonLayoutWrapperData,
       },
     ],
   },
