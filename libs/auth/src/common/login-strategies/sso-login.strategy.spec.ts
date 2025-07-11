@@ -527,7 +527,7 @@ describe("SsoLoginStrategy", () => {
     });
 
     it("converts new SSO user with no master password to Key Connector on first login", async () => {
-      tokenResponse.key = null;
+      tokenResponse.key = undefined;
       tokenResponse.kdf = KdfType.Argon2id;
       tokenResponse.kdfIterations = 10;
       tokenResponse.kdfMemory = 64;
@@ -535,16 +535,19 @@ describe("SsoLoginStrategy", () => {
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
 
-      const result = await ssoLoginStrategy.logIn(credentials);
+      await ssoLoginStrategy.logIn(credentials);
 
-      expect(result.requiresKeyConnectorDomainConfirmation).toEqual({
-        organizationId: ssoOrgId,
-        keyConnectorUrl: keyConnectorUrl,
-        kdf: KdfType.Argon2id,
-        kdfIterations: 10,
-        kdfMemory: 64,
-        kdfParallelism: 4,
-      });
+      expect(keyConnectorService.setNewSsoUserKeyConnectorConversionData).toHaveBeenCalledWith(
+        {
+          organizationId: ssoOrgId,
+          keyConnectorUrl: keyConnectorUrl,
+          kdf: KdfType.Argon2id,
+          kdfIterations: 10,
+          kdfMemory: 64,
+          kdfParallelism: 4,
+        },
+        userId,
+      );
     });
 
     it("decrypts and sets the user key if Key Connector is enabled and the user doesn't have a master password", async () => {
@@ -590,7 +593,7 @@ describe("SsoLoginStrategy", () => {
     });
 
     it("converts new SSO user with no master password to Key Connector on first login", async () => {
-      tokenResponse.key = null;
+      tokenResponse.key = undefined;
       tokenResponse.kdf = KdfType.Argon2id;
       tokenResponse.kdfIterations = 10;
       tokenResponse.kdfMemory = 64;
@@ -598,16 +601,19 @@ describe("SsoLoginStrategy", () => {
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
 
-      const result = await ssoLoginStrategy.logIn(credentials);
+      await ssoLoginStrategy.logIn(credentials);
 
-      expect(result.requiresKeyConnectorDomainConfirmation).toEqual({
-        organizationId: ssoOrgId,
-        keyConnectorUrl: keyConnectorUrl,
-        kdf: KdfType.Argon2id,
-        kdfIterations: 10,
-        kdfMemory: 64,
-        kdfParallelism: 4,
-      });
+      expect(keyConnectorService.setNewSsoUserKeyConnectorConversionData).toHaveBeenCalledWith(
+        {
+          organizationId: ssoOrgId,
+          keyConnectorUrl: keyConnectorUrl,
+          kdf: KdfType.Argon2id,
+          kdfIterations: 10,
+          kdfMemory: 64,
+          kdfParallelism: 4,
+        },
+        userId,
+      );
     });
 
     it("decrypts and sets the user key if Key Connector is enabled and the user doesn't have a master password", async () => {
