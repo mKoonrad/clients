@@ -120,7 +120,6 @@ export class SsoComponent implements OnInit {
     private ssoComponentService: SsoComponentService,
     private loginSuccessHandlerService: LoginSuccessHandlerService,
     private configService: ConfigService,
-    // TODO remove
     private keyConnectorService: KeyConnectorService,
   ) {
     environmentService.environment$.pipe(takeUntilDestroyed()).subscribe((env) => {
@@ -434,6 +433,16 @@ export class SsoComponent implements OnInit {
       const authResult = await this.formPromise;
       if (authResult.requiresTwoFactor) {
         return await this.handleTwoFactorRequired(orgSsoIdentifier);
+      }
+
+      if (
+        (await firstValueFrom(
+          this.keyConnectorService.requiresDomainConfirmation$(authResult.userId),
+        )) != null
+      ) {
+        this.logService.debug("Key Connector domain confirmation required");
+        await this.router.navigate(["confirm-key-connector-domain"]);
+        return;
       }
 
       // Everything after the 2FA check is considered a successful login

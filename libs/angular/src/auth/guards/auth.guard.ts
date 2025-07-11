@@ -90,13 +90,6 @@ export const authGuard: CanActivateFn = async (
     return router.createUrlTree(["/remove-password"]);
   }
 
-  if (
-    !routerState.url.includes("confirm-key-connector-domain") &&
-    (await firstValueFrom(keyConnectorService.requiresDomainConfirmation$(userId))) != null
-  ) {
-    return router.createUrlTree(["/confirm-key-connector-domain"]);
-  }
-
   // TDE org user has "manage account recovery" permission
   if (
     forceSetPasswordReason ===
