@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate napi_derive;
 
-mod autotype_internal;
 mod passkey_authenticator_internal;
 mod registry;
 
@@ -890,6 +889,10 @@ pub mod logging {
 pub mod autotype {
     #[napi]
     pub fn get_foreground_window_title() -> napi::Result<String, napi::Status> {
-        crate::autotype_internal::get_foreground_window_title().map_err(napi::Error::from_reason)
+        autotype::get_foreground_window_title().map_err(|_| {
+            napi::Error::from_reason(format!(
+                "Autotype Error: faild to get foreground window title"
+            ))
+        })
     }
 }
