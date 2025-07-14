@@ -129,19 +129,33 @@ export class PolicyEditComponent implements AfterViewInit {
 
   submit = async () => {
     let request: PolicyRequest;
+    let canceled: boolean = false;
+
     try {
+      canceled = !(await this.policyComponent.confirm());
+      if (canceled) {
+        this.dialogRef.close();
+      }
+
       request = await this.policyComponent.buildRequest();
     } catch (e) {
       this.toastService.showToast({ variant: "error", title: null, message: e.message });
       return;
     }
-    await this.policyApiService.putPolicy(this.data.organizationId, this.data.policy.type, request);
-    this.toastService.showToast({
-      variant: "success",
-      title: null,
-      message: this.i18nService.t("editedPolicyId", this.i18nService.t(this.data.policy.name)),
-    });
-    this.dialogRef.close(PolicyEditDialogResult.Saved);
+
+    if (!canceled) {
+      await this.policyApiService.putPolicy(
+        this.data.organizationId,
+        this.data.policy.type,
+        request,
+      );
+      this.toastService.showToast({
+        variant: "success",
+        title: null,
+        message: this.i18nService.t("editedPolicyId", this.i18nService.t(this.data.policy.name)),
+      });
+      this.dialogRef.close(PolicyEditDialogResult.Saved);
+    }
   };
 
   static open = (dialogService: DialogService, config: DialogConfig<PolicyEditDialogData>) => {

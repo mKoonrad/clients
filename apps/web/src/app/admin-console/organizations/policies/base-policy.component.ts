@@ -55,6 +55,13 @@ export abstract class BasePolicyComponent implements OnInit {
     return Promise.resolve(request);
   }
 
+  /**
+   * Enable optional validation before sumitting a respose for policy submission
+   * */
+  confirm(): Promise<boolean> | boolean {
+    return true;
+  }
+
   protected loadData() {
     this.data?.patchValue(this.policyResponse?.data ?? {});
   }

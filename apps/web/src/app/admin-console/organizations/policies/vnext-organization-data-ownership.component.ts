@@ -5,7 +5,6 @@ import { PolicyType } from "@bitwarden/common/admin-console/enums";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
-import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { DialogService } from "@bitwarden/components";
 
 import { SharedModule } from "../../../shared";
@@ -34,25 +33,18 @@ export class vNextOrganizationDataOwnershipPolicyComponent
   extends BasePolicyComponent
   implements OnInit
 {
-  constructor(
-    private dialogService: DialogService,
-    private i18nService: I18nService,
-  ) {
+  constructor(private dialogService: DialogService) {
     super();
   }
 
   @ViewChild("dialog", { static: true }) warningContent!: TemplateRef<unknown>;
 
-  async buildRequest() {
+  override async confirm(): Promise<boolean> {
     if (this.policyResponse?.enabled && !this.enabled.value) {
       const dialogRef = this.dialogService.open(this.warningContent);
       const result = await lastValueFrom(dialogRef.closed);
-
-      if (!result) {
-        throw new Error(this.i18nService.t("canceled"));
-      }
+      return Boolean(result);
     }
-
-    return super.buildRequest();
+    return true;
   }
 }
