@@ -14,6 +14,7 @@ default = []
 manual_test = []
 
 [dependencies]
+autotype = { path = "../autotype" }
 base64 = { workspace = true }
 hex = { workspace = true }
 anyhow = { workspace = true }
@@ -30,7 +31,6 @@ tokio-stream = { workspace = true }
 [target.'cfg(windows)'.dependencies]
 windows-registry = { workspace = true }
 windows_plugin_authenticator = { path = "../windows_plugin_authenticator" }
-autotype = { path = "../autotype" }
 
 [build-dependencies]
 napi-build = { workspace = true }

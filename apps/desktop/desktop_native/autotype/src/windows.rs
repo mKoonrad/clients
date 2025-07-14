@@ -1,9 +1,3 @@
-/*
-    The `windowing` module provides a safe abstraction
-    over unsafe Win32 API functions for autotype
-    usage.
-*/
-
 use std::ffi::OsString;
 use std::os::windows::ffi::OsStringExt;
 
@@ -17,11 +11,23 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 /*
-    Returns a handle to the foreground window.
+    Gets the title bar string for the foreground window.
+*/
+pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
+    let Ok(window_handle) = get_foreground_window() else {
+        return Err(());
+    };
+    let Ok(Some(window_title)) = get_window_title(window_handle) else {
+        return Err(());
+    };
 
+    Ok(window_title)
+}
+
+/*
     https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
 */
-pub fn get_foreground_window() -> Result<HWND, ()> {
+fn get_foreground_window() -> Result<HWND, ()> {
     let foreground_window_handle = unsafe { GetForegroundWindow() };
 
     if foreground_window_handle.is_invalid() {
@@ -32,19 +38,33 @@ pub fn get_foreground_window() -> Result<HWND, ()> {
 }
 
 /*
-    Returns the window title, if possible.
+    TODO: Future improvement is to use GetLastError for better error handling
+
+    https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
+*/
+fn get_window_title_length(window_handle: HWND) -> Result<usize, ()> {
+    if window_handle.is_invalid() {
+        return Err(());
+    }
+
+    match usize::try_from(unsafe { GetWindowTextLengthW(window_handle) }) {
+        Ok(length) => Ok(length),
+        Err(_) => Err(()),
+    }
+}
+
+/*
+    TODO: Future improvement is to use GetLastError for better error handling
 
     https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextw
-    https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror
 */
-pub fn get_window_title(window_handle: HWND) -> Result<Option<String>, ()> {
+fn get_window_title(window_handle: HWND) -> Result<Option<String>, ()> {
     if window_handle.is_invalid() {
         return Err(());
     }
 
     let window_title_length = get_window_title_length(window_handle)?;
     if window_title_length == 0 {
-        // TODO: Future improvement is to use GetLastError
         return Ok(None);
     }
 
@@ -52,11 +72,11 @@ pub fn get_window_title(window_handle: HWND) -> Result<Option<String>, ()> {
 
     let window_title_length = unsafe { GetWindowTextW(window_handle, &mut buffer) };
     if window_title_length == 0 {
-        // TODO: Future improvement is to use GetLastError
         return Ok(None);
     }
 
     let window_title = OsString::from_wide(&buffer);
+
     Ok(Some(window_title.to_string_lossy().into_owned()))
 }
 
@@ -97,23 +117,5 @@ pub fn type_input(input: Vec<u8>) -> Result<(), ()> {
         Err(())
     } else {
         Ok(())
-    }
-}
-
-/*
-    Gets the length of the title for a window.
-
-    https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
-    https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror
-*/
-fn get_window_title_length(window_handle: HWND) -> Result<usize, ()> {
-    if window_handle.is_invalid() {
-        return Err(());
-    }
-
-    match unsafe { usize::try_from(GetWindowTextLengthW(window_handle)) } {
-        Ok(length) => Ok(length),
-        // TODO: Future improvement is to use GetLastError
-        Err(_) => Err(()),
     }
 }
