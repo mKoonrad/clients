@@ -236,17 +236,6 @@ export class VaultHeaderComponent {
     return true;
   }
 
-  get showMenu(): boolean {
-    if (this.collection?.node.defaultCollection) {
-      return false;
-    }
-
-    return (
-      this.collection != null &&
-      (this.canEditCollection || this.canDeleteCollection || this.canViewCollectionInfo)
-    );
-  }
-
   deleteCollection() {
     this.onDeleteCollection.emit();
   }

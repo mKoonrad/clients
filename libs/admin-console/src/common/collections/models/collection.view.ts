@@ -60,7 +60,7 @@ export class CollectionView implements View, ITreeNodeObject {
       return false;
     }
 
-    if (org?.id !== this.organizationId) {
+    if (org != null && org.id !== this.organizationId) {
       throw new Error(
         "Id of the organization provided does not match the org id of the collection.",
       );
@@ -74,7 +74,7 @@ export class CollectionView implements View, ITreeNodeObject {
    * Does not include admin permissions - see {@link CollectionAdminView.canDelete}.
    */
   canDelete(org: Organization | undefined): boolean {
-    if (org?.id !== this.organizationId) {
+    if (org != null && org.id !== this.organizationId) {
       throw new Error(
         "Id of the organization provided does not match the org id of the collection.",
       );

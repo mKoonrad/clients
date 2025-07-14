@@ -120,7 +120,7 @@ export class VaultHeaderComponent {
     }
 
     if (this.filter?.organizationId !== undefined) {
-      return this.filter?.organizationId;
+      return this.filter.organizationId;
     }
 
     return undefined;
@@ -136,7 +136,11 @@ export class VaultHeaderComponent {
   }
 
   protected get title() {
-    if (this.filter?.collectionId === Unassigned) {
+    if (this.filter === undefined) {
+      return "";
+    }
+
+    if (this.filter.collectionId === Unassigned) {
       return this.i18nService.t("unassigned");
     }
 
@@ -144,7 +148,7 @@ export class VaultHeaderComponent {
       return this.collection.node.name;
     }
 
-    if (this.filter?.organizationId === Unassigned) {
+    if (this.filter.organizationId === Unassigned) {
       return this.i18nService.t("myVault");
     }
 
@@ -211,14 +215,6 @@ export class VaultHeaderComponent {
     );
 
     return this.collection.node.canDelete(organization);
-  }
-
-  get showMenu(): boolean {
-    if (this.collection?.node.defaultCollection) {
-      return false;
-    }
-
-    return this.canEditCollection || this.canEditCollection;
   }
 
   deleteCollection() {

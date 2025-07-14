@@ -43,6 +43,10 @@ export class CollectionAdminView extends CollectionView {
    * Returns true if the user can edit a collection (including user and group access) from the Admin Console.
    */
   override canEdit(org: Organization): boolean {
+    if (this.defaultCollection) {
+      return false;
+    }
+
     return (
       org?.canEditAnyCollection ||
       (this.unmanaged && org?.canEditUnmanagedCollections) ||
@@ -54,6 +58,10 @@ export class CollectionAdminView extends CollectionView {
    * Returns true if the user can delete a collection from the Admin Console.
    */
   override canDelete(org: Organization): boolean {
+    if (this.defaultCollection) {
+      return false;
+    }
+
     return org?.canDeleteAnyCollection || super.canDelete(org);
   }
 
@@ -61,9 +69,12 @@ export class CollectionAdminView extends CollectionView {
    * Whether the user can modify user access to this collection
    */
   canEditUserAccess(org: Organization): boolean {
+    if (this.defaultCollection) {
+      return false;
+    }
+
     return (
-      (org.permissions.manageUsers && org.allowAdminAccessToAllCollectionItems) ||
-      (this.canEdit(org) && !this.defaultCollection)
+      (org.permissions.manageUsers && org.allowAdminAccessToAllCollectionItems) || this.canEdit(org)
     );
   }
 
@@ -71,9 +82,13 @@ export class CollectionAdminView extends CollectionView {
    * Whether the user can modify group access to this collection
    */
   canEditGroupAccess(org: Organization): boolean {
+    if (this.defaultCollection) {
+      return false;
+    }
+
     return (
       (org.permissions.manageGroups && org.allowAdminAccessToAllCollectionItems) ||
-      (this.canEdit(org) && !this.defaultCollection)
+      this.canEdit(org)
     );
   }
 

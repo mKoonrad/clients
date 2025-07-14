@@ -104,20 +104,4 @@ export class VaultCollectionRowComponent {
   protected deleteCollection() {
     this.onEvent.next({ type: "delete", items: [{ collection: this.collection }] });
   }
-
-  protected get showCheckbox() {
-    if (this.collection?.id === Unassigned || this.collection.defaultCollection) {
-      return false; // Never show checkbox for Unassigned or the default user collection
-    }
-
-    return this.canEditCollection || this.canDeleteCollection;
-  }
-
-  protected get showMenu() {
-    if (this.collection.defaultCollection) {
-      return false;
-    }
-
-    return this.canEditCollection || this.canDeleteCollection || this.canViewCollectionInfo;
-  }
 }
