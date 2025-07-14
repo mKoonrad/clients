@@ -146,7 +146,7 @@ export class VaultCipherRowComponent implements OnInit {
   }
 
   protected get showCopyPassword(): boolean {
-    return this.isNotDeletedLoginCipher && this.cipher.viewPassword;
+    return this.isNotDeletedLoginCipher && this.cipher.viewPassword && !!this.cipher.login.password;
   }
 
   protected get showCopyTotp(): boolean {
@@ -159,14 +159,13 @@ export class VaultCipherRowComponent implements OnInit {
 
   protected get hideMenu() {
     return !(
-      this.isNotDeletedLoginCipher ||
-      this.showCopyPassword ||
-      this.showCopyTotp ||
-      this.showLaunchUri ||
-      this.showAttachments ||
-      this.showClone ||
-      this.canEditCipher ||
-      (this.cipher.isDeleted && this.canRestoreCipher)
+      (this.isNotDeletedLoginCipher || (this.cipher.isDeleted && this.canRestoreCipher)) &&
+      (this.showCopyPassword ||
+        this.showCopyTotp ||
+        this.showLaunchUri ||
+        this.showAttachments ||
+        this.showClone ||
+        this.canEditCipher)
     );
   }
 
