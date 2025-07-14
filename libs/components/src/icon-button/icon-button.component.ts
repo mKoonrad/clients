@@ -1,12 +1,22 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { NgClass } from "@angular/common";
-import { Component, computed, ElementRef, HostBinding, Input, model } from "@angular/core";
+import {
+  Component,
+  computed,
+  ElementRef,
+  HostBinding,
+  inject,
+  Input,
+  model,
+  Signal,
+} from "@angular/core";
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { debounce, interval } from "rxjs";
 
 import { ButtonLikeAbstraction, ButtonType } from "../shared/button-like.abstraction";
 import { FocusableElement } from "../shared/focusable-element";
+import { ariaDisableElement } from "../utils";
 
 export type IconButtonType = ButtonType | "contrast" | "main" | "muted" | "light";
 
@@ -102,41 +112,41 @@ const styles: Record<IconButtonType, string[]> = {
 
 const disabledStyles: Record<IconButtonType, string[]> = {
   contrast: [
-    "disabled:tw-opacity-60",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
+    "aria-disabled:tw-opacity-60",
+    "aria-disabled:hover:tw-border-transparent",
+    "aria-disabled:hover:tw-bg-transparent",
   ],
   main: [
-    "disabled:!tw-text-secondary-300",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
+    "aria-disabled:!tw-text-secondary-300",
+    "aria-disabled:hover:tw-border-transparent",
+    "aria-disabled:hover:tw-bg-transparent",
   ],
   muted: [
-    "disabled:!tw-text-secondary-300",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
+    "aria-disabled:!tw-text-secondary-300",
+    "aria-disabled:hover:tw-border-transparent",
+    "aria-disabled:hover:tw-bg-transparent",
   ],
   primary: [
-    "disabled:tw-opacity-60",
-    "disabled:hover:tw-border-primary-600",
-    "disabled:hover:tw-bg-primary-600",
+    "aria-disabled:tw-opacity-60",
+    "aria-disabled:hover:tw-border-primary-600",
+    "aria-disabled:hover:tw-bg-primary-600",
   ],
   secondary: [
-    "disabled:tw-opacity-60",
-    "disabled:hover:tw-border-text-muted",
-    "disabled:hover:tw-bg-transparent",
-    "disabled:hover:!tw-text-muted",
+    "aria-disabled:tw-opacity-60",
+    "aria-disabled:hover:tw-border-text-muted",
+    "aria-disabled:hover:tw-bg-transparent",
+    "aria-disabled:hover:!tw-text-muted",
   ],
   danger: [
-    "disabled:!tw-text-secondary-300",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
-    "disabled:hover:!tw-text-secondary-300",
+    "aria-disabled:!tw-text-secondary-300",
+    "aria-disabled:hover:tw-border-transparent",
+    "aria-disabled:hover:tw-bg-transparent",
+    "aria-disabled:hover:!tw-text-secondary-300",
   ],
   light: [
-    "disabled:tw-opacity-60",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
+    "aria-disabled:tw-opacity-60",
+    "aria-disabled:hover:tw-border-transparent",
+    "aria-disabled:hover:tw-bg-transparent",
   ],
   unstyled: [],
 };
@@ -147,7 +157,13 @@ const sizes: Record<IconButtonSize, string[]> = {
   default: ["tw-px-2.5", "tw-py-1.5"],
   small: ["tw-leading-none", "tw-text-base", "tw-p-1"],
 };
+/**
+  * Icon buttons are used when no text accompanies the button. It consists of an icon that may be updated to any icon in the `bwi-font`, a `title` attribute, and an `aria-label`.
 
+  * The most common use of the icon button is in the banner, toast, and modal components as a close button. It can also be found in tables as the 3 dot option menu, or on navigation list items when there are options that need to be collapsed into a menu.
+
+  * Similar to the main button components, spacing between multiple icon buttons should be .5rem.
+ */
 @Component({
   selector: "button[bitIconButton]:not(button[bitButton])",
   templateUrl: "icon-button.component.html",
@@ -155,10 +171,9 @@ const sizes: Record<IconButtonSize, string[]> = {
     { provide: ButtonLikeAbstraction, useExisting: BitIconButtonComponent },
     { provide: FocusableElement, useExisting: BitIconButtonComponent },
   ],
-  standalone: true,
   imports: [NgClass],
   host: {
-    "[attr.disabled]": "disabledAttr()",
+    "[attr.aria-disabled]": "disabledAttr()",
   },
 })
 export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableElement {
@@ -228,5 +243,10 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
     return this.elementRef.nativeElement;
   }
 
-  constructor(private elementRef: ElementRef) {}
+  private elementRef = inject(ElementRef);
+
+  constructor() {
+    const element = this.elementRef.nativeElement;
+    ariaDisableElement(element, this.disabledAttr as Signal<boolean | undefined>);
+  }
 }
