@@ -15,7 +15,6 @@ import { KeyConnectorService } from "@bitwarden/common/key-management/key-connec
 import { ErrorResponse } from "@bitwarden/common/models/response/error.response";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { UserId } from "@bitwarden/common/types/guid";
-import { Argon2KdfConfig, KdfConfig, KdfType, PBKDF2KdfConfig } from "@bitwarden/key-management";
 
 import { AuthRequestServiceAbstraction } from "../abstractions";
 import { SsoLoginCredentials } from "../models/domain/login-credentials";
@@ -127,19 +126,10 @@ export class SsoLoginStrategy extends LoginStrategy {
       // The presence of a masterKeyEncryptedUserKey indicates that the user has already been provisioned in Key Connector.
       const newSsoUser = tokenResponse.key == null;
       if (newSsoUser) {
-        const kdfConfig: KdfConfig =
-          tokenResponse.kdf === KdfType.PBKDF2_SHA256
-            ? new PBKDF2KdfConfig(tokenResponse.kdfIterations)
-            : new Argon2KdfConfig(
-                tokenResponse.kdfIterations,
-                tokenResponse.kdfMemory,
-                tokenResponse.kdfParallelism,
-              );
-
         // Store Key Connector domain confirmation data in state instead of AuthResult
         await this.keyConnectorService.setNewSsoUserKeyConnectorConversionData(
           {
-            kdfConfig,
+            kdfConfig: tokenResponse.kdfConfig,
             keyConnectorUrl: this.getKeyConnectorUrl(tokenResponse),
             organizationId: this.cache.value.orgId,
           },

@@ -35,7 +35,7 @@ import { FakeAccountService, mockAccountServiceWith } from "@bitwarden/common/sp
 import { CsprngArray } from "@bitwarden/common/types/csprng";
 import { UserId } from "@bitwarden/common/types/guid";
 import { DeviceKey, MasterKey, UserKey } from "@bitwarden/common/types/key";
-import { Argon2KdfConfig, KdfConfigService, KdfType, KeyService } from "@bitwarden/key-management";
+import { Argon2KdfConfig, KdfConfigService, KeyService } from "@bitwarden/key-management";
 
 import {
   AuthRequestServiceAbstraction,
@@ -528,10 +528,7 @@ describe("SsoLoginStrategy", () => {
 
     it("converts new SSO user with no master password to Key Connector on first login", async () => {
       tokenResponse.key = undefined;
-      tokenResponse.kdf = KdfType.Argon2id;
-      tokenResponse.kdfIterations = 10;
-      tokenResponse.kdfMemory = 64;
-      tokenResponse.kdfParallelism = 4;
+      tokenResponse.kdfConfig = new Argon2KdfConfig(10, 64, 4);
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
 
@@ -591,10 +588,7 @@ describe("SsoLoginStrategy", () => {
 
     it("converts new SSO user with no master password to Key Connector on first login", async () => {
       tokenResponse.key = undefined;
-      tokenResponse.kdf = KdfType.Argon2id;
-      tokenResponse.kdfIterations = 10;
-      tokenResponse.kdfMemory = 64;
-      tokenResponse.kdfParallelism = 4;
+      tokenResponse.kdfConfig = new Argon2KdfConfig(10, 64, 4);
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
 
