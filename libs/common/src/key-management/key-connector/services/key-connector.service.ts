@@ -9,13 +9,7 @@ import { AccountService } from "@bitwarden/common/auth/abstractions/account.serv
 import { NewSsoUserKeyConnectorConversion } from "@bitwarden/common/key-management/key-connector/models/new-sso-user-key-connector-conversion";
 // This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
 // eslint-disable-next-line no-restricted-imports
-import {
-  Argon2KdfConfig,
-  KdfConfig,
-  PBKDF2KdfConfig,
-  KeyService,
-  KdfType,
-} from "@bitwarden/key-management";
+import { Argon2KdfConfig, KdfType, KeyService, PBKDF2KdfConfig } from "@bitwarden/key-management";
 
 import { ApiService } from "../../../abstractions/api.service";
 import { OrganizationService } from "../../../admin-console/abstractions/organization/organization.service.abstraction";
@@ -51,7 +45,17 @@ export const NEW_SSO_USER_KEY_CONNECTOR_CONVERSION =
     KEY_CONNECTOR_DISK,
     "newSsoUserKeyConnectorConversion",
     {
-      deserializer: (data) => data,
+      deserializer: (conversion) =>
+        conversion == null
+          ? null
+          : {
+              kdfConfig:
+                conversion.kdfConfig.kdfType === KdfType.PBKDF2_SHA256
+                  ? PBKDF2KdfConfig.fromJSON(conversion.kdfConfig)
+                  : Argon2KdfConfig.fromJSON(conversion.kdfConfig),
+              keyConnectorUrl: conversion.keyConnectorUrl,
+              organizationId: conversion.organizationId,
+            },
       clearOn: ["logout"],
       cleanupDelayMs: 0,
     },
@@ -148,14 +152,9 @@ export class KeyConnectorService implements KeyConnectorServiceAbstraction {
       throw new Error("Key Connector conversion not found");
     }
 
-    const { kdf, kdfIterations, kdfMemory, kdfParallelism, keyConnectorUrl, organizationId } =
-      conversion;
+    const { kdfConfig, keyConnectorUrl, organizationId } = conversion;
 
     const password = await this.keyGenerationService.createKey(512);
-    const kdfConfig: KdfConfig =
-      kdf === KdfType.PBKDF2_SHA256
-        ? new PBKDF2KdfConfig(kdfIterations)
-        : new Argon2KdfConfig(kdfIterations, kdfMemory, kdfParallelism);
 
     const masterKey = await this.keyService.makeMasterKey(
       password.keyB64,

@@ -59,9 +59,8 @@ describe("KeyConnectorService", () => {
   const keyConnectorUrl = "https://key-connector-url.com";
 
   const conversion: NewSsoUserKeyConnectorConversion = {
-    kdf: KdfType.PBKDF2_SHA256,
-    kdfIterations: 600_000,
-    keyConnectorUrl: keyConnectorUrl,
+    kdfConfig: new PBKDF2KdfConfig(600_000),
+    keyConnectorUrl,
     organizationId: mockOrgId,
   };
 
@@ -454,10 +453,7 @@ describe("KeyConnectorService", () => {
             : new Argon2KdfConfig(kdfIterations, kdfMemory, kdfParallelism);
 
         const conversion: NewSsoUserKeyConnectorConversion = {
-          kdf: kdfType,
-          kdfIterations: kdfIterations,
-          kdfMemory: kdfMemory,
-          kdfParallelism: kdfParallelism,
+          kdfConfig: expectedKdfConfig,
           keyConnectorUrl: keyConnectorUrl,
           organizationId: mockOrgId,
         };
@@ -584,10 +580,7 @@ describe("KeyConnectorService", () => {
         NEW_SSO_USER_KEY_CONNECTOR_CONVERSION,
       );
       const existingConversion: NewSsoUserKeyConnectorConversion = {
-        kdf: KdfType.Argon2id,
-        kdfIterations: 3,
-        kdfMemory: 64,
-        kdfParallelism: 4,
+        kdfConfig: new Argon2KdfConfig(3, 64, 4),
         keyConnectorUrl: "https://old.example.com",
         organizationId: "old-org-id" as OrganizationId,
       };

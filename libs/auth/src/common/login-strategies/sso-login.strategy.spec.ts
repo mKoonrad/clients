@@ -35,7 +35,7 @@ import { FakeAccountService, mockAccountServiceWith } from "@bitwarden/common/sp
 import { CsprngArray } from "@bitwarden/common/types/csprng";
 import { UserId } from "@bitwarden/common/types/guid";
 import { DeviceKey, MasterKey, UserKey } from "@bitwarden/common/types/key";
-import { KdfConfigService, KdfType, KeyService } from "@bitwarden/key-management";
+import { Argon2KdfConfig, KdfConfigService, KdfType, KeyService } from "@bitwarden/key-management";
 
 import {
   AuthRequestServiceAbstraction,
@@ -539,12 +539,9 @@ describe("SsoLoginStrategy", () => {
 
       expect(keyConnectorService.setNewSsoUserKeyConnectorConversionData).toHaveBeenCalledWith(
         {
-          organizationId: ssoOrgId,
+          kdfConfig: new Argon2KdfConfig(10, 64, 4),
           keyConnectorUrl: keyConnectorUrl,
-          kdf: KdfType.Argon2id,
-          kdfIterations: 10,
-          kdfMemory: 64,
-          kdfParallelism: 4,
+          organizationId: ssoOrgId,
         },
         userId,
       );
@@ -605,12 +602,9 @@ describe("SsoLoginStrategy", () => {
 
       expect(keyConnectorService.setNewSsoUserKeyConnectorConversionData).toHaveBeenCalledWith(
         {
-          organizationId: ssoOrgId,
+          kdfConfig: new Argon2KdfConfig(10, 64, 4),
           keyConnectorUrl: keyConnectorUrl,
-          kdf: KdfType.Argon2id,
-          kdfIterations: 10,
-          kdfMemory: 64,
-          kdfParallelism: 4,
+          organizationId: ssoOrgId,
         },
         userId,
       );
