@@ -449,15 +449,6 @@ export class TwoFactorAuthComponent implements OnInit, OnDestroy {
       return; // stop login process
     }
 
-    if (
-      (await firstValueFrom(
-        this.keyConnectorService.requiresDomainConfirmation$(authResult.userId),
-      )) != null
-    ) {
-      await this.router.navigate(["confirm-key-connector-domain"]);
-      return;
-    }
-
     // User is fully logged in so handle any post login logic before executing navigation
     await this.loginSuccessHandlerService.run(authResult.userId);
 
@@ -470,6 +461,15 @@ export class TwoFactorAuthComponent implements OnInit, OnDestroy {
         this.orgSsoIdentifier,
         userId,
       );
+    }
+
+    if (
+      (await firstValueFrom(
+        this.keyConnectorService.requiresDomainConfirmation$(authResult.userId),
+      )) != null
+    ) {
+      await this.router.navigate(["confirm-key-connector-domain"]);
+      return;
     }
 
     const userDecryptionOpts = await firstValueFrom(

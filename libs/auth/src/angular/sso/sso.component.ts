@@ -435,15 +435,6 @@ export class SsoComponent implements OnInit {
         return await this.handleTwoFactorRequired(orgSsoIdentifier);
       }
 
-      if (
-        (await firstValueFrom(
-          this.keyConnectorService.requiresDomainConfirmation$(authResult.userId),
-        )) != null
-      ) {
-        await this.router.navigate(["confirm-key-connector-domain"]);
-        return;
-      }
-
       // Everything after the 2FA check is considered a successful login
       // Just have to figure out where to send the user
       await this.loginSuccessHandlerService.run(authResult.userId);
@@ -457,6 +448,15 @@ export class SsoComponent implements OnInit {
         orgSsoIdentifier,
         authResult.userId,
       );
+
+      if (
+        (await firstValueFrom(
+          this.keyConnectorService.requiresDomainConfirmation$(authResult.userId),
+        )) != null
+      ) {
+        await this.router.navigate(["confirm-key-connector-domain"]);
+        return;
+      }
 
       // must come after 2fa check since user decryption options aren't available if 2fa is required
       const userDecryptionOpts = await firstValueFrom(
