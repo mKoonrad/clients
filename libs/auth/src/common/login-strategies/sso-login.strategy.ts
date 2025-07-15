@@ -219,7 +219,7 @@ export class SsoLoginStrategy extends LoginStrategy {
       this.getKeyConnectorUrl(tokenResponse) != null
     ) {
       // Key connector enabled for user
-      await this.trySetUserKeyWithMasterKey(tokenResponse, userId);
+      await this.trySetUserKeyWithMasterKey(userId);
     }
 
     // Note: In the traditional SSO flow with MP without key connector, the lock component
@@ -329,23 +329,15 @@ export class SsoLoginStrategy extends LoginStrategy {
     }
   }
 
-  private async trySetUserKeyWithMasterKey(
-    tokenResponse: IdentityTokenResponse,
-    userId: UserId,
-  ): Promise<void> {
-    const newSsoUser = tokenResponse.key == null;
-    // For new users with Key Connector, we will not have a master key yet, since Key Connector
-    // domain have to be confirmed first.
-    if (newSsoUser) {
-      return;
-    }
-
+  private async trySetUserKeyWithMasterKey(userId: UserId): Promise<void> {
     const masterKey = await firstValueFrom(this.masterPasswordService.masterKey$(userId));
 
-    // There is a scenario in which the master key is not set here. That will occur if the user
-    // has a master password and is using Key Connector. In that case, we cannot set the master key
+    // There are two scenarios in which the master key is not set here:
+    // 1. If the user has a master password and is using Key Connector. In that case, we cannot set the master key
     // because the user hasn't entered their master password yet.
-    // Instead, we'll return here and let the migration to Key Connector handle setting the master key.
+    // 2. For new users with Key Connector, we will not have a master key yet, since Key Connector domain
+    // has to be confirmed first.
+    // In both cases, we'll return here and let the migration to Key Connector handle setting the master key.
     if (!masterKey) {
       return;
     }
