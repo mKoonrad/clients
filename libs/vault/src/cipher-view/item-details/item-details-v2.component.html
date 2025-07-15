@@ -13,12 +13,12 @@
     </div>
     <ng-container>
       <div class="tw-flex tw-flex-col md:tw-flex-row md:tw-flex-wrap">
-        @for (item of showItems; track item.id; let last = $last) {
+        @for (item of showItems(); track item.id; let last = $last) {
           <span
             class="tw-flex tw-items-center tw-mt-2 tw-mr-4"
             bitTypography="body2"
             [attr.aria-label]="getAriaLabel(item)"
-            [ngClass]="{ 'tw-mb-2': last && isSmallScreen }"
+            [ngClass]="{ 'tw-mb-2': last && hasSmallScreen() }"
             data-testid="item-details-list"
           >
             @if (isOrgIcon(item)) {
@@ -41,7 +41,7 @@
             </span>
           </span>
         }
-        @if (allItems.length === 0) {
+        @if (allItems().length === 0) {
           <span
             class="tw-flex tw-items-center tw-mt-2 tw-mr-4"
             bitTypography="body2"
@@ -53,7 +53,7 @@
             </span>
           </span>
         }
-        @if (isSmallScreen && allItems.length > 2) {
+        @if (hasSmallScreen() && allItems().length > 2) {
           <button
             bitTypography="body2"
             type="button"

@@ -1,9 +1,11 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
-import { CommonModule, DOCUMENT } from "@angular/common";
-import { Component, inject, input, OnChanges } from "@angular/core";
-
+import { CommonModule } from "@angular/common";
+import { Component, computed, input, signal } from "@angular/core";
 // This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
+import { toSignal } from "@angular/core/rxjs-interop";
+import { fromEvent, map, startWith } from "rxjs";
+
 // eslint-disable-next-line no-restricted-imports
 import { CollectionView } from "@bitwarden/admin-console/common";
 import { JslibModule } from "@bitwarden/angular/jslib.module";
@@ -33,67 +35,53 @@ import { OrgIconDirective } from "../../components/org-icon.directive";
     ButtonLinkDirective,
   ],
 })
-export class ItemDetailsV2Component implements OnChanges {
+export class ItemDetailsV2Component {
   hideOwner = input<boolean>(false);
   cipher = input.required<CipherView>();
   organization = input<Organization | undefined>();
   folder = input<FolderView | undefined>();
   collections = input<CollectionView[] | undefined>();
+  showAllDetails = signal(false);
 
-  showAllDetails: boolean = false;
+  showOwnership = computed(() => {
+    return this.cipher().organizationId && this.organization() && !this.hideOwner();
+  });
+
+  hasSmallScreen = toSignal(
+    fromEvent(window, "resize").pipe(
+      map(() => window.innerWidth),
+      startWith(window.innerWidth),
+      map((width) => width < 681),
+    ),
+  );
 
   // Array to hold all details of item. Organization, Collections, and Folder
-  allItems: any[] = [];
+  allItems = computed(() => {
+    let items: any[] = [];
+    if (this.showOwnership() && this.organization()) {
+      items.push(this.organization());
+    }
+    if (this.cipher().collectionIds?.length > 0 && this.collections()) {
+      items = [...items, ...this.collections()];
+    }
+    if (this.cipher().folderId && this.folder()) {
+      items.push(this.folder());
+    }
+    return items;
+  });
 
-  // Array to hold the display pieces of the item details (dependent on allItems and screen size)
-  showItems: any[] = [];
-
-  // Inject the document to check for screen size
-  private document = inject(DOCUMENT);
-  isSmallScreen = false;
+  showItems = computed(() => {
+    if (this.hasSmallScreen() && this.allItems().length > 2 && !this.showAllDetails()) {
+      return this.allItems().slice(0, 2);
+    } else {
+      return this.allItems();
+    }
+  });
 
   constructor(private i18nService: I18nService) {}
 
-  ngOnChanges() {
-    this.allItems = [];
-    this.isSmallScreen = this.hasSmallScreen();
-
-    if (this.showOwnership && this.organization()) {
-      this.allItems.push(this.organization());
-    }
-    if (this.cipher().collectionIds?.length > 0 && this.collections()) {
-      this.allItems = [...this.allItems, ...this.collections()];
-    }
-    if (this.cipher().folderId && this.folder()) {
-      this.allItems.push(this.folder());
-    }
-    this.showItems = [...this.allItems];
-
-    // If the screen is small, we only show the first two items
-    if (this.isSmallScreen && this.allItems.length > 2) {
-      this.setItemsForSmallScreen();
-    }
-  }
-
-  get showOwnership() {
-    return this.cipher().organizationId && this.organization() && !this.hideOwner();
-  }
-
   toggleShowMore() {
-    this.showAllDetails = !this.showAllDetails;
-    if (this.showAllDetails) {
-      this.showItems = [...this.allItems];
-    } else {
-      this.showItems = this.allItems.slice(0, 2);
-    }
-  }
-
-  hasSmallScreen() {
-    return this.document.documentElement.clientWidth < 681;
-  }
-
-  setItemsForSmallScreen() {
-    this.showItems = this.allItems.slice(0, 2);
+    this.showAllDetails.update((value) => !value);
   }
 
   getAriaLabel(item: Organization | CollectionView | FolderView): string {
@@ -107,7 +95,7 @@ export class ItemDetailsV2Component implements OnChanges {
     return "";
   }
 
-  getIconClass(item: CollectionView | FolderView): string {
+  getIconClass(item: Organization | CollectionView | FolderView): string {
     if (item instanceof CollectionView) {
       return "bwi-collection-shared";
     } else if (item instanceof FolderView) {
@@ -116,7 +104,7 @@ export class ItemDetailsV2Component implements OnChanges {
     return "";
   }
 
-  getItemTitle(item: CollectionView | FolderView): string {
+  getItemTitle(item: Organization | CollectionView | FolderView): string {
     if (item instanceof CollectionView) {
       return this.i18nService.t("collection");
     } else if (item instanceof FolderView) {
