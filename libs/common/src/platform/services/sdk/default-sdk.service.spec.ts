@@ -84,6 +84,8 @@ describe("DefaultSdkService", () => {
           .calledWith(userId)
           .mockReturnValue(of("private-key" as EncryptedString));
         keyService.encryptedOrgKeys$.calledWith(userId).mockReturnValue(of({}));
+        keyService.userSigningKey$.calledWith(userId).mockReturnValue(of(null));
+        securityStateService.accountSecurityState$.calledWith(userId).mockReturnValue(of(null));
       });
 
       describe("given no client override has been set for the user", () => {
