@@ -467,6 +467,7 @@ export class EventService {
         break;
       // Secrets Manager
       case EventType.Secret_Retrieved:
+
         msg = this.i18nService.t("accessedSecretWithId", this.formatSecretId(ev, options));
         humanReadableMsg = this.i18nService.t("accessedSecretWithId", this.getShortId(ev.secretId));
         break;
