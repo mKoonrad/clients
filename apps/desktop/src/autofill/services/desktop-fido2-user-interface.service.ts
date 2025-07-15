@@ -95,6 +95,7 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
 
   private confirmCredentialSubject = new Subject<boolean>();
 
+  private skipPickerShortcutAfterUnlock: boolean = false;
   private updatedCipher: CipherView;
 
   private rpId = new BehaviorSubject<string>(null);
@@ -126,11 +127,17 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
     try {
       // Check if we can return the credential without user interaction
       await this.accountService.setShowHeader(false);
-      if (assumeUserPresence && cipherIds.length === 1 && !masterPasswordRepromptRequired) {
+      if (
+        assumeUserPresence &&
+        cipherIds.length === 1 &&
+        !masterPasswordRepromptRequired &&
+        !this.skipPickerShortcutAfterUnlock
+      ) {
         this.logService.debug(
           "shortcut - Assuming user presence and returning cipherId",
           cipherIds[0],
         );
+
         return { cipherId: cipherIds[0], userVerified: userVerification };
       }
 
@@ -140,10 +147,10 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
       this.availableCipherIdsSubject.next(cipherIds);
 
       await this.showUi("/fido2-assertion", this.windowObject.windowXy, false);
-
       const chosenCipherResponse = await this.waitForUiChosenCipher();
 
       this.logService.debug("Received chosen cipher", chosenCipherResponse);
+      this.skipPickerShortcutAfterUnlock = false;
 
       return {
         cipherId: chosenCipherResponse?.cipherId,
@@ -358,6 +365,8 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
             timeout(1000 * 60 * 5), // 5 minutes
           ),
         );
+
+        this.skipPickerShortcutAfterUnlock = true;
       } catch (error) {
         this.logService.warning("Error while waiting for vault to unlock", error);
       }
