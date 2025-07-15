@@ -2,7 +2,7 @@
 // @ts-strict-ignore
 import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { Subject, takeUntil } from "rxjs";
+import { takeUntil } from "rxjs";
 
 import { FileDownloadService } from "@bitwarden/common/platform/abstractions/file-download/file-download.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -14,6 +14,8 @@ import { EventService } from "@bitwarden/web-vault/app/core";
 import { EventExportService } from "@bitwarden/web-vault/app/tools/event-export";
 
 import { ServiceAccountEventLogApiService } from "./service-account-event-log-api.service";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 
 @Component({
   selector: "sm-service-accounts-events",
@@ -25,7 +27,6 @@ export class ServiceAccountEventsComponent
   implements OnInit, OnDestroy
 {
   exportFileName = "machine-account-events";
-  private destroy$ = new Subject<void>();
   private serviceAccountId: string;
 
   constructor(
@@ -38,6 +39,8 @@ export class ServiceAccountEventsComponent
     logService: LogService,
     fileDownloadService: FileDownloadService,
     toastService: ToastService,
+    protected organizationService: OrganizationService,
+    protected accountService: AccountService,
   ) {
     super(
       eventService,
@@ -47,6 +50,9 @@ export class ServiceAccountEventsComponent
       logService,
       fileDownloadService,
       toastService,
+      route,
+      accountService,
+      organizationService,
     );
   }
 
@@ -77,10 +83,5 @@ export class ServiceAccountEventsComponent
       name: this.i18nService.t("machineAccount") + " " + this.serviceAccountId,
       email: "",
     };
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }

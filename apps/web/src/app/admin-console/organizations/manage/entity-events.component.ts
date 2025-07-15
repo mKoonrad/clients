@@ -21,12 +21,13 @@ import {
   TableDataSource,
   ToastService,
 } from "@bitwarden/components";
-
 import { EventService } from "../../../core";
 import { SharedModule } from "../../../shared";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 
 export interface EntityEventsDialogParams {
-  entity: "user" | "cipher";
+  entity: "user" | "cipher" | "secret" | "project";
   entityId: string;
 
   organizationId?: string;
@@ -72,6 +73,8 @@ export class EntityEventsComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private router: Router,
     private activeRoute: ActivatedRoute,
+    private accountService: AccountService,
+    protected organizationService: OrganizationService,
   ) {}
 
   async ngOnInit() {
@@ -156,6 +159,22 @@ export class EntityEventsComponent implements OnInit, OnDestroy {
       );
     } else if (this.params.entity === "user") {
       response = await this.apiService.getEventsOrganizationUser(
+        this.params.organizationId,
+        this.params.entityId,
+        dates[0],
+        dates[1],
+        clearExisting ? null : this.continuationToken,
+      );
+    } else if (this.params.entity === "secret") {
+      response = await this.apiService.getEventsSecret(
+        this.params.organizationId,
+        this.params.entityId,
+        dates[0],
+        dates[1],
+        clearExisting ? null : this.continuationToken,
+      );
+    } else if (this.params.entity === "project") {
+      response = await this.apiService.getEventsProject(
         this.params.organizationId,
         this.params.entityId,
         dates[0],

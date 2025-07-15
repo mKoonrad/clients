@@ -1,7 +1,7 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { Component, OnInit } from "@angular/core";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import {
   combineLatest,
   firstValueFrom,
@@ -17,7 +17,7 @@ import {
 } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { getUserId } from "@bitwarden/common/auth/services/account.service";
-import { DialogService } from "@bitwarden/components";
+import { DialogRef, DialogService, ToastService } from "@bitwarden/components";
 
 import { ProjectListView } from "../../models/view/project-list.view";
 import {
@@ -36,6 +36,9 @@ import {
   ProjectOperation,
 } from "../dialog/project-dialog.component";
 import { ProjectService } from "../project.service";
+import { openEntityEventsDialog } from "@bitwarden/web-vault/app/admin-console/organizations/manage/entity-events.component";
+import { ProjectView } from "../../models/view/project.view";
+import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 
 @Component({
   selector: "sm-projects",
@@ -55,6 +58,9 @@ export class ProjectsComponent implements OnInit {
     private dialogService: DialogService,
     private organizationService: OrganizationService,
     private accountService: AccountService,
+    private toastService: ToastService,
+    private i18nService: I18nService,
+    private router: Router,
   ) {}
 
   ngOnInit() {
@@ -73,7 +79,47 @@ export class ProjectsComponent implements OnInit {
           )
         )?.enabled;
 
-        return await this.getProjects();
+        const projects = await this.getProjects();
+        var viewEvents = this.route.snapshot.queryParams.viewEvents;
+
+        if (viewEvents) {
+          let targetProject = projects.find((project) => project.id === viewEvents);
+
+          var userIsAdmin = (
+            await firstValueFrom(
+              this.organizationService
+                .organizations$(userId)
+                .pipe(getOrganizationById(params.organizationId)),
+            )
+          )?.isAdmin;
+
+          // They would fall into here if they don't have access to a project, or if it has been permanently deleted.
+          if (!targetProject) {
+            //If they are an admin it was permanently deleted and we can show the events with project name redacted
+            if (userIsAdmin) {
+              this.openEventsDialogFromEntityId(
+                this.i18nService.t("nameUnavailableProjectDeleted", viewEvents),
+                params.organizationId,
+                viewEvents,
+              );
+            } else {
+              //They aren't an admin so we don't know if they have access to it, lets show the unknown cipher toast.
+              this.toastService.showToast({
+                variant: "error",
+                title: null,
+                message: this.i18nService.t("unknownProject"),
+              });
+            }
+          } else {
+            this.openEventsDialog(targetProject);
+          }
+
+          await this.router.navigate([], {
+            queryParams: { search: this.search },
+          });
+        }
+
+        return projects;
       }),
     );
 
@@ -106,6 +152,30 @@ export class ProjectsComponent implements OnInit {
       },
     });
   }
+
+  openEventsDialog = (project: ProjectView): DialogRef<void> =>
+    openEntityEventsDialog(this.dialogService, {
+      data: {
+        name: project.name,
+        organizationId: project.organizationId,
+        entityId: project.id,
+        entity: "project",
+      },
+    });
+
+  openEventsDialogFromEntityId = (
+    headerName: string,
+    organizationId: string,
+    entityId: string,
+  ): DialogRef<void> =>
+    openEntityEventsDialog(this.dialogService, {
+      data: {
+        name: headerName,
+        organizationId: organizationId,
+        entityId: entityId,
+        entity: "project",
+      },
+    });
 
   async openDeleteProjectDialog(projects: ProjectListView[]) {
     let projectsToDelete = projects;

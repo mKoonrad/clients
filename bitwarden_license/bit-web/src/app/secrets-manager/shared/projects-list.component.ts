@@ -2,13 +2,22 @@
 // @ts-strict-ignore
 import { SelectionModel } from "@angular/cdk/collections";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
-import { map } from "rxjs";
+import { catchError, concatMap, map, Observable, of, Subject, switchMap, takeUntil } from "rxjs";
 
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import { TableDataSource, ToastService } from "@bitwarden/components";
+import { DialogRef, DialogService, TableDataSource, ToastService } from "@bitwarden/components";
 
 import { ProjectListView } from "../models/view/project-list.view";
+import { ProjectView } from "../models/view/project.view";
+import { openEntityEventsDialog } from "@bitwarden/web-vault/app/admin-console/organizations/manage/entity-events.component";
+import {
+  getOrganizationById,
+  OrganizationService,
+} from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
+import { ActivatedRoute } from "@angular/router";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { getUserId } from "@bitwarden/common/auth/services/account.service";
 
 @Component({
   selector: "sm-projects-list",
@@ -26,6 +35,9 @@ export class ProjectsListComponent {
     this.dataSource.data = projects;
   }
   private _projects: ProjectListView[];
+  protected viewEventsAllowed$: Observable<boolean>;
+  protected isAdmin$: Observable<boolean>;
+  private destroy$: Subject<void> = new Subject<void>();
 
   @Input() showMenus?: boolean = true;
 
@@ -50,7 +62,31 @@ export class ProjectsListComponent {
     private i18nService: I18nService,
     private platformUtilsService: PlatformUtilsService,
     private toastService: ToastService,
+    private dialogService: DialogService,
+    private organizationService: OrganizationService,
+    private activatedRoute: ActivatedRoute,
+    private accountService: AccountService,
   ) {}
+
+  ngOnInit(): void {
+    this.viewEventsAllowed$ = this.activatedRoute.params.pipe(
+      concatMap((params) =>
+        getUserId(this.accountService.activeAccount$).pipe(
+          switchMap((userId) =>
+            this.organizationService
+              .organizations$(userId)
+              .pipe(getOrganizationById(params.organizationId)),
+          ),
+        ),
+      ),
+      map((org) => org.canAccessEventLogs),
+      catchError((err: unknown) => {
+        console.error("Error checking SM access", err);
+        return of(false);
+      }),
+      takeUntil(this.destroy$),
+    );
+  }
 
   isAllSelected() {
     if (this.selection.selected?.length > 0) {
@@ -86,6 +122,16 @@ export class ProjectsListComponent {
       });
     }
   }
+
+  public openEventsDialog = (project: ProjectView): DialogRef<void> =>
+    openEntityEventsDialog(this.dialogService, {
+      data: {
+        name: project.name,
+        organizationId: project.organizationId,
+        entityId: project.id,
+        entity: "project",
+      },
+    });
 
   private selectedHasWriteAccess() {
     const selectedProjects = this.projects.filter((project) =>
