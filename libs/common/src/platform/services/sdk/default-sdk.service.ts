@@ -243,8 +243,8 @@ export class DefaultSdkService implements SdkService {
               },
             },
       privateKey,
-      signingKey: signingKey?.inner(),
-      securityState: securityState.securityState,
+      signingKey: signingKey?.inner() || undefined,
+      securityState: securityState?.securityState || undefined,
     });
 
     // We initialize the org crypto even if the org_keys are

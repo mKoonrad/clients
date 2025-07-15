@@ -306,8 +306,8 @@ export class UserKeyRotationService {
       email: email,
       privateKey:
         cryptographicStateParameters.publicKeyEncryptionKeyPair.wrappedPrivateKey.encryptedString!,
-      signingKey: null,
-      securityState: null,
+      signingKey: undefined,
+      securityState: undefined,
       method: {
         decryptedKey: { decrypted_user_key: cryptographicStateParameters.userKey.toBase64() },
       },
@@ -641,8 +641,8 @@ export class UserKeyRotationService {
             wrappedPrivateKey: currentUserKeyWrappedPrivateKey,
             publicKey: publicKey,
           },
-          signingKey: signingKey,
-          securityState: securityState,
+          signingKey: signingKey!,
+          securityState: securityState!,
         },
       };
     }

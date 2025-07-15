@@ -1,16 +1,13 @@
 import { Observable } from "rxjs";
 
 import { StateProvider } from "@bitwarden/common/platform/state";
-import { OrganizationId, UserId } from "@bitwarden/common/types/guid";
-import { OrgKey } from "@bitwarden/common/types/key";
+import { UserId } from "@bitwarden/common/types/guid";
 
 import { SecurityStateService } from "../abstractions/security-state.service";
 import { SignedSecurityState } from "../models/security-state";
 import { ACCOUNT_SECURITY_STATE } from "../state/security-state.state";
 
 export class DefaultSecurityStateService implements SecurityStateService {
-  readonly activeUserOrgKeys$: Observable<Record<OrganizationId, OrgKey>>;
-
   constructor(protected stateProvider: StateProvider) {}
 
   // Emits the provided user's security state, or null if there is no security state present for the user.

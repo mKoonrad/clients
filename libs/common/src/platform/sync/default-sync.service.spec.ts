@@ -11,6 +11,7 @@ import {
   UserDecryptionOptions,
   UserDecryptionOptionsServiceAbstraction,
 } from "@bitwarden/auth/common";
+import { SecurityStateService } from "@bitwarden/common/key-management/security-state/abstractions/security-state.service";
 // This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
 // eslint-disable-next-line no-restricted-imports
 import { KeyService } from "@bitwarden/key-management";
@@ -69,6 +70,7 @@ describe("DefaultSyncService", () => {
   let tokenService: MockProxy<TokenService>;
   let authService: MockProxy<AuthService>;
   let stateProvider: MockProxy<StateProvider>;
+  let securityStateService: MockProxy<SecurityStateService>;
 
   let sut: DefaultSyncService;
 
@@ -98,6 +100,7 @@ describe("DefaultSyncService", () => {
     tokenService = mock();
     authService = mock();
     stateProvider = mock();
+    securityStateService = mock();
 
     sut = new DefaultSyncService(
       masterPasswordAbstraction,
@@ -125,6 +128,7 @@ describe("DefaultSyncService", () => {
       tokenService,
       authService,
       stateProvider,
+      securityStateService,
     );
   });
 

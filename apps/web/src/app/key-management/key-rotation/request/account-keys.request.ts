@@ -10,13 +10,13 @@ export class AccountKeysRequest {
   /**
    * @deprecated
    */
-  userKeyEncryptedAccountPrivateKey: string;
+  userKeyEncryptedAccountPrivateKey: string | null = null;
   /**
    * @deprecated
    */
-  accountPublicKey: string;
+  accountPublicKey: string | null = null;
 
-  publicKeyEncryptionKeyPair: PublicKeyEncryptionKeyPairRequestModel | null;
+  publicKeyEncryptionKeyPair: PublicKeyEncryptionKeyPairRequestModel | null = null;
   signatureKeyPair: SignatureKeyPairRequestModel | null = null;
   securityState: SecurityStateRequest | null = null;
 

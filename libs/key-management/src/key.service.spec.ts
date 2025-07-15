@@ -7,7 +7,7 @@ import { PinServiceAbstraction } from "@bitwarden/auth/common";
 import { EncryptedOrganizationKeyData } from "@bitwarden/common/admin-console/models/data/encrypted-organization-key.data";
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
-import { SigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { FakeMasterPasswordService } from "@bitwarden/common/key-management/master-password/services/fake-master-password.service";
 import { VaultTimeoutStringType } from "@bitwarden/common/key-management/vault-timeout";
 import { VAULT_TIMEOUT } from "@bitwarden/common/key-management/vault-timeout/services/vault-timeout-settings.state";
@@ -571,7 +571,7 @@ describe("keyService", () => {
 
   describe("userSigningKey$", () => {
     it("returns the signing key when the user has a signing key set", async () => {
-      const fakeSigningKey = new SigningKey("");
+      const fakeSigningKey = new WrappedSigningKey("");
       const fakeSigningKeyState = stateProvider.singleUser.getFake(
         mockUserId,
         USER_KEY_ENCRYPTED_SIGNING_KEY,
@@ -598,11 +598,11 @@ describe("keyService", () => {
     });
     it("throws if the userId is null", async () => {
       await expect(
-        keyService.setUserSigningKey(new SigningKey(""), null as unknown as UserId),
+        keyService.setUserSigningKey(new WrappedSigningKey(""), null as unknown as UserId),
       ).rejects.toThrow("No userId provided.");
     });
     it("sets the signing key for the user", async () => {
-      const fakeSigningKey = new SigningKey("test");
+      const fakeSigningKey = new WrappedSigningKey("test");
       const fakeSigningKeyState = stateProvider.singleUser.getFake(
         mockUserId,
         USER_KEY_ENCRYPTED_SIGNING_KEY,
