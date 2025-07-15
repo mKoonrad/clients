@@ -100,7 +100,7 @@ export class DefaultSyncService extends CoreSyncService {
     private tokenService: TokenService,
     authService: AuthService,
     stateProvider: StateProvider,
-    private accountSecurityStateService: SecurityStateService,
+    private securityStateService: SecurityStateService,
   ) {
     super(
       stateService,
@@ -244,7 +244,7 @@ export class DefaultSyncService extends CoreSyncService {
           response.accountKeys.signatureKeyPair.wrappedSigningKey,
           response.id,
         );
-        await this.accountSecurityStateService.setAccountSecurityState(
+        await this.securityStateService.setAccountSecurityState(
           response.accountKeys.securityState.toSerializedSecurityState(),
           response.id,
         );
