@@ -138,6 +138,7 @@ describe("Fido2CreateComponent", () => {
         content: { key: "closeThisBitwardenWindow" },
         type: "danger",
         acceptButtonText: { key: "closeThisWindow" },
+        acceptAction: expect.any(Function),
         cancelButtonText: null,
       });
     });
@@ -218,6 +219,7 @@ describe("Fido2CreateComponent", () => {
         content: { key: "closeThisBitwardenWindow" },
         type: "danger",
         acceptButtonText: { key: "closeThisWindow" },
+        acceptAction: expect.any(Function),
         cancelButtonText: null,
       });
     });
