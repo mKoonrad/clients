@@ -127,16 +127,19 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
     try {
       // Check if we can return the credential without user interaction
       await this.accountService.setShowHeader(false);
-      if (
-        assumeUserPresence &&
-        cipherIds.length === 1 &&
-        !masterPasswordRepromptRequired &&
-        !this.skipPickerShortcutAfterUnlock
-      ) {
+      if (assumeUserPresence && cipherIds.length === 1 && !masterPasswordRepromptRequired) {
         this.logService.debug(
           "shortcut - Assuming user presence and returning cipherId",
           cipherIds[0],
         );
+
+        if (this.skipPickerShortcutAfterUnlock) {
+          const chosenCipherResponse = this.userSelectedCipher(cipherIds);
+          return {
+            cipherId: chosenCipherResponse?.cipherId,
+            userVerified: chosenCipherResponse?.userVerified,
+          };
+        }
 
         return { cipherId: cipherIds[0], userVerified: userVerification };
       }
@@ -144,10 +147,7 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
       this.logService.debug("Could not shortcut, showing UI");
 
       // make the cipherIds available to the UI.
-      this.availableCipherIdsSubject.next(cipherIds);
-
-      await this.showUi("/fido2-assertion", this.windowObject.windowXy, false);
-      const chosenCipherResponse = await this.waitForUiChosenCipher();
+      const chosenCipherResponse = this.userSelectedCipher(cipherIds);
 
       this.logService.debug("Received chosen cipher", chosenCipherResponse);
       this.skipPickerShortcutAfterUnlock = false;
@@ -189,6 +189,16 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
       });
       return { cipherId: undefined, userVerified: false };
     }
+  }
+
+  private async userSelectedCipher(
+    cipherIds: string[],
+  ): Promise<{ cipherId?: string; userVerified: boolean } | undefined> {
+    // make the cipherIds available to the UI.
+    this.availableCipherIdsSubject.next(cipherIds);
+
+    await this.showUi("/fido2-assertion", this.windowObject.windowXy, false);
+    return await this.waitForUiChosenCipher();
   }
 
   /**
