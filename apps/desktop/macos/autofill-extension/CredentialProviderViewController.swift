@@ -233,7 +233,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                     UserVerification.discouraged
                 }
                 
-                let req = Passkey(
+                let req = PasskeyAssertionWithoutUserInterfaceRequest(
                     rpId: passkeyIdentity.relyingPartyIdentifier,
                     credentialId: passkeyIdentity.credentialID,
                     userName: passkeyIdentity.userName,
@@ -245,7 +245,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                     windowXy: self.getWindowPosition()
                 )
                 
-                self.client.preparePasskeyAssertion(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
+                self.client.preparePasskeyAssertionWithoutUserInterface(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
                 return
             }
         }
