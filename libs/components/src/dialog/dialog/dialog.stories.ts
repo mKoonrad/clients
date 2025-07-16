@@ -64,6 +64,13 @@ export default {
         disable: true,
       },
     },
+    background: {
+      options: ["alt", "default"],
+      control: { type: "radio" },
+      table: {
+        defaultValue: "default",
+      },
+    },
   },
   parameters: {
     design: {
@@ -79,7 +86,7 @@ export const Default: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <bit-dialog [dialogSize]="dialogSize" [title]="title" [subtitle]="subtitle" [loading]="loading" [disablePadding]="disablePadding">
+      <bit-dialog [dialogSize]="dialogSize" [background]="background" [title]="title" [subtitle]="subtitle" [loading]="loading" [disablePadding]="disablePadding">
         <ng-container bitDialogTitle>
           <span bitBadge variant="success">Foobar</span>
         </ng-container>
