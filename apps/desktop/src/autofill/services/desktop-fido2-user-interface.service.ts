@@ -359,7 +359,9 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
           ),
         );
 
-        await this.router.navigate(["/"]);
+        if (status2 === AuthenticationStatus.Unlocked) {
+          await this.router.navigate(["/"]);
+        }
       } catch (error) {
         this.logService.warning("Error while waiting for vault to unlock", error);
       }
