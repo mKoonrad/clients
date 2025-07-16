@@ -1,32 +1,32 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { SelectionModel } from "@angular/cdk/collections";
-import { Component, EventEmitter, Input, OnDestroy, Output } from "@angular/core";
+import { Component, EventEmitter, Input, OnDestroy, Output, OnInit } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
 import { catchError, concatMap, map, Observable, of, Subject, switchMap, takeUntil } from "rxjs";
 
-import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
-import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
-import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import { DialogRef, DialogService, TableDataSource, ToastService } from "@bitwarden/components";
-
-import { SecretListView } from "../models/view/secret-list.view";
-import { SecretService } from "../secrets/secret.service";
-import { openEntityEventsDialog } from "@bitwarden/web-vault/app/admin-console/organizations/manage/entity-events.component";
-import { SecretView } from "../models/view/secret.view";
 import {
   getOrganizationById,
   OrganizationService,
 } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
-import { ActivatedRoute } from "@angular/router";
-import { getUserId } from "@bitwarden/common/auth/services/account.service";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { getUserId } from "@bitwarden/common/auth/services/account.service";
+import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
+import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
+import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
+import { DialogRef, DialogService, TableDataSource, ToastService } from "@bitwarden/components";
+import { openEntityEventsDialog } from "@bitwarden/web-vault/app/admin-console/organizations/manage/entity-events.component";
+
+import { SecretListView } from "../models/view/secret-list.view";
+import { SecretView } from "../models/view/secret.view";
+import { SecretService } from "../secrets/secret.service";
 
 @Component({
   selector: "sm-secrets-list",
   templateUrl: "./secrets-list.component.html",
   standalone: false,
 })
-export class SecretsListComponent implements OnDestroy {
+export class SecretsListComponent implements OnDestroy, OnInit {
   protected dataSource = new TableDataSource<SecretListView>();
 
   @Input()
@@ -71,6 +71,7 @@ export class SecretsListComponent implements OnDestroy {
     private organizationService: OrganizationService,
     private activatedRoute: ActivatedRoute,
     private accountService: AccountService,
+    private logService: LogService,
   ) {
     this.selection.changed
       .pipe(takeUntil(this.destroy$))
@@ -89,8 +90,16 @@ export class SecretsListComponent implements OnDestroy {
         ),
       ),
       map((org) => org.canAccessEventLogs),
-      catchError((err: unknown) => {
-        console.error("Error checking SM access", err);
+      catchError((error: unknown) => {
+        if (typeof error === "string") {
+          this.toastService.showToast({
+            message: error,
+            variant: "error",
+            title: "",
+          });
+        } else {
+          this.logService.error(error);
+        }
         return of(false);
       }),
       takeUntil(this.destroy$),
@@ -110,7 +119,7 @@ export class SecretsListComponent implements OnDestroy {
     }
     return false;
   }
-  public openEventsDialog = (secret: SecretView): DialogRef<void> =>
+  openEventsDialog = (secret: SecretView): DialogRef<void> =>
     openEntityEventsDialog(this.dialogService, {
       data: {
         name: secret.name,

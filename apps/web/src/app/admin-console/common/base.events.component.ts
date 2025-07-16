@@ -1,8 +1,13 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
-import { Directive } from "@angular/core";
+import { Directive, OnDestroy } from "@angular/core";
 import { FormControl, FormGroup } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { combineLatest, filter, map, Observable, Subject, switchMap, takeUntil } from "rxjs";
 
+import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
+import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
+import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { EventResponse } from "@bitwarden/common/models/response/event.response";
 import { ListResponse } from "@bitwarden/common/models/response/list.response";
 import { EventView } from "@bitwarden/common/models/view/event.view";
@@ -14,14 +19,9 @@ import { ToastService } from "@bitwarden/components";
 
 import { EventOptions, EventService } from "../../core";
 import { EventExportService } from "../../tools/event-export";
-import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
-import { combineLatest, filter, map, Observable, Subject, switchMap, takeUntil } from "rxjs";
-import { ActivatedRoute } from "@angular/router";
-import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
-import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 
 @Directive()
-export abstract class BaseEventsComponent {
+export abstract class BaseEventsComponent implements OnDestroy {
   loading = true;
   loaded = false;
   events: EventView[];
@@ -44,8 +44,6 @@ export abstract class BaseEventsComponent {
   protected get destroy$(): Observable<void> {
     return this.destroySubject$.asObservable();
   }
-
-  //public filter: (org: Organization) => boolean = () => false;
 
   constructor(
     protected eventService: EventService,
@@ -183,7 +181,7 @@ export abstract class BaseEventsComponent {
     const events = await Promise.all(
       response.data.map(async (r) => {
         const userId = r.actingUserId == null ? r.userId : r.actingUserId;
-        var options = new EventOptions();
+        const options = new EventOptions();
         options.disableLink = !this.canUseSM;
 
         const eventInfo = await this.eventService.getEventInfo(r, options);
