@@ -95,7 +95,6 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
 
   private confirmCredentialSubject = new Subject<boolean>();
 
-  private skipPickerShortcutAfterUnlock: boolean = false;
   private updatedCipher: CipherView;
 
   private rpId = new BehaviorSubject<string>(null);
@@ -133,24 +132,15 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
           cipherIds[0],
         );
 
-        if (this.skipPickerShortcutAfterUnlock) {
-          const chosenCipherResponse = this.userSelectedCipher(cipherIds);
-          return {
-            cipherId: chosenCipherResponse?.cipherId,
-            userVerified: chosenCipherResponse?.userVerified,
-          };
-        }
-
         return { cipherId: cipherIds[0], userVerified: userVerification };
       }
 
       this.logService.debug("Could not shortcut, showing UI");
 
       // make the cipherIds available to the UI.
-      const chosenCipherResponse = this.userSelectedCipher(cipherIds);
+      const chosenCipherResponse = await this.userSelectedCipher(cipherIds);
 
       this.logService.debug("Received chosen cipher", chosenCipherResponse);
-      this.skipPickerShortcutAfterUnlock = false;
 
       return {
         cipherId: chosenCipherResponse?.cipherId,
@@ -376,7 +366,7 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
           ),
         );
 
-        this.skipPickerShortcutAfterUnlock = true;
+        await this.router.navigate(["/"]);
       } catch (error) {
         this.logService.warning("Error while waiting for vault to unlock", error);
       }
