@@ -112,4 +112,11 @@ export class CollectionAdminView extends CollectionView {
   get isUnassignedCollection() {
     return this.id === Unassigned;
   }
+
+  /**
+   * Returns true if the collection can be edited and does not have a userDefaultCollectionEmail.
+   */
+  override canEditName(org: Organization): boolean {
+    return this.canEdit(org) && super.canEditName(org);
+  }
 }

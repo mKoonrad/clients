@@ -273,6 +273,10 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
           : allCollections;
 
         if (this.collection) {
+          if (!this.collection.canEditName) {
+            this.formGroup.controls.name.disable();
+          }
+
           // Ensure we don't allow nesting the current collection within itself
           this.nestOptions = this.nestOptions.filter((c) => c.id !== this.collectionId);
 
@@ -406,11 +410,15 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       .filter((v) => v.type === AccessItemType.Member)
       .map(convertToSelectionView);
 
-    const parent = this.formGroup.controls.parent.value;
-    if (parent) {
-      collectionView.name = `${parent}/${this.formGroup.controls.name.value}`;
+    if (this.collection.canEditName(this.organization)) {
+      const parent = this.formGroup.controls.parent.value;
+      if (parent) {
+        collectionView.name = `${parent}/${this.formGroup.controls.name.value}`;
+      } else {
+        collectionView.name = this.formGroup.controls.name.value;
+      }
     } else {
-      collectionView.name = this.formGroup.controls.name.value;
+      collectionView.name = null;
     }
 
     const savedCollection = await this.collectionAdminService.save(collectionView);
@@ -483,10 +491,6 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       this.formGroup.controls.name.disable();
       this.formGroup.controls.parent.disable();
       this.formGroup.controls.access.disable();
-    } else {
-      this.formGroup.controls.name.enable();
-      this.formGroup.controls.parent.enable();
-      this.formGroup.controls.access.enable();
     }
   }
 
