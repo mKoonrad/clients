@@ -59,7 +59,7 @@ export class Collection extends Domain {
     return this.decryptObj<Collection, CollectionView>(
       this,
       new CollectionView(this),
-      ["name"] as EncryptableKeys<Domain, CollectionView>[],
+      ["name"] as EncryptableKeys<Collection, CollectionView>[],
       this.organizationId ?? null,
       orgKey,
     );
