@@ -138,7 +138,10 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
       this.logService.debug("Could not shortcut, showing UI");
 
       // make the cipherIds available to the UI.
-      const chosenCipherResponse = await this.userSelectedCipher(cipherIds);
+      this.availableCipherIdsSubject.next(cipherIds);
+
+      await this.showUi("/fido2-assertion", this.windowObject.windowXy, false);
+      const chosenCipherResponse = await this.waitForUiChosenCipher();
 
       this.logService.debug("Received chosen cipher", chosenCipherResponse);
 
@@ -179,16 +182,6 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
       });
       return { cipherId: undefined, userVerified: false };
     }
-  }
-
-  private async userSelectedCipher(
-    cipherIds: string[],
-  ): Promise<{ cipherId?: string; userVerified: boolean } | undefined> {
-    // make the cipherIds available to the UI.
-    this.availableCipherIdsSubject.next(cipherIds);
-
-    await this.showUi("/fido2-assertion", this.windowObject.windowXy, false);
-    return await this.waitForUiChosenCipher();
   }
 
   /**
