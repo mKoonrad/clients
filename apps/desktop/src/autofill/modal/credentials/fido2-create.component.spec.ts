@@ -137,7 +137,7 @@ describe("Fido2CreateComponent", () => {
         title: { key: "unableToSavePasskey" },
         content: { key: "closeThisBitwardenWindow" },
         type: "danger",
-        acceptButtonText: { key: "closeBitwarden" },
+        acceptButtonText: { key: "closeThisWindow" },
         cancelButtonText: null,
       });
     });
@@ -217,7 +217,7 @@ describe("Fido2CreateComponent", () => {
         title: { key: "unableToSavePasskey" },
         content: { key: "closeThisBitwardenWindow" },
         type: "danger",
-        acceptButtonText: { key: "closeBitwarden" },
+        acceptButtonText: { key: "closeThisWindow" },
         cancelButtonText: null,
       });
     });
