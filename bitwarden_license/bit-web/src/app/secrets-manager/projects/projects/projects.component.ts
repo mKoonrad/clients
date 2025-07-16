@@ -17,9 +17,12 @@ import {
 } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { getUserId } from "@bitwarden/common/auth/services/account.service";
+import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { DialogRef, DialogService, ToastService } from "@bitwarden/components";
+import { openEntityEventsDialog } from "@bitwarden/web-vault/app/admin-console/organizations/manage/entity-events.component";
 
 import { ProjectListView } from "../../models/view/project-list.view";
+import { ProjectView } from "../../models/view/project.view";
 import {
   BulkConfirmationDetails,
   BulkConfirmationDialogComponent,
@@ -36,9 +39,6 @@ import {
   ProjectOperation,
 } from "../dialog/project-dialog.component";
 import { ProjectService } from "../project.service";
-import { openEntityEventsDialog } from "@bitwarden/web-vault/app/admin-console/organizations/manage/entity-events.component";
-import { ProjectView } from "../../models/view/project.view";
-import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 
 @Component({
   selector: "sm-projects",
@@ -80,12 +80,12 @@ export class ProjectsComponent implements OnInit {
         )?.enabled;
 
         const projects = await this.getProjects();
-        var viewEvents = this.route.snapshot.queryParams.viewEvents;
+        const viewEvents = this.route.snapshot.queryParams.viewEvents;
 
         if (viewEvents) {
-          let targetProject = projects.find((project) => project.id === viewEvents);
+          const targetProject = projects.find((project) => project.id === viewEvents);
 
-          var userIsAdmin = (
+          const userIsAdmin = (
             await firstValueFrom(
               this.organizationService
                 .organizations$(userId)

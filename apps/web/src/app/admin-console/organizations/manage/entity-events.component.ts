@@ -8,6 +8,8 @@ import { firstValueFrom, switchMap } from "rxjs";
 import { OrganizationUserApiService } from "@bitwarden/admin-console/common";
 import { UserNamePipe } from "@bitwarden/angular/pipes/user-name.pipe";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { EventResponse } from "@bitwarden/common/models/response/event.response";
 import { ListResponse } from "@bitwarden/common/models/response/list.response";
 import { EventView } from "@bitwarden/common/models/view/event.view";
@@ -21,10 +23,9 @@ import {
   TableDataSource,
   ToastService,
 } from "@bitwarden/components";
+
 import { EventService } from "../../../core";
 import { SharedModule } from "../../../shared";
-import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
-import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 
 export interface EntityEventsDialogParams {
   entity: "user" | "cipher" | "secret" | "project";

@@ -76,6 +76,7 @@ export class EventsComponent extends BaseEventsComponent implements OnInit {
   }
 
   async load() {
+    this.initBase();
     const response = await this.apiService.getProviderUsers(this.providerId);
     response.data.forEach((u) => {
       const name = this.userNamePipe.transform(u);

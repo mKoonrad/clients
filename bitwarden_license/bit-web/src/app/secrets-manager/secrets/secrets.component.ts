@@ -14,6 +14,7 @@ import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.servic
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { DialogRef, DialogService, ToastService } from "@bitwarden/components";
+import { openEntityEventsDialog } from "@bitwarden/web-vault/app/admin-console/organizations/manage/entity-events.component";
 
 import { SecretListView } from "../models/view/secret-list.view";
 import { SecretsListComponent } from "../shared/secrets-list.component";
@@ -32,7 +33,6 @@ import {
   SecretViewDialogParams,
 } from "./dialog/secret-view-dialog.component";
 import { SecretService } from "./secret.service";
-import { openEntityEventsDialog } from "@bitwarden/web-vault/app/admin-console/organizations/manage/entity-events.component";
 
 @Component({
   selector: "sm-secrets",
@@ -75,12 +75,12 @@ export class SecretsComponent implements OnInit {
         )?.enabled;
 
         const secrets = await this.getSecrets();
-        var viewEvents = this.route.snapshot.queryParams.viewEvents;
+        const viewEvents = this.route.snapshot.queryParams.viewEvents;
 
         if (viewEvents) {
           let targetSecret = secrets.find((secret) => secret.id === viewEvents);
 
-          var userIsAdmin = (
+          const userIsAdmin = (
             await firstValueFrom(
               this.organizationService
                 .organizations$(userId)
