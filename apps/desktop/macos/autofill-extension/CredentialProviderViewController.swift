@@ -234,6 +234,9 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                     UserVerification.discouraged
                 }
                 
+                /*
+                    We're still using the old request type here, because we're sending the same data, we're expecting a single credential to be used
+                */
                 let req = PasskeyAssertionWithoutUserInterfaceRequest(
                     rpId: passkeyIdentity.relyingPartyIdentifier,
                     credentialId: passkeyIdentity.credentialID,
