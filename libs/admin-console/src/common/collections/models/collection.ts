@@ -1,7 +1,5 @@
 import { EncString } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import Domain, { EncryptableKeys } from "@bitwarden/common/platform/models/domain/domain-base";
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { OrgKey } from "@bitwarden/common/types/key";
 
 import { CollectionData } from "./collection.data";

@@ -273,7 +273,7 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
           : allCollections;
 
         if (this.collection) {
-          if (!this.collection.canEditName) {
+          if (!this.collection.canEditName(this.organization)) {
             this.formGroup.controls.name.disable();
           }
 
@@ -410,7 +410,7 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       .filter((v) => v.type === AccessItemType.Member)
       .map(convertToSelectionView);
 
-    if (this.collection.canEditName(this.organization)) {
+    if (!this.editMode || this.collection.canEditName(this.organization)) {
       const parent = this.formGroup.controls.parent.value;
       if (parent) {
         collectionView.name = `${parent}/${this.formGroup.controls.name.value}`;
