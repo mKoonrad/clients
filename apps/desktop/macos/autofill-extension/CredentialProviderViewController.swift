@@ -13,6 +13,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     let logger: Logger
     
     @IBOutlet weak var statusLabel: NSTextField!
+    @IBOutlet weak var logoImageView: NSImageView!
     
     // There is something a bit strange about the initialization/deinitialization in this class.
     // Sometimes deinit won't be called after a request has successfully finished,
@@ -172,13 +173,9 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     }
        
     override func provideCredentialWithoutUserInteraction(for credentialRequest: any ASCredentialRequest) {
-       
-        
-        let error = ASExtensionError(.userInteractionRequired)
-        self.extensionContext.cancelRequest(withError: error)
-        return
-        
-        
+       let error = ASExtensionError(.userInteractionRequired)
+       self.extensionContext.cancelRequest(withError: error)
+       return
     }
     
     /*
