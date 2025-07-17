@@ -13,6 +13,7 @@ import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.servic
 import { ValidationService } from "@bitwarden/common/platform/abstractions/validation.service";
 import { UserId } from "@bitwarden/common/types/guid";
 import { DialogRef, DIALOG_DATA, ToastService } from "@bitwarden/components";
+import { LogService } from "@bitwarden/logging";
 
 import { LoginApprovalDialogComponentServiceAbstraction } from "./login-approval-dialog-component.service.abstraction";
 import { LoginApprovalDialogComponent } from "./login-approval-dialog.component";
@@ -27,6 +28,7 @@ describe("LoginApprovalDialogComponent", () => {
   let devicesService: MockProxy<DevicesServiceAbstraction>;
   let dialogRef: MockProxy<DialogRef>;
   let i18nService: MockProxy<I18nService>;
+  let logService: MockProxy<LogService>;
   let toastService: MockProxy<ToastService>;
   let validationService: MockProxy<ValidationService>;
 
@@ -41,6 +43,7 @@ describe("LoginApprovalDialogComponent", () => {
     devicesService = mock<DevicesServiceAbstraction>();
     dialogRef = mock<DialogRef>();
     i18nService = mock<I18nService>();
+    logService = mock<LogService>();
     toastService = mock<ToastService>();
     validationService = mock<ValidationService>();
 
@@ -61,6 +64,7 @@ describe("LoginApprovalDialogComponent", () => {
         { provide: DevicesServiceAbstraction, useValue: devicesService },
         { provide: DialogRef, useValue: dialogRef },
         { provide: I18nService, useValue: i18nService },
+        { provide: LogService, useValue: logService },
         { provide: ToastService, useValue: toastService },
         { provide: ValidationService, useValue: validationService },
         {
