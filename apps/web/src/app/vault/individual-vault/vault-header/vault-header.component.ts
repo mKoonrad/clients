@@ -1,7 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from "@angular/core";
 import { Router } from "@angular/router";
-import { firstValueFrom, map, shareReplay } from "rxjs";
+import { firstValueFrom } from "rxjs";
 
 import {
   Unassigned,
@@ -16,13 +16,13 @@ import { ConfigService } from "@bitwarden/common/platform/abstractions/config/co
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { CipherType } from "@bitwarden/common/vault/enums";
 import { TreeNode } from "@bitwarden/common/vault/models/domain/tree-node";
-import { RestrictedItemTypesService } from "@bitwarden/common/vault/services/restricted-item-types.service";
 import {
   BreadcrumbsModule,
   DialogService,
   MenuModule,
   SimpleDialogOptions,
 } from "@bitwarden/components";
+import { NewCipherMenuComponent } from "@bitwarden/vault";
 
 import { CollectionDialogTabType } from "../../../admin-console/organizations/shared/components/collection-dialog";
 import { HeaderModule } from "../../../layouts/header/header.module";
@@ -44,6 +44,7 @@ import {
     HeaderModule,
     PipesModule,
     JslibModule,
+    NewCipherMenuComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -52,21 +53,6 @@ export class VaultHeaderComponent {
   protected All = All;
   protected CollectionDialogTabType = CollectionDialogTabType;
   protected CipherType = CipherType;
-  protected allCipherMenuItems = [
-    { type: CipherType.Login, icon: "bwi-globe", labelKey: "typeLogin" },
-    { type: CipherType.Card, icon: "bwi-credit-card", labelKey: "typeCard" },
-    { type: CipherType.Identity, icon: "bwi-id-card", labelKey: "typeIdentity" },
-    { type: CipherType.SecureNote, icon: "bwi-sticky-note", labelKey: "note" },
-    { type: CipherType.SshKey, icon: "bwi-key", labelKey: "typeSshKey" },
-  ];
-  protected cipherMenuItems$ = this.restrictedItemTypesService.restricted$.pipe(
-    map((restrictedTypes) => {
-      return this.allCipherMenuItems.filter((item) => {
-        return !restrictedTypes.some((restrictedType) => restrictedType.cipherType === item.type);
-      });
-    }),
-    shareReplay({ bufferSize: 1, refCount: true }),
-  );
 
   /**
    * Boolean to determine the loading state of the header.
@@ -107,7 +93,6 @@ export class VaultHeaderComponent {
     private dialogService: DialogService,
     private router: Router,
     private configService: ConfigService,
-    private restrictedItemTypesService: RestrictedItemTypesService,
   ) {}
 
   /**
