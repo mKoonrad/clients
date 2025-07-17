@@ -43,7 +43,7 @@ export class CollectionAdminView extends CollectionView {
    * Returns true if the user can edit a collection (including user and group access) from the Admin Console.
    */
   override canEdit(org: Organization): boolean {
-    if (this.defaultCollection) {
+    if (this.isDefaultCollection) {
       return false;
     }
 
@@ -58,7 +58,7 @@ export class CollectionAdminView extends CollectionView {
    * Returns true if the user can delete a collection from the Admin Console.
    */
   override canDelete(org: Organization): boolean {
-    if (this.defaultCollection) {
+    if (this.isDefaultCollection) {
       return false;
     }
 
@@ -69,7 +69,7 @@ export class CollectionAdminView extends CollectionView {
    * Whether the user can modify user access to this collection
    */
   canEditUserAccess(org: Organization): boolean {
-    if (this.defaultCollection) {
+    if (this.isDefaultCollection) {
       return false;
     }
 
@@ -82,7 +82,7 @@ export class CollectionAdminView extends CollectionView {
    * Whether the user can modify group access to this collection
    */
   canEditGroupAccess(org: Organization): boolean {
-    if (this.defaultCollection) {
+    if (this.isDefaultCollection) {
       return false;
     }
 
@@ -96,7 +96,7 @@ export class CollectionAdminView extends CollectionView {
    * Returns true if the user can view collection info and access in a read-only state from the Admin Console
    */
   override canViewCollectionInfo(org: Organization | undefined): boolean {
-    if (this.isUnassignedCollection || this.defaultCollection) {
+    if (this.isUnassignedCollection || this.isDefaultCollection) {
       return false;
     }
     const isAdmin = org?.isAdmin ?? false;

@@ -47,6 +47,7 @@ const createMockCollection = (
   cv.canDelete = jest.fn();
   cv.canViewCollectionInfo = jest.fn();
   cv.name = name;
+  cv.isDefaultCollection: true,
 
   return cv;
 };
