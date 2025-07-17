@@ -449,7 +449,7 @@ export abstract class KeyService {
    *
    * @throws If an invalid user id is passed in.
    */
-  abstract userPublicKey$(userId: UserId): Observable<Uint8Array | null>;
+  abstract userPublicKey$(userId: UserId): Observable<UserPublicKey | null>;
 
   /**
    * Gets a users signing keys from local state.
