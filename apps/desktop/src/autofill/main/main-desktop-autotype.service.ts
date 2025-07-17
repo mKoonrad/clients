@@ -37,8 +37,13 @@ export class MainDesktopAutotypeService {
   }
 
   private doAutotype() {
-    const result = autotype.getForegroundWindowTitle();
+    const window_title = autotype.getForegroundWindowTitle();
+    // eslint-disable-next-line no-console
+    console.log("Window Title: " + window_title);
 
+    // --------------------------------------------------
+
+    const result = autotype.typeInput(new Array<number>());
     // eslint-disable-next-line no-console
     console.log("Window Title: " + result);
   }

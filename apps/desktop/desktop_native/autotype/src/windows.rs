@@ -1,7 +1,8 @@
 use std::ffi::OsString;
 use std::os::windows::ffi::OsStringExt;
+use std::thread;
 
-use windows::Win32::Foundation::HWND;
+use windows::Win32::Foundation::{GetLastError, HWND};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE,
     VIRTUAL_KEY,
@@ -15,12 +16,10 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
     let Ok(window_handle) = get_foreground_window() else {
         return Err(());
     };
+
     let Ok(Some(window_title)) = get_window_title(window_handle) else {
         return Err(());
     };
-
-    _ = type_input(vec![0x42, 0x49, 0x54]);
-    println!("type_input() success");
 
     Ok(window_title)
 }
@@ -29,7 +28,7 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
 ///
 /// `input` must be a Windows virtual-key code between A - Z or one
 /// of the following virtual keys:
-/// VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
+/// VK_TAB, VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
 ///
 /// TODO: Future improvement is to use GetLastError for better error handling
 ///
@@ -37,14 +36,18 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
 ///
 /// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
+    let fake_input = String::from("user@bitwarden.com\tpassword");
+    let input: Vec<u16> = fake_input.encode_utf16().collect();
+    println!("Input string: {:?}\nInput vec: {:?}\nInput vec len: {:?}", fake_input, input, input.len());
+
     let mut input_down_keys: Vec<INPUT> = Vec::new();
     let mut input_up_keys: Vec<INPUT> = Vec::new();
 
     for i in input {
         let next_down_input: INPUT = match i {
             // Inserts a virtual-key down input
-            // VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
-            0x10..0x12 | 0x5B | 0x5C => INPUT {
+            // VK_TAB, VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
+            0x09 | 0x10..0x12 | 0x5B | 0x5C => INPUT {
                 r#type: INPUT_KEYBOARD,
                 Anonymous: INPUT_0 {
                     ki: KEYBDINPUT {
@@ -58,7 +61,7 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
             },
             // Inserts a unicode down input
             // A - Z
-            0x41..=0x5A => INPUT {
+            _ => INPUT {
                 r#type: INPUT_KEYBOARD,
                 Anonymous: INPUT_0 {
                     ki: KEYBDINPUT {
@@ -70,12 +73,11 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
                     },
                 },
             },
-            _ => return Err(()),
         };
         let next_up_input: INPUT = match i {
             // Inserts a virtual-key up input
-            // VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
-            0x10..0x12 | 0x5B | 0x5C => INPUT {
+            // VK_TAB, VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
+            0x09 | 0x10..0x12 | 0x5B | 0x5C => INPUT {
                 r#type: INPUT_KEYBOARD,
                 Anonymous: INPUT_0 {
                     ki: KEYBDINPUT {
@@ -89,7 +91,7 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
             },
             // Inserts a unicode up input
             // A - Z
-            0x41..=0x5A => INPUT {
+            _ => INPUT {
                 r#type: INPUT_KEYBOARD,
                 Anonymous: INPUT_0 {
                     ki: KEYBDINPUT {
@@ -101,24 +103,32 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
                     },
                 },
             },
-            _ => return Err(()),
         };
 
         input_down_keys.push(next_down_input);
         input_up_keys.push(next_up_input);
     }
 
-    let inputs: Vec<INPUT> = input_down_keys
-        .into_iter()
-        .chain(input_up_keys.into_iter())
-        .collect();
-    let insert_count = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
-
-    if insert_count == 0 {
-        return Err(()); // input was blocked by another thread
-    } else if insert_count != inputs.len() as u32 {
-        return Err(());
+    // let inputs: Vec<INPUT> = input_down_keys
+    //     .into_iter()
+    //     .chain(input_up_keys.into_iter())
+    //     .collect();
+    for i in 0..input_down_keys.len() {
+        unsafe { SendInput(&[input_down_keys[i]], std::mem::size_of::<INPUT>() as i32) };
+        thread::sleep_ms(40);
+        unsafe { SendInput(&[input_up_keys[i]], std::mem::size_of::<INPUT>() as i32) };
+        thread::sleep_ms(40);
     }
+    //let insert_count = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
+
+    //let e = unsafe { GetLastError().to_hresult().message() };
+    //println!("GetLastError(): {:?}", e);
+
+    // if insert_count == 0 {
+    //     return Err(()); // input was blocked by another thread
+    // } else if insert_count != inputs.len() as u32 {
+    //     return Err(());
+    // }
 
     Ok(())
 }
