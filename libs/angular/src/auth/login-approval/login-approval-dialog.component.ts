@@ -10,6 +10,7 @@ import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { AuthRequestServiceAbstraction } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import { AuthRequestResponse } from "@bitwarden/common/auth/models/response/auth-request.response";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -51,6 +52,7 @@ export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
   email: string;
   fingerprintPhrase: string;
   authRequestResponse: AuthRequestResponse;
+  readableDeviceTypeName: string;
   interval: NodeJS.Timeout;
   requestTimeText: string;
 
@@ -67,6 +69,7 @@ export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private loginApprovalDialogComponentService: LoginApprovalDialogComponentServiceAbstraction,
     private validationService: ValidationService,
+    private devicesService: DevicesServiceAbstraction,
   ) {
     this.authRequestId = params.notificationId;
   }
@@ -86,13 +89,20 @@ export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
       }
 
       const publicKey = Utils.fromB64ToArray(this.authRequestResponse.publicKey);
+
       this.email = await firstValueFrom(
         this.accountService.activeAccount$.pipe(map((a) => a?.email)),
       );
+
       this.fingerprintPhrase = await this.authRequestService.getFingerprintPhrase(
         this.email,
         publicKey,
       );
+
+      this.readableDeviceTypeName = this.devicesService.getReadableDeviceTypeName(
+        this.authRequestResponse.requestDeviceTypeValue,
+      );
+
       this.updateTimeText();
 
       this.interval = setInterval(() => {
@@ -147,18 +157,18 @@ export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
     if (loginResponse.requestApproved) {
       this.toastService.showToast({
         variant: "success",
-        title: null,
+        title: "",
         message: this.i18nService.t(
-          "logInConfirmedForEmailOnDevice",
+          "loginRequestApprovedForEmailOnDevice",
           this.email,
-          loginResponse.requestDeviceType,
+          this.devicesService.getReadableDeviceTypeName(loginResponse.requestDeviceTypeValue),
         ),
       });
     } else {
       this.toastService.showToast({
         variant: "info",
-        title: null,
-        message: this.i18nService.t("youDeniedALogInAttemptFromAnotherDevice"),
+        title: "",
+        message: this.i18nService.t("youDeniedLoginAttemptFromAnotherDevice"),
       });
     }
   }

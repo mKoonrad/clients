@@ -7,6 +7,7 @@ import { of } from "rxjs";
 import { AuthRequestServiceAbstraction } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import { AuthRequestResponse } from "@bitwarden/common/auth/models/response/auth-request.response";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -26,6 +27,7 @@ describe("LoginApprovalDialogComponent", () => {
   let authRequestService: MockProxy<AuthRequestServiceAbstraction>;
   let accountService: MockProxy<AccountService>;
   let apiService: MockProxy<ApiService>;
+  let devicesService: MockProxy<DevicesServiceAbstraction>;
   let i18nService: MockProxy<I18nService>;
   let dialogRef: MockProxy<DialogRef>;
   let toastService: MockProxy<ToastService>;
@@ -39,6 +41,7 @@ describe("LoginApprovalDialogComponent", () => {
     authRequestService = mock<AuthRequestServiceAbstraction>();
     accountService = mock<AccountService>();
     apiService = mock<ApiService>();
+    devicesService = mock<DevicesServiceAbstraction>();
     i18nService = mock<I18nService>();
     dialogRef = mock<DialogRef>();
     toastService = mock<ToastService>();
@@ -56,6 +59,7 @@ describe("LoginApprovalDialogComponent", () => {
       providers: [
         { provide: DIALOG_DATA, useValue: { notificationId: testNotificationId } },
         { provide: AuthRequestServiceAbstraction, useValue: authRequestService },
+        { provide: DevicesServiceAbstraction, useValue: devicesService },
         { provide: AccountService, useValue: accountService },
         { provide: PlatformUtilsService, useValue: mock<PlatformUtilsService>() },
         { provide: I18nService, useValue: i18nService },
@@ -117,7 +121,7 @@ describe("LoginApprovalDialogComponent", () => {
       expect(authRequestService.approveOrDenyAuthRequest).toHaveBeenCalledWith(false, response);
       expect(toastService.showToast).toHaveBeenCalledWith({
         variant: "info",
-        title: null,
+        title: "",
         message: "denied message",
       });
     });

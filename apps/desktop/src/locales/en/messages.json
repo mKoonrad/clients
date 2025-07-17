@@ -3041,9 +3041,6 @@
       }
     }
   },
-  "youDeniedALogInAttemptFromAnotherDevice": {
-    "message": "You denied a login attempt from another device. If this really was you, try to log in with the device again."
-  },
   "justNow": {
     "message": "Just now"
   },
