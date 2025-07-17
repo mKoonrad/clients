@@ -164,10 +164,50 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         // frame.width and frame.height is always 0, so we need to estimate it when we use it.
         let centerX = Int32(round(frame.origin.x))
         let centerY = Int32(round(screenHeight - (frame.origin.y)))
+    private func getWindowPosition() async -> Position {
+        let screenHeight = NSScreen.main?.frame.height ?? 1440
         
-        logger.log("[autofill-extension] position reported from macos: x=\(centerX), y=\(centerY)")
+        logger.log("[autofill-extension] position: Getting window position")
         
-        return Position(x: centerX, y: centerY)
+        // Wait for window frame to stabilize (animation to complete)
+        var lastFrame: CGRect = .zero
+        var stableCount = 0
+        let requiredStableChecks = 3
+        let maxAttempts = 20
+        var attempts = 0
+        
+        while stableCount < requiredStableChecks && attempts < maxAttempts {
+            let currentFrame: CGRect = self.view.window?.frame ?? .zero
+            
+            if currentFrame.equalTo(lastFrame) && !currentFrame.equalTo(.zero) {
+                stableCount += 1
+            } else {
+                stableCount = 0
+                lastFrame = currentFrame
+            }
+            
+            try? await Task.sleep(nanoseconds: 16_666_666) // ~60fps (16.67ms)
+            attempts += 1
+        }
+        
+        let finalWindowFrame = self.view.window?.frame ?? .zero
+        logger.log("[autofill-extension] position: Final window frame: \(NSStringFromRect(finalWindowFrame))")
+        
+        // Use stabilized window frame if available, otherwise fallback to mouse position
+        if finalWindowFrame.origin.x != 0 || finalWindowFrame.origin.y != 0 {
+            let centerX = Int32(round(finalWindowFrame.origin.x))
+            let centerY = Int32(round(screenHeight - finalWindowFrame.origin.y))
+            logger.log("[autofill-extension] position: Using window position: x=\(centerX), y=\(centerY)")
+            return Position(x: centerX, y: centerY)
+        } else {
+            // Fallback to mouse position
+            let mouseLocation = NSEvent.mouseLocation
+            let mouseX = Int32(round(mouseLocation.x))
+            let mouseY = Int32(round(screenHeight - mouseLocation.y))
+            logger.log("[autofill-extension] position: Using mouse position fallback: x=\(mouseX), y=\(mouseY)")
+            return Position(x: mouseX, y: mouseY)
+        }
+    }
     }
     
     override func viewDidLoad() {
@@ -273,6 +313,18 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 )
                 
                 Task {
+                    let windowPosition = await self.getWindowPosition()
+                    let req = PasskeyAssertionWithoutUserInterfaceRequest(
+                        rpId: passkeyIdentity.relyingPartyIdentifier,
+                        credentialId: passkeyIdentity.credentialID,
+                        userName: passkeyIdentity.userName,
+                        userHandle: passkeyIdentity.userHandle,
+                        recordIdentifier: passkeyIdentity.recordIdentifier,
+                        clientDataHash: request.clientDataHash,
+                        userVerification: userVerification,
+                        windowXy: windowPosition
+                    )
+                    
                     let client = await getClient()
                     client.preparePasskeyAssertionWithoutUserInterface(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
                 }
@@ -368,6 +420,18 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 logger.log("[autofill-extension] prepareInterface(passkey) calling preparePasskeyRegistration")                
                 
                 Task {
+                    let windowPosition = await self.getWindowPosition()
+                    let req = PasskeyRegistrationRequest(
+                        rpId: passkeyIdentity.relyingPartyIdentifier,
+                        userName: passkeyIdentity.userName,
+                        userHandle: passkeyIdentity.userHandle,
+                        clientDataHash: request.clientDataHash,
+                        userVerification: userVerification,
+                        supportedAlgorithms: request.supportedAlgorithms.map{ Int32($0.rawValue) },
+                        windowXy: windowPosition,
+                        excludedCredentials: excludedCredentialIds
+                    )
+                    
                     let client = await getClient()
                     client.preparePasskeyRegistration(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
                 }
@@ -435,6 +499,16 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         let timeoutTimer = createTimer()
         
         Task {
+            let windowPosition = await self.getWindowPosition()
+            let req = PasskeyAssertionRequest(
+                rpId: requestParameters.relyingPartyIdentifier,
+                clientDataHash: requestParameters.clientDataHash,
+                userVerification: userVerification,
+                allowedCredentials: requestParameters.allowedCredentials,
+                windowXy: windowPosition
+                //extensionInput: requestParameters.extensionInput,
+            )
+            
             let client = await getClient()
             client.preparePasskeyAssertion(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
         }

@@ -418,7 +418,7 @@ function normalizePosition(position: { x: number; y: number }): { x: number; y: 
   // so we need to add half of the estimated width of the nativeOS dialog to the x position
   // and remove half of the estimated height of the nativeOS dialog to the y position.
   return {
-    x: Math.round(position.x + 200), // add half of estimated width of the nativeOS dialog
-    y: Math.round(position.y - 100), // remove half of estimated height of the nativeOS dialog
+    x: Math.round(position.x + 100), // add half of estimated width of the nativeOS dialog
+    y: Math.round(position.y), // remove half of estimated height of the nativeOS dialog
   };
 }
