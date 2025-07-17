@@ -156,14 +156,6 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         connectionMonitorTimer = nil
     }
     
-    private func getWindowPosition() -> Position {
-        let frame = self.view.window?.frame ?? .zero
-        let screenHeight = NSScreen.main?.frame.height ?? 0
-        let screenWidth = NSScreen.main?.frame.width ?? 0
-
-        // frame.width and frame.height is always 0, so we need to estimate it when we use it.
-        let centerX = Int32(round(frame.origin.x))
-        let centerY = Int32(round(screenHeight - (frame.origin.y)))
     private func getWindowPosition() async -> Position {
         let screenHeight = NSScreen.main?.frame.height ?? 1440
         
@@ -207,7 +199,6 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
             logger.log("[autofill-extension] position: Using mouse position fallback: x=\(mouseX), y=\(mouseY)")
             return Position(x: mouseX, y: mouseY)
         }
-    }
     }
     
     override func viewDidLoad() {
@@ -301,17 +292,6 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 /*
                     We're still using the old request type here, because we're sending the same data, we're expecting a single credential to be used
                 */
-                let req = PasskeyAssertionWithoutUserInterfaceRequest(
-                    rpId: passkeyIdentity.relyingPartyIdentifier,
-                    credentialId: passkeyIdentity.credentialID,
-                    userName: passkeyIdentity.userName,
-                    userHandle: passkeyIdentity.userHandle,
-                    recordIdentifier: passkeyIdentity.recordIdentifier,
-                    clientDataHash: request.clientDataHash,
-                    userVerification: userVerification,
-                    windowXy: self.getWindowPosition()
-                )
-                
                 Task {
                     let windowPosition = await self.getWindowPosition()
                     let req = PasskeyAssertionWithoutUserInterfaceRequest(
@@ -407,16 +387,6 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                     }
                 }
                 
-                let req = PasskeyRegistrationRequest(
-                    rpId: passkeyIdentity.relyingPartyIdentifier,
-                    userName: passkeyIdentity.userName,
-                    userHandle: passkeyIdentity.userHandle,
-                    clientDataHash: request.clientDataHash,
-                    userVerification: userVerification,
-                    supportedAlgorithms: request.supportedAlgorithms.map{ Int32($0.rawValue) },
-                    windowXy: self.getWindowPosition(),
-                    excludedCredentials: excludedCredentialIds
-                )
                 logger.log("[autofill-extension] prepareInterface(passkey) calling preparePasskeyRegistration")                
                 
                 Task {
@@ -486,15 +456,6 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         default:
             UserVerification.discouraged
         }
-        
-        let req = PasskeyAssertionRequest(
-            rpId: requestParameters.relyingPartyIdentifier,
-            clientDataHash: requestParameters.clientDataHash,
-            userVerification: userVerification,
-            allowedCredentials: requestParameters.allowedCredentials,
-            windowXy: self.getWindowPosition()
-            //extensionInput: requestParameters.extensionInput,
-        )
         
         let timeoutTimer = createTimer()
         
