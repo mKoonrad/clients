@@ -21,50 +21,71 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     //
     // If instead I make this a static, the deinit gets called correctly after each request.
     // I think we still might want a static regardless, to be able to reuse the connection if possible.
-    let client: MacOsProviderClient = {
-        let logger = Logger(subsystem: "com.bitwarden.desktop.autofill-extension", category: "credential-provider")
+    private var client: MacOsProviderClient?
+    
+    private func getClient() async -> MacOsProviderClient {
+        if let client = self.client {
+            return client
+        }
         
+        let logger = Logger(subsystem: "com.bitwarden.desktop.autofill-extension", category: "credential-provider")
+
         // Check if the Electron app is running
         let workspace = NSWorkspace.shared
         let isRunning = workspace.runningApplications.contains { app in
             app.bundleIdentifier == "com.bitwarden.desktop"
         }
-        
+
         if !isRunning {
-           logger.log("[autofill-extension] Bitwarden Desktop not running, attempting to launch")
-            
-           // Try to launch the app
+            logger.log("[autofill-extension] Bitwarden Desktop not running, attempting to launch")
+
+            // Launch the app and wait for it to be ready
             if let appURL = workspace.urlForApplication(withBundleIdentifier: "com.bitwarden.desktop") {
-                let semaphore = DispatchSemaphore(value: 0)
-                
-                workspace.openApplication(at: appURL,
-                                          configuration: NSWorkspace.OpenConfiguration()) { app, error in
-                    if let error = error {
-                        logger.error("[autofill-extension] Failed to launch Bitwarden Desktop: \(error.localizedDescription)")
-                    } else if let app = app {
-                        logger.log("[autofill-extension] Successfully launched Bitwarden Desktop")
-                    } else {
-                        logger.error("[autofill-extension] Failed to launch Bitwarden Desktop: unknown error")
+                await withCheckedContinuation { continuation in
+                    workspace.openApplication(at: appURL, configuration: NSWorkspace.OpenConfiguration()) { app, error in
+                        if let error = error {
+                            logger.error("[autofill-extension] Failed to launch Bitwarden Desktop: \(error.localizedDescription)")
+                        } else {
+                            logger.log("[autofill-extension] Successfully launched Bitwarden Desktop")
+                        }
+                        continuation.resume()
                     }
-                    semaphore.signal()
                 }
-                
-                // Wait for launch completion with timeout
-                _ = semaphore.wait(timeout: .now() + 5.0)
-                
-                // Add a small delay to allow for initialization
-                Thread.sleep(forTimeInterval: 1.0)
-            } else {
-                logger.error("[autofill-extension] Could not find Bitwarden Desktop app")
             }
-        } else {
-            logger.log("[autofill-extension] Bitwarden Desktop is running")    
+        }
+
+        logger.log("[autofill-extension] Connecting to Bitwarden over IPC")
+        
+        // Retry connection creation, not just status checking
+        let maxRetries = 20
+        let delayMs = 500
+        var newClient: MacOsProviderClient?
+        
+        for attempt in 1...maxRetries {
+            logger.log("[autofill-extension] Connection attempt \(attempt)")
+            
+            // Create a new client instance for each retry
+            newClient = MacOsProviderClient.connect()
+            try? await Task.sleep(nanoseconds: UInt64(100 * attempt + (delayMs * 1_000_000))) // Convert ms to nanoseconds
+            let connectionStatus = newClient!.getConnectionStatus()
+            
+            logger.log("[autofill-extension] Connection attempt \(attempt), status: \(connectionStatus == .connected ? "connected" : "disconnected")")
+            
+            if connectionStatus == .connected {
+                logger.log("[autofill-extension] Successfully connected to Bitwarden (attempt \(attempt))")
+                break
+            } else {
+                if attempt < maxRetries {
+                    logger.log("[autofill-extension] Retrying connection")
+                } else {
+                    logger.error("[autofill-extension] Failed to connect after \(maxRetries) attempts, final status: \(connectionStatus == .connected ? "connected" : "disconnected")")
+                }
+            }
         }
         
-        logger.log("[autofill-extension] Connecting to Bitwarden over IPC")    
-
-        return MacOsProviderClient.connect()
-    }()
+        self.client = newClient
+        return newClient!
+    }
     
     // Timer for checking connection status
     private var connectionMonitorTimer: Timer?
@@ -86,6 +107,11 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     
     // Check the connection status by calling into Rust
     private func checkConnectionStatus() {
+        // Only check if we have a client
+        guard let client = self.client else {
+            return
+        }
+        
         // Get the current connection status from Rust
         let currentStatus = client.getConnectionStatus()
         
@@ -135,18 +161,13 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         let screenHeight = NSScreen.main?.frame.height ?? 0
         let screenWidth = NSScreen.main?.frame.width ?? 0
 
-        // frame.width and frame.height is always 0. Estimating works OK for now.
-        let estimatedWidth:CGFloat = 400;
-        let estimatedHeight:CGFloat = 200;
-        // passkey modals are 600x600.
-        let modalHeight: CGFloat = 600;
-        let modalWidth: CGFloat = 600;
-        let centerX = round(frame.origin.x + estimatedWidth/2)
-        let centerY = round(screenHeight - (frame.origin.y + estimatedHeight/2))
-        // Check if centerX or centerY are beyond either edge of the screen.  If they are find the center of the screen, otherwise use the original value.
-        let positionX = centerX + modalWidth >= screenWidth || CGFloat(centerX) - modalWidth <= 0 ? Int32(screenWidth/2) : Int32(centerX)
-        let positionY = centerY + modalHeight >= screenHeight || CGFloat(centerY) - modalHeight <= 0 ? Int32(screenHeight/2) : Int32(centerY)
-        return Position(x: positionX, y: positionY)
+        // frame.width and frame.height is always 0, so we need to estimate it when we use it.
+        let centerX = Int32(round(frame.origin.x))
+        let centerY = Int32(round(screenHeight - (frame.origin.y)))
+        
+        logger.log("[autofill-extension] position reported from macos: x=\(centerX), y=\(centerY)")
+        
+        return Position(x: centerX, y: centerY)
     }
     
     override func viewDidLoad() {
@@ -163,8 +184,11 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         // Set the localized message
         statusLabel.stringValue = NSLocalizedString("autofillConfigurationMessage", comment: "Message shown when Bitwarden is enabled in system settings")
         
-        // Send the native status request
-        client.sendNativeStatus(key: "request-sync", value: "")
+        // Send the native status request asynchronously
+        Task {
+            let client = await getClient()
+            client.sendNativeStatus(key: "request-sync", value: "")
+        }
         
         // Complete the configuration after 2 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
@@ -248,7 +272,10 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                     windowXy: self.getWindowPosition()
                 )
                 
-                self.client.preparePasskeyAssertionWithoutUserInterface(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
+                Task {
+                    let client = await getClient()
+                    client.preparePasskeyAssertionWithoutUserInterface(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
+                }
                 return
             }
         }
@@ -340,7 +367,10 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 )
                 logger.log("[autofill-extension] prepareInterface(passkey) calling preparePasskeyRegistration")                
                 
-                self.client.preparePasskeyRegistration(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
+                Task {
+                    let client = await getClient()
+                    client.preparePasskeyRegistration(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
+                }
                 return
             }
         }
@@ -404,7 +434,10 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         
         let timeoutTimer = createTimer()
         
-        self.client.preparePasskeyAssertion(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
+        Task {
+            let client = await getClient()
+            client.preparePasskeyAssertion(request: req, callback: CallbackImpl(self.extensionContext, self.logger, timeoutTimer))
+        }
         return
     }    
 }
