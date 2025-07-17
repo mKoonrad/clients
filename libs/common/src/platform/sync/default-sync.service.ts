@@ -235,7 +235,7 @@ export class DefaultSyncService extends CoreSyncService {
     // Cleanup: Only the first branch should be kept after the server always returns accountKeys https://bitwarden.atlassian.net/browse/PM-21768
     if (response.accountKeys != null) {
       await this.keyService.setPrivateKey(
-        response.accountKeys.publicKeyEncryptionKeyPair.wrappedPrivateKey.encryptedString!,
+        response.accountKeys.publicKeyEncryptionKeyPair.wrappedPrivateKey,
         response.id,
       );
       if (response.accountKeys.signatureKeyPair !== null) {
@@ -245,7 +245,7 @@ export class DefaultSyncService extends CoreSyncService {
           response.id,
         );
         await this.securityStateService.setAccountSecurityState(
-          response.accountKeys.securityState.toSerializedSecurityState(),
+          response.accountKeys.securityState.securityState,
           response.id,
         );
       }

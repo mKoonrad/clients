@@ -8,7 +8,7 @@ import {
   EncryptedString,
   EncString,
 } from "@bitwarden/common/key-management/crypto/models/enc-string";
-import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
+import { WrappedSigningKey } from "@bitwarden/common/key-management/types";
 import { KeySuffixOptions, HashPurpose } from "@bitwarden/common/platform/enums";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import { OrganizationId, UserId } from "@bitwarden/common/types/guid";
@@ -449,7 +449,7 @@ export abstract class KeyService {
    *
    * @throws If an invalid user id is passed in.
    */
-  abstract userPublicKey$(userId: UserId): Observable<UserPublicKey | null>;
+  abstract userPublicKey$(userId: UserId): Observable<Uint8Array | null>;
 
   /**
    * Gets a users signing keys from local state.

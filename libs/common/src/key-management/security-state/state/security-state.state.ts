@@ -1,12 +1,12 @@
-import { CRYPTO_MEMORY, UserKeyDefinition } from "@bitwarden/common/platform/state";
+import { CRYPTO_DISK, UserKeyDefinition } from "@bitwarden/common/platform/state";
 
-import { SignedSecurityState } from "../models/security-state";
+import { SignedSecurityState } from "../../types";
 
 export const ACCOUNT_SECURITY_STATE = new UserKeyDefinition<SignedSecurityState>(
-  CRYPTO_MEMORY,
+  CRYPTO_DISK,
   "accountSecurityState",
   {
-    deserializer: (obj) => SignedSecurityState.fromJson(obj),
-    clearOn: ["logout", "lock"],
+    deserializer: (obj) => obj,
+    clearOn: ["logout"],
   },
 );

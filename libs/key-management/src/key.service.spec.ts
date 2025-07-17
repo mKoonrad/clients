@@ -11,8 +11,8 @@ import {
   EncString,
   EncryptedString,
 } from "@bitwarden/common/key-management/crypto/models/enc-string";
-import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { FakeMasterPasswordService } from "@bitwarden/common/key-management/master-password/services/fake-master-password.service";
+import { UnsignedPublicKey, WrappedSigningKey } from "@bitwarden/common/key-management/types";
 import { VaultTimeoutStringType } from "@bitwarden/common/key-management/vault-timeout";
 import { VAULT_TIMEOUT } from "@bitwarden/common/key-management/vault-timeout/services/vault-timeout-settings.state";
 import { KeyGenerationService } from "@bitwarden/common/platform/abstractions/key-generation.service";
@@ -535,7 +535,7 @@ describe("keyService", () => {
       const fakeDecryptedUserPrivateKey = makeStaticByteArray(10, 1);
       encryptService.unwrapDecapsulationKey.mockResolvedValue(fakeDecryptedUserPrivateKey);
 
-      const fakeUserPublicKey = makeStaticByteArray(10, 2);
+      const fakeUserPublicKey = makeStaticByteArray(10, 2) as UnsignedPublicKey;
       cryptoFunctionService.rsaExtractPublicKey.mockResolvedValue(fakeUserPublicKey);
 
       const userPrivateKey = await firstValueFrom(keyService.userPrivateKey$(mockUserId));
@@ -574,12 +574,12 @@ describe("keyService", () => {
 
   describe("userSigningKey$", () => {
     it("returns the signing key when the user has a signing key set", async () => {
-      const fakeSigningKey = new WrappedSigningKey("");
+      const fakeSigningKey = "" as WrappedSigningKey;
       const fakeSigningKeyState = stateProvider.singleUser.getFake(
         mockUserId,
         USER_KEY_ENCRYPTED_SIGNING_KEY,
       );
-      fakeSigningKeyState.nextState(fakeSigningKey.toSerializable());
+      fakeSigningKeyState.nextState(fakeSigningKey);
 
       const signingKey = await firstValueFrom(keyService.userSigningKey$(mockUserId));
 
@@ -601,11 +601,11 @@ describe("keyService", () => {
     });
     it("throws if the userId is null", async () => {
       await expect(
-        keyService.setUserSigningKey(new WrappedSigningKey(""), null as unknown as UserId),
+        keyService.setUserSigningKey("" as WrappedSigningKey, null as unknown as UserId),
       ).rejects.toThrow("No userId provided.");
     });
     it("sets the signing key for the user", async () => {
-      const fakeSigningKey = new WrappedSigningKey("test");
+      const fakeSigningKey = "" as WrappedSigningKey;
       const fakeSigningKeyState = stateProvider.singleUser.getFake(
         mockUserId,
         USER_KEY_ENCRYPTED_SIGNING_KEY,
@@ -613,7 +613,7 @@ describe("keyService", () => {
       fakeSigningKeyState.nextState(null);
       await keyService.setUserSigningKey(fakeSigningKey, mockUserId);
       expect(fakeSigningKeyState.nextMock).toHaveBeenCalledTimes(1);
-      expect(fakeSigningKeyState.nextMock).toHaveBeenCalledWith(fakeSigningKey.toSerializable());
+      expect(fakeSigningKeyState.nextMock).toHaveBeenCalledWith(fakeSigningKey);
     });
   });
 
@@ -1006,12 +1006,12 @@ describe("keyService", () => {
 
       keyService.userPrivateKey$ = jest.fn().mockReturnValue(new BehaviorSubject("private key"));
       cryptoFunctionService.rsaExtractPublicKey.mockResolvedValue(
-        Utils.fromUtf8ToArray("public key"),
+        Utils.fromUtf8ToArray("public key") as UnsignedPublicKey,
       );
       const key = await firstValueFrom(keyService.userEncryptionKeyPair$(mockUserId));
       expect(key).toEqual({
         privateKey: "private key",
-        publicKey: Utils.fromUtf8ToArray("public key"),
+        publicKey: Utils.fromUtf8ToArray("public key") as UnsignedPublicKey,
       });
     });
   });

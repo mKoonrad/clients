@@ -7,9 +7,13 @@ import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/a
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { EncString } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
-import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { SecurityStateService } from "@bitwarden/common/key-management/security-state/abstractions/security-state.service";
-import { SignedSecurityState as SignedSecurityState } from "@bitwarden/common/key-management/security-state/models/security-state";
+import {
+  SignedSecurityState,
+  UnsignedPublicKey,
+  WrappedPrivateKey,
+  WrappedSigningKey,
+} from "@bitwarden/common/key-management/types";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -17,7 +21,6 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { SdkClientFactory } from "@bitwarden/common/platform/abstractions/sdk/sdk-client-factory";
 import { SdkLoadService } from "@bitwarden/common/platform/abstractions/sdk/sdk-load.service";
 import { EncryptionType, HashPurpose } from "@bitwarden/common/platform/enums";
-import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import { SendService } from "@bitwarden/common/tools/send/services/send.service.abstraction";
 import { UserId } from "@bitwarden/common/types/guid";
@@ -244,20 +247,19 @@ export class UserKeyRotationService {
     // Re-encrypt the private key with the new user key
     // Rotation of the private key is not supported yet
     const privateKey = await this.encryptService.unwrapDecapsulationKey(
-      cryptographicStateParameters.publicKeyEncryptionKeyPair.wrappedPrivateKey,
+      new EncString(cryptographicStateParameters.publicKeyEncryptionKeyPair.wrappedPrivateKey),
       cryptographicStateParameters.userKey,
     );
-    const newUserKeyWrappedPrivateKey = await this.encryptService.wrapDecapsulationKey(
-      privateKey,
-      newUserKey,
-    );
+    const newUserKeyWrappedPrivateKey = (
+      await this.encryptService.wrapDecapsulationKey(privateKey, newUserKey)
+    ).encryptedString! as string as WrappedPrivateKey;
     const publicKey = await this.cryptoFunctionService.rsaExtractPublicKey(privateKey);
 
     return {
       userKey: newUserKey,
       publicKeyEncryptionKeyPair: {
-        wrappedPrivateKey: newUserKeyWrappedPrivateKey.encryptedString!,
-        publicKey: Utils.fromBufferToB64(publicKey),
+        wrappedPrivateKey: newUserKeyWrappedPrivateKey,
+        publicKey: publicKey,
       },
     };
   }
@@ -304,8 +306,7 @@ export class UserKeyRotationService {
       userId: userId,
       kdfParams: kdfConfig.toSdkConfig(),
       email: email,
-      privateKey:
-        cryptographicStateParameters.publicKeyEncryptionKeyPair.wrappedPrivateKey.encryptedString!,
+      privateKey: cryptographicStateParameters.publicKeyEncryptionKeyPair.wrappedPrivateKey,
       signingKey: undefined,
       securityState: undefined,
       method: {
@@ -331,10 +332,9 @@ export class UserKeyRotationService {
       userId: userId,
       kdfParams: kdfConfig.toSdkConfig(),
       email: email,
-      privateKey:
-        cryptographicStateParameters.publicKeyEncryptionKeyPair.wrappedPrivateKey.encryptedString!,
-      signingKey: cryptographicStateParameters.signingKey.inner(),
-      securityState: cryptographicStateParameters.securityState.securityState,
+      privateKey: cryptographicStateParameters.publicKeyEncryptionKeyPair.wrappedPrivateKey,
+      signingKey: cryptographicStateParameters.signingKey,
+      securityState: cryptographicStateParameters.securityState,
       method: {
         decryptedKey: { decrypted_user_key: cryptographicStateParameters.userKey.toBase64() },
       },
@@ -384,8 +384,8 @@ export class UserKeyRotationService {
     currentUserKey: UserKey,
     newUserKey: UserKey,
     masterPasswordAuthenticationAndUnlockData: MasterPasswordAuthenticationAndUnlockData,
-    trustedEmergencyAccessGranteesPublicKeys: Uint8Array[],
-    trustedOrganizationPublicKeys: Uint8Array[],
+    trustedEmergencyAccessGranteesPublicKeys: UnsignedPublicKey[],
+    trustedOrganizationPublicKeys: UnsignedPublicKey[],
   ): Promise<UnlockDataRequest> {
     // To ensure access; all unlock methods need to be updated and provided the new user key.
     // User unlock methods
@@ -433,8 +433,8 @@ export class UserKeyRotationService {
    */
   protected async verifyTrust(user: Account): Promise<{
     wasTrustDenied: boolean;
-    trustedOrganizationPublicKeys: Uint8Array[];
-    trustedEmergencyAccessUserPublicKeys: Uint8Array[];
+    trustedOrganizationPublicKeys: UnsignedPublicKey[];
+    trustedEmergencyAccessUserPublicKeys: UnsignedPublicKey[];
   }> {
     // Since currently the joined organizations and emergency access grantees are
     // not signed, manual trust prompts are required, to verify that the server
@@ -502,8 +502,10 @@ export class UserKeyRotationService {
     );
     return {
       wasTrustDenied: false,
-      trustedOrganizationPublicKeys: organizations.map((d) => d.publicKey),
-      trustedEmergencyAccessUserPublicKeys: emergencyAccessGrantees.map((d) => d.publicKey),
+      trustedOrganizationPublicKeys: organizations.map((d) => d.publicKey as UnsignedPublicKey),
+      trustedEmergencyAccessUserPublicKeys: emergencyAccessGrantees.map(
+        (d) => d.publicKey as UnsignedPublicKey,
+      ),
     };
   }
 
@@ -593,18 +595,16 @@ export class UserKeyRotationService {
       this.keyService.userKey$(user.id),
       "User key",
     ))!;
-    const currentUserKeyWrappedPrivateKey = new EncString(
+    const currentUserKeyWrappedPrivateKey: WrappedPrivateKey = new EncString(
       (await this.firstValueFromOrThrow(
         this.keyService.userEncryptedPrivateKey$(user.id),
         "Private key",
       ))!,
-    );
-    const publicKey = Utils.fromBufferToB64(
-      await this.cryptoFunctionService.rsaExtractPublicKey(
-        await this.encryptService.unwrapDecapsulationKey(
-          currentUserKeyWrappedPrivateKey,
-          currentUserKey,
-        ),
+    ).encryptedString! as string as WrappedPrivateKey;
+    const publicKey = await this.cryptoFunctionService.rsaExtractPublicKey(
+      await this.encryptService.unwrapDecapsulationKey(
+        new EncString(currentUserKeyWrappedPrivateKey),
+        currentUserKey,
       ),
     );
 
@@ -622,11 +622,11 @@ export class UserKeyRotationService {
         },
       };
     } else if (currentUserKey.inner().type === EncryptionType.CoseEncrypt0) {
-      const signingKey = await this.firstValueFromOrThrow(
+      const signingKey: WrappedSigningKey = await this.firstValueFromOrThrow(
         this.keyService.userSigningKey$(user.id),
         "User signing key",
       );
-      const securityState = await this.firstValueFromOrThrow(
+      const securityState: SignedSecurityState = await this.firstValueFromOrThrow(
         this.securityStateService.accountSecurityState$(user.id),
         "User security state",
       );
@@ -666,8 +666,8 @@ export type V1CryptographicStateParameters = {
   version: 1;
   userKey: UserKey;
   publicKeyEncryptionKeyPair: {
-    wrappedPrivateKey: EncString;
-    publicKey: string;
+    wrappedPrivateKey: WrappedPrivateKey;
+    publicKey: UnsignedPublicKey;
   };
 };
 
@@ -675,8 +675,8 @@ export type V2CryptographicStateParameters = {
   version: 2;
   userKey: UserKey;
   publicKeyEncryptionKeyPair: {
-    wrappedPrivateKey: EncString;
-    publicKey: string;
+    wrappedPrivateKey: WrappedPrivateKey;
+    publicKey: UnsignedPublicKey;
   };
   signingKey: WrappedSigningKey;
   securityState: SignedSecurityState;

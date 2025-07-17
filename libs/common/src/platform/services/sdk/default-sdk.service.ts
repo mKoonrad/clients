@@ -14,8 +14,6 @@ import {
   throwIfEmpty,
 } from "rxjs";
 
-import { SecurityStateService } from "@bitwarden/common/key-management/security-state/abstractions/security-state.service";
-import { SignedSecurityState } from "@bitwarden/common/key-management/security-state/models/security-state";
 // This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
 // eslint-disable-next-line no-restricted-imports
 import { KeyService, KdfConfigService, KdfConfig, KdfType } from "@bitwarden/key-management";
@@ -30,7 +28,8 @@ import { EncryptedOrganizationKeyData } from "../../../admin-console/models/data
 import { AccountInfo, AccountService } from "../../../auth/abstractions/account.service";
 import { DeviceType } from "../../../enums/device-type.enum";
 import { EncryptedString } from "../../../key-management/crypto/models/enc-string";
-import { WrappedSigningKey } from "../../../key-management/keys/models/signing-key";
+import { SecurityStateService } from "../../../key-management/security-state/abstractions/security-state.service";
+import { SignedSecurityState, WrappedSigningKey } from "../../../key-management/types";
 import { OrganizationId, UserId } from "../../../types/guid";
 import { UserKey } from "../../../types/key";
 import { Environment, EnvironmentService } from "../../abstractions/environment.service";
@@ -243,8 +242,8 @@ export class DefaultSdkService implements SdkService {
               },
             },
       privateKey,
-      signingKey: signingKey?.inner() || undefined,
-      securityState: securityState?.securityState || undefined,
+      signingKey: signingKey || undefined,
+      securityState: securityState || undefined,
     });
 
     // We initialize the org crypto even if the org_keys are

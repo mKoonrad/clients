@@ -25,8 +25,8 @@ import {
   EncString,
   EncryptedString,
 } from "@bitwarden/common/key-management/crypto/models/enc-string";
-import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
 import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/key-management/master-password/abstractions/master-password.service.abstraction";
+import { WrappedSigningKey } from "@bitwarden/common/key-management/types";
 import { VaultTimeoutStringType } from "@bitwarden/common/key-management/vault-timeout";
 import { VAULT_TIMEOUT } from "@bitwarden/common/key-management/vault-timeout/services/vault-timeout-settings.state";
 import { KeyGenerationService } from "@bitwarden/common/platform/abstractions/key-generation.service";
@@ -863,7 +863,7 @@ export class DefaultKeyService implements KeyServiceAbstraction {
       return null;
     }
 
-    return (await this.cryptoFunctionService.rsaExtractPublicKey(privateKey)) as UserPublicKey;
+    return await this.cryptoFunctionService.rsaExtractPublicKey(privateKey);
   }
 
   userPrivateKey$(userId: UserId): Observable<UserPrivateKey | null> {
@@ -881,7 +881,7 @@ export class DefaultKeyService implements KeyServiceAbstraction {
           return null;
         }
 
-        const publicKey = (await this.derivePublicKey(privateKey))!;
+        const publicKey = (await this.derivePublicKey(privateKey))! as UserPublicKey;
         return { privateKey, publicKey };
       }),
     );
@@ -987,11 +987,7 @@ export class DefaultKeyService implements KeyServiceAbstraction {
     if (userId == null) {
       throw new Error("No userId provided.");
     }
-    await this.stateProvider.setUserState(
-      USER_KEY_ENCRYPTED_SIGNING_KEY,
-      userSigningKey.toSerializable(),
-      userId,
-    );
+    await this.stateProvider.setUserState(USER_KEY_ENCRYPTED_SIGNING_KEY, userSigningKey, userId);
   }
 
   userSigningKey$(userId: UserId): Observable<WrappedSigningKey | null> {
@@ -1000,7 +996,7 @@ export class DefaultKeyService implements KeyServiceAbstraction {
         if (encryptedSigningKey == null) {
           return null;
         }
-        return WrappedSigningKey.fromSerializable(encryptedSigningKey);
+        return encryptedSigningKey as WrappedSigningKey;
       }),
     );
   }

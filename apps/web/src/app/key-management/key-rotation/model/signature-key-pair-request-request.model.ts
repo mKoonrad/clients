@@ -1,11 +1,10 @@
-import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
-import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
-import { EncString, SignatureAlgorithm } from "@bitwarden/sdk-internal";
+import { VerifyingKey, WrappedSigningKey } from "@bitwarden/common/key-management/types";
+import { SignatureAlgorithm } from "@bitwarden/sdk-internal";
 
 export class SignatureKeyPairRequestModel {
   signatureAlgorithm: SignatureAlgorithm;
-  wrappedSigningKey: EncString;
-  verifyingKey: string;
+  wrappedSigningKey: WrappedSigningKey;
+  verifyingKey: VerifyingKey;
 
   constructor(
     signingKey: WrappedSigningKey,
@@ -13,7 +12,7 @@ export class SignatureKeyPairRequestModel {
     signingKeyAlgorithm: SignatureAlgorithm,
   ) {
     this.signatureAlgorithm = signingKeyAlgorithm;
-    this.wrappedSigningKey = signingKey.inner();
-    this.verifyingKey = verifyingKey.toString();
+    this.wrappedSigningKey = signingKey;
+    this.verifyingKey = verifyingKey;
   }
 }

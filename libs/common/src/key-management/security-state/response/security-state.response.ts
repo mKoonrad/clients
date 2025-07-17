@@ -1,13 +1,16 @@
-import { SignedSecurityState } from "../models/security-state";
+import { SignedSecurityState } from "../../types";
 
 export class SecurityStateResponse {
-  securityState: string;
+  readonly securityState: SignedSecurityState | null = null;
 
-  constructor(response: any) {
-    this.securityState = response.securityState;
-  }
+  constructor(response: unknown) {
+    if (typeof response !== "object" || response === null) {
+      throw new TypeError("Response must be an object");
+    }
 
-  toSerializedSecurityState(): SignedSecurityState {
-    return new SignedSecurityState(this.securityState);
+    if (!("securityState" in response) || !(typeof response.securityState === "string")) {
+      throw new TypeError("Response must contain a valid securityState");
+    }
+    this.securityState = response.securityState as SignedSecurityState;
   }
 }

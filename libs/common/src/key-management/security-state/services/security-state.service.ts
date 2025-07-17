@@ -3,8 +3,8 @@ import { Observable } from "rxjs";
 import { StateProvider } from "@bitwarden/common/platform/state";
 import { UserId } from "@bitwarden/common/types/guid";
 
+import { SignedSecurityState } from "../../types";
 import { SecurityStateService } from "../abstractions/security-state.service";
-import { SignedSecurityState } from "../models/security-state";
 import { ACCOUNT_SECURITY_STATE } from "../state/security-state.state";
 
 export class DefaultSecurityStateService implements SecurityStateService {

@@ -1,16 +1,21 @@
-import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
-import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
-import { SignedSecurityState } from "@bitwarden/common/key-management/security-state/models/security-state";
+import {
+  SignedSecurityState,
+  UnsignedPublicKey,
+  VerifyingKey,
+  WrappedPrivateKey,
+  WrappedSigningKey,
+} from "@bitwarden/common/key-management/types";
+import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import { UserKey } from "@bitwarden/common/types/key";
-import { EncString, UserCryptoV2KeysResponse } from "@bitwarden/sdk-internal";
+import { SignedPublicKey, UserCryptoV2KeysResponse } from "@bitwarden/sdk-internal";
 
 export type V2UserCryptographicState = {
   userKey: UserKey;
   publicKeyEncryptionKeyPair: {
-    wrappedPrivateKey: EncString;
-    publicKey: string;
-    signedPublicKey: string;
+    wrappedPrivateKey: WrappedPrivateKey;
+    publicKey: UnsignedPublicKey;
+    signedPublicKey: SignedPublicKey;
   };
   signatureKeyPair: {
     wrappedSigningKey: WrappedSigningKey;
@@ -28,16 +33,16 @@ export function fromSdkV2KeysToV2UserCryptographicState(
   return {
     userKey: SymmetricCryptoKey.fromString(response.userKey) as UserKey,
     publicKeyEncryptionKeyPair: {
-      wrappedPrivateKey: response.privateKey,
-      publicKey: response.publicKey,
+      wrappedPrivateKey: response.privateKey as WrappedPrivateKey,
+      publicKey: Utils.fromB64ToArray(response.publicKey) as UnsignedPublicKey,
       signedPublicKey: response.signedPublicKey,
     },
     signatureKeyPair: {
-      wrappedSigningKey: new WrappedSigningKey(response.signingKey),
-      verifyingKey: new VerifyingKey(response.verifyingKey),
+      wrappedSigningKey: response.signingKey as WrappedSigningKey,
+      verifyingKey: response.verifyingKey as VerifyingKey,
     },
     securityState: {
-      securityState: new SignedSecurityState(response.securityState),
+      securityState: response.securityState as SignedSecurityState,
       securityStateVersion: response.securityVersion,
     },
   };

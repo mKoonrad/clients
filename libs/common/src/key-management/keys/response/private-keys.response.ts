@@ -4,20 +4,40 @@ import { PublicKeyEncryptionKeyPairResponse } from "./public-key-encryption-key-
 import { SignatureKeyPairResponse } from "./signature-key-pair.response";
 
 export class PrivateKeysResponseModel {
-  readonly signatureKeyPair: SignatureKeyPairResponse | null = null;
   readonly publicKeyEncryptionKeyPair: PublicKeyEncryptionKeyPairResponse;
+  readonly signatureKeyPair: SignatureKeyPairResponse | null = null;
   readonly securityState: SecurityStateResponse | null = null;
 
-  constructor(response: any) {
-    if ("signatureKeyPair" in response && response.signatureKeyPair != null) {
-      this.signatureKeyPair = new SignatureKeyPairResponse(response.signatureKeyPair);
-    }
-    if ("securityState" in response && response.securityState != null) {
-      this.securityState = new SecurityStateResponse(response.securityState);
+  constructor(response: unknown) {
+    if (typeof response !== "object" || response === null) {
+      throw new TypeError("Response must be an object");
     }
 
+    if (
+      !("publicKeyEncryptionKeyPair" in response) ||
+      typeof response.publicKeyEncryptionKeyPair !== "object"
+    ) {
+      throw new TypeError("Response must contain a valid publicKeyEncryptionKeyPair");
+    }
     this.publicKeyEncryptionKeyPair = new PublicKeyEncryptionKeyPairResponse(
       response.publicKeyEncryptionKeyPair,
     );
+
+    if ("signatureKeyPair" in response && typeof response.signatureKeyPair === "object") {
+      this.signatureKeyPair = new SignatureKeyPairResponse(response.signatureKeyPair);
+    }
+
+    if ("securityState" in response && typeof response.securityState === "object") {
+      this.securityState = new SecurityStateResponse(response.securityState);
+    }
+
+    if (
+      (this.signatureKeyPair !== null && this.securityState === null) ||
+      (this.signatureKeyPair === null && this.securityState !== null)
+    ) {
+      throw new TypeError(
+        "Both signatureKeyPair and securityState must be present or absent together",
+      );
+    }
   }
 }
