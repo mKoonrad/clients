@@ -3,8 +3,8 @@ use std::os::windows::ffi::OsStringExt;
 
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    SendInput, HARDWAREINPUT, INPUT, INPUT_0, INPUT_TYPE, KEYBDINPUT, KEYBD_EVENT_FLAGS,
-    MOUSEINPUT, VIRTUAL_KEY,
+    SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE,
+    VIRTUAL_KEY,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     GetForegroundWindow, GetWindowTextLengthW, GetWindowTextW,
@@ -21,7 +21,98 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
         return Err(());
     };
 
+    _ = type_input(vec![0x42, 0x49, 0x54]);
+    println!("type_input() success");
+
     Ok(window_title)
+}
+
+/*
+    Attempts to type the input text wherever the user's cursor is.
+
+    `input` must be between A - Z or one of the following virtual keys:
+    VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
+
+    https://learn.microsoft.com/en-in/windows/win32/api/winuser/nf-winuser-sendinput
+    https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+*/
+pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
+    let mut input_down_keys: Vec<INPUT> = Vec::new();
+    let mut input_up_keys: Vec<INPUT> = Vec::new();
+
+    for i in input {
+        let next_down_input: INPUT = match i {
+            // Inserts a Virtual Key
+            // VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
+            0x10..0x12 | 0x5B | 0x5C => INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VIRTUAL_KEY(i),
+                        wScan: 0,
+                        dwFlags: Default::default(),
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            // Inserts unicode
+            // A - Z
+            0x41..=0x5A => INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: Default::default(),
+                        wScan: i,
+                        dwFlags: KEYEVENTF_UNICODE,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            _ => return Err(()),
+        };
+        let next_up_input: INPUT = match i {
+            // Inserts a Virtual Key
+            // VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
+            0x10..0x12 | 0x5B | 0x5C => INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VIRTUAL_KEY(i),
+                        wScan: 0,
+                        dwFlags: KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            // Inserts unicode
+            // A - Z
+            0x41..=0x5A => INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: Default::default(),
+                        wScan: i,
+                        dwFlags: KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            _ => return Err(()),
+        };
+
+        input_down_keys.push(next_down_input);
+        input_up_keys.push(next_up_input);
+    }
+
+    let insert_count = unsafe { SendInput(&input_down_keys, std::mem::size_of::<INPUT>() as i32) };
+
+    println!("type_input insert count: {:?}", insert_count);
+
+    Ok(())
 }
 
 /*
@@ -78,44 +169,4 @@ fn get_window_title(window_handle: HWND) -> Result<Option<String>, ()> {
     let window_title = OsString::from_wide(&buffer);
 
     Ok(Some(window_title.to_string_lossy().into_owned()))
-}
-
-/*
-    Attempts to type the input text wherever the user's cursor is.
-
-    TODO: a lot, differentiate between unicode and virtual keys, etc.
-
-    https://learn.microsoft.com/en-in/windows/win32/api/winuser/nf-winuser-sendinput
-    https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-keybdinput
-*/
-pub fn type_input(input: Vec<u8>) -> Result<(), ()> {
-    const B_KEY: u16 = 0x42;
-    const KEYBOARD_EVENT_KEY_UP: u32 = 2;
-    const LET_SYSTEM_PROVIDE_TIMESTAMP: u32 = 0;
-
-    let test_input = INPUT {
-        r#type: INPUT_TYPE(0),
-        Anonymous: INPUT_0 {
-            ki: KEYBDINPUT {
-                wVk: VIRTUAL_KEY(B_KEY),
-                wScan: 0,
-                dwFlags: KEYBD_EVENT_FLAGS(KEYBOARD_EVENT_KEY_UP),
-                time: LET_SYSTEM_PROVIDE_TIMESTAMP,
-                dwExtraInfo: 0,
-            },
-        },
-    };
-
-    let test_input_vec: Vec<INPUT> = vec![test_input];
-    let test_input_vec_mem_size: usize = std::mem::size_of::<INPUT>() * test_input_vec.len();
-
-    let insert_count = unsafe { SendInput(&test_input_vec, test_input_vec_mem_size as i32) };
-
-    if insert_count <= 0 {
-        Err(())
-    } else if insert_count != input.len() as u32 {
-        Err(())
-    } else {
-        Ok(())
-    }
 }
