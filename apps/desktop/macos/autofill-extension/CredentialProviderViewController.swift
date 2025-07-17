@@ -171,11 +171,18 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
             self?.extensionContext.completeExtensionConfigurationRequest()
         }
     }
-       
+    
+    /*
+     In order to implement this method, we need to query the state of the vault to be unlocked and have one and only one matching credential so that it doesn't need to show ui.
+     If we do show UI, it's going to fail and disconnect after the platform timeout which is 3s.
+     For now we just claim to always need UI displayed.
+     */
     override func provideCredentialWithoutUserInteraction(for credentialRequest: any ASCredentialRequest) {
        let error = ASExtensionError(.userInteractionRequired)
        self.extensionContext.cancelRequest(withError: error)
        return
+        
+        
     }
     
     /*
