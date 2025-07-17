@@ -26,11 +26,15 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
 }
 
 /// Attempts to type the input text wherever the user's cursor is.
-/// 
-/// `input` must be between A - Z or one of the following virtual keys:
+///
+/// `input` must be a Windows virtual-key code between A - Z or one
+/// of the following virtual keys:
 /// VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
-/// 
+///
+/// TODO: Future improvement is to use GetLastError for better error handling
+///
 /// https://learn.microsoft.com/en-in/windows/win32/api/winuser/nf-winuser-sendinput
+///
 /// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
     let mut input_down_keys: Vec<INPUT> = Vec::new();
@@ -38,7 +42,7 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
 
     for i in input {
         let next_down_input: INPUT = match i {
-            // Inserts a Virtual Key
+            // Inserts a virtual-key down input
             // VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
             0x10..0x12 | 0x5B | 0x5C => INPUT {
                 r#type: INPUT_KEYBOARD,
@@ -52,7 +56,7 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
                     },
                 },
             },
-            // Inserts unicode
+            // Inserts a unicode down input
             // A - Z
             0x41..=0x5A => INPUT {
                 r#type: INPUT_KEYBOARD,
@@ -69,7 +73,7 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
             _ => return Err(()),
         };
         let next_up_input: INPUT = match i {
-            // Inserts a Virtual Key
+            // Inserts a virtual-key up input
             // VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN
             0x10..0x12 | 0x5B | 0x5C => INPUT {
                 r#type: INPUT_KEYBOARD,
@@ -83,7 +87,7 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
                     },
                 },
             },
-            // Inserts unicode
+            // Inserts a unicode up input
             // A - Z
             0x41..=0x5A => INPUT {
                 r#type: INPUT_KEYBOARD,
@@ -104,9 +108,17 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
         input_up_keys.push(next_up_input);
     }
 
-    let insert_count = unsafe { SendInput(&input_down_keys, std::mem::size_of::<INPUT>() as i32) };
+    let inputs: Vec<INPUT> = input_down_keys
+        .into_iter()
+        .chain(input_up_keys.into_iter())
+        .collect();
+    let insert_count = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
 
-    println!("type_input insert count: {:?}", insert_count);
+    if insert_count == 0 {
+        return Err(()); // input was blocked by another thread
+    } else if insert_count != inputs.len() as u32 {
+        return Err(());
+    }
 
     Ok(())
 }
