@@ -20,6 +20,11 @@ describe("DefaultLoginApprovalDialogComponentService", () => {
 
   it("has showLoginRequestedAlertIfWindowNotVisible method that is a no-op", async () => {
     const loginApprovalDialogComponent = {} as LoginApprovalDialogComponent;
-    await service.showLoginRequestedAlertIfWindowNotVisible(loginApprovalDialogComponent.email);
+
+    const result = await service.showLoginRequestedAlertIfWindowNotVisible(
+      loginApprovalDialogComponent.email,
+    );
+
+    expect(result).toBeUndefined();
   });
 });
