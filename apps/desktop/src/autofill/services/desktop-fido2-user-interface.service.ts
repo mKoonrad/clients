@@ -131,7 +131,6 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
           "shortcut - Assuming user presence and returning cipherId",
           cipherIds[0],
         );
-
         return { cipherId: cipherIds[0], userVerified: userVerification };
       }
 
@@ -141,6 +140,7 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
       this.availableCipherIdsSubject.next(cipherIds);
 
       await this.showUi("/fido2-assertion", this.windowObject.windowXy, false);
+
       const chosenCipherResponse = await this.waitForUiChosenCipher();
 
       this.logService.debug("Received chosen cipher", chosenCipherResponse);
