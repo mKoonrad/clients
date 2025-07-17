@@ -6,7 +6,7 @@ import { DevicePendingAuthRequest } from "@bitwarden/common/auth/abstractions/de
 import { BadgeModule, DialogService, ItemModule } from "@bitwarden/components";
 import { I18nPipe } from "@bitwarden/ui-common";
 
-import { LoginApprovalDialogComponent } from "../../login-approval/login-approval-dialog.component";
+import { LoginApprovalDialogComponent } from "../login-approval/login-approval-dialog.component";
 
 import { DeviceDisplayData } from "./device-management.component";
 import { clearAuthRequestAndResortDevices } from "./resort-devices.helper";

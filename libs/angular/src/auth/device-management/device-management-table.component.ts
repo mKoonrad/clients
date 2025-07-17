@@ -14,7 +14,7 @@ import {
   TableModule,
 } from "@bitwarden/components";
 
-import { LoginApprovalDialogComponent } from "../../login-approval/login-approval-dialog.component";
+import { LoginApprovalDialogComponent } from "../login-approval/login-approval-dialog.component";
 
 import { DeviceDisplayData } from "./device-management.component";
 import { clearAuthRequestAndResortDevices } from "./resort-devices.helper";
