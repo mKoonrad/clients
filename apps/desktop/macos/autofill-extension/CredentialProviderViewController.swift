@@ -181,8 +181,6 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
        let error = ASExtensionError(.userInteractionRequired)
        self.extensionContext.cancelRequest(withError: error)
        return
-        
-        
     }
     
     /*
