@@ -6,6 +6,7 @@ import { SignedSecurityState as SdkSignedSecurityState } from "@bitwarden/sdk-in
  * A private key, encrypted with a symmetric key.
  */
 export type WrappedPrivateKey = Opaque<string, "WrappedPrivateKey">;
+
 /**
  * A public key, signed with the accounts signature key.
  */

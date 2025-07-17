@@ -1,4 +1,5 @@
 import { SecurityStateRequest } from "@bitwarden/common/key-management/security-state/request/security-state.request";
+import { WrappedPrivateKey } from "@bitwarden/common/key-management/types";
 import { SdkLoadService } from "@bitwarden/common/platform/abstractions/sdk/sdk-load.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { PureCrypto } from "@bitwarden/sdk-internal";
@@ -13,7 +14,7 @@ export class AccountKeysRequest {
   /**
    * @deprecated
    */
-  userKeyEncryptedAccountPrivateKey: string | null = null;
+  userKeyEncryptedAccountPrivateKey: WrappedPrivateKey | null = null;
   /**
    * @deprecated
    */
