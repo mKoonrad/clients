@@ -201,7 +201,7 @@ export class VaultItemsComponent {
   }
 
   protected canEditCollection(collection: CollectionView): boolean {
-    // Only allow allow deletion if collection editing is enabled, not deleting "Unassigned",
+    // Only allow allow deletion if collection editing is enabled and not deleting "Unassigned"
     if (collection.id === Unassigned) {
       return false;
     }
@@ -212,7 +212,7 @@ export class VaultItemsComponent {
   }
 
   protected canDeleteCollection(collection: CollectionView): boolean {
-    // Only allow allow deletion if collection editing is enabled, not deleting "Unassigned",
+    // Only allow allow deletion if collection editing is enabled and not deleting "Unassigned"
     if (collection.id === Unassigned) {
       return false;
     }

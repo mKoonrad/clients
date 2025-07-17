@@ -56,7 +56,7 @@ export class CollectionView implements View, ITreeNodeObject {
    * Does not include admin permissions - see {@link CollectionAdminView.canEdit}.
    */
   canEdit(org: Organization | undefined): boolean {
-    if (this.defaultCollection) {
+    if (this.isDefaultCollection) {
       return false;
     }
 
@@ -83,7 +83,7 @@ export class CollectionView implements View, ITreeNodeObject {
     const canDeleteManagedCollections = !org?.limitCollectionDeletion || org.isAdmin;
 
     // Only use individual permissions, not admin permissions
-    return canDeleteManagedCollections && this.manage && !this.defaultCollection;
+    return canDeleteManagedCollections && this.manage && !this.isDefaultCollection;
   }
 
   /**
@@ -97,7 +97,7 @@ export class CollectionView implements View, ITreeNodeObject {
     return Object.assign(new CollectionView(new Collection()), obj);
   }
 
-  get defaultCollection() {
+  get isDefaultCollection() {
     return this.type == CollectionTypes.DefaultUserCollection;
   }
 }
