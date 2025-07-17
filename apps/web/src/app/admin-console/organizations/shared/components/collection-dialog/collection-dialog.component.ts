@@ -1,6 +1,7 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { AbstractControl, FormBuilder, Validators } from "@angular/forms";
 import {
   combineLatest,
@@ -144,6 +145,9 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
   protected collections: Collection[];
   protected buttonDisplayName: ButtonType = ButtonType.Save;
   private orgExceedingCollectionLimit!: Organization;
+  private createDefaultLocation = toSignal(
+    this.configService.getFeatureFlag$(FeatureFlag.CreateDefaultLocation),
+  );
 
   constructor(
     @Inject(DIALOG_DATA) private params: CollectionDialogParams,
@@ -273,7 +277,7 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
           : allCollections;
 
         if (this.collection) {
-          if (!this.collection.canEditName(this.organization)) {
+          if (this.createDefaultLocation() && !this.collection.canEditName(this.organization)) {
             this.formGroup.controls.name.disable();
           }
 
@@ -410,7 +414,10 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       .filter((v) => v.type === AccessItemType.Member)
       .map(convertToSelectionView);
 
-    if (!this.editMode || this.collection.canEditName(this.organization)) {
+    if (
+      (this.createDefaultLocation() && !this.editMode) ||
+      this.collection.canEditName(this.organization)
+    ) {
       const parent = this.formGroup.controls.parent.value;
       if (parent) {
         collectionView.name = `${parent}/${this.formGroup.controls.name.value}`;
