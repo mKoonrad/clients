@@ -195,8 +195,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         let timeoutTimer = createTimer()
         if let request = credentialRequest as? ASPasskeyCredentialRequest {
             if let passkeyIdentity = request.credentialIdentity as? ASPasskeyCredentialIdentity {
-                    
-                
+
                 logger.log("[autofill-extension] prepareInterfaceToProvideCredential (passkey) called \(request)")
                 
                 class CallbackImpl: PreparePasskeyAssertionCallback {
@@ -245,7 +244,6 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                     recordIdentifier: passkeyIdentity.recordIdentifier,
                     clientDataHash: request.clientDataHash,
                     userVerification: userVerification,
-                
                     windowXy: self.getWindowPosition()
                 )
                 
