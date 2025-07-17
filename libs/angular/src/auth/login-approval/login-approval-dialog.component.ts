@@ -2,7 +2,7 @@
 // @ts-strict-ignore
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, OnDestroy, Inject } from "@angular/core";
-import { Subject, firstValueFrom, map } from "rxjs";
+import { firstValueFrom, map } from "rxjs";
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
 // This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
@@ -12,9 +12,7 @@ import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import { AuthRequestResponse } from "@bitwarden/common/auth/models/response/auth-request.response";
-import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
-import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { ValidationService } from "@bitwarden/common/platform/abstractions/validation.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import {
@@ -26,58 +24,47 @@ import {
   DialogService,
   ToastService,
 } from "@bitwarden/components";
-import { KeyService } from "@bitwarden/key-management";
 
 import { LoginApprovalDialogComponentServiceAbstraction } from "./login-approval-dialog-component.service.abstraction";
 
-const RequestTimeOut = 60000 * 15; //15 Minutes
-const RequestTimeUpdate = 60000 * 5; //5 Minutes
+const RequestTimeOut = 60000 * 15; // 15 Minutes
+const RequestTimeUpdate = 60000 * 5; // 5 Minutes
 
 export interface LoginApprovalDialogParams {
   notificationId: string;
 }
 
 @Component({
-  selector: "login-approval",
   templateUrl: "login-approval-dialog.component.html",
-  imports: [CommonModule, AsyncActionsModule, ButtonModule, DialogModule, JslibModule],
+  imports: [AsyncActionsModule, ButtonModule, CommonModule, DialogModule, JslibModule],
 })
 export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
-  loading = true;
-
   authRequestId: string;
-
-  private destroy$ = new Subject<void>();
-
+  authRequestResponse: AuthRequestResponse;
   email: string;
   fingerprintPhrase: string;
-  authRequestResponse: AuthRequestResponse;
-  readableDeviceTypeName: string;
   interval: NodeJS.Timeout;
+  loading = true;
+  readableDeviceTypeName: string;
   requestTimeText: string;
 
   constructor(
     @Inject(DIALOG_DATA) private params: LoginApprovalDialogParams,
-    protected authRequestService: AuthRequestServiceAbstraction,
-    protected accountService: AccountService,
-    protected platformUtilsService: PlatformUtilsService,
-    protected i18nService: I18nService,
-    protected apiService: ApiService,
-    protected appIdService: AppIdService,
-    protected keyService: KeyService,
-    private dialogRef: DialogRef,
-    private toastService: ToastService,
-    private loginApprovalDialogComponentService: LoginApprovalDialogComponentServiceAbstraction,
-    private validationService: ValidationService,
+    private accountService: AccountService,
+    private apiService: ApiService,
+    private authRequestService: AuthRequestServiceAbstraction,
     private devicesService: DevicesServiceAbstraction,
+    private dialogRef: DialogRef,
+    private i18nService: I18nService,
+    private loginApprovalDialogComponentService: LoginApprovalDialogComponentServiceAbstraction,
+    private toastService: ToastService,
+    private validationService: ValidationService,
   ) {
     this.authRequestId = params.notificationId;
   }
 
   async ngOnDestroy(): Promise<void> {
     clearInterval(this.interval);
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   async ngOnInit() {

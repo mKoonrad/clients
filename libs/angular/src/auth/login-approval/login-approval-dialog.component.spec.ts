@@ -9,13 +9,10 @@ import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import { AuthRequestResponse } from "@bitwarden/common/auth/models/response/auth-request.response";
-import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
-import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { ValidationService } from "@bitwarden/common/platform/abstractions/validation.service";
 import { UserId } from "@bitwarden/common/types/guid";
 import { DialogRef, DIALOG_DATA, ToastService } from "@bitwarden/components";
-import { KeyService } from "@bitwarden/key-management";
 
 import { LoginApprovalDialogComponentServiceAbstraction } from "./login-approval-dialog-component.service.abstraction";
 import { LoginApprovalDialogComponent } from "./login-approval-dialog.component";
@@ -24,12 +21,12 @@ describe("LoginApprovalDialogComponent", () => {
   let component: LoginApprovalDialogComponent;
   let fixture: ComponentFixture<LoginApprovalDialogComponent>;
 
-  let authRequestService: MockProxy<AuthRequestServiceAbstraction>;
   let accountService: MockProxy<AccountService>;
   let apiService: MockProxy<ApiService>;
+  let authRequestService: MockProxy<AuthRequestServiceAbstraction>;
   let devicesService: MockProxy<DevicesServiceAbstraction>;
-  let i18nService: MockProxy<I18nService>;
   let dialogRef: MockProxy<DialogRef>;
+  let i18nService: MockProxy<I18nService>;
   let toastService: MockProxy<ToastService>;
   let validationService: MockProxy<ValidationService>;
 
@@ -38,12 +35,12 @@ describe("LoginApprovalDialogComponent", () => {
   const testPublicKey = "test-public-key";
 
   beforeEach(async () => {
-    authRequestService = mock<AuthRequestServiceAbstraction>();
     accountService = mock<AccountService>();
     apiService = mock<ApiService>();
+    authRequestService = mock<AuthRequestServiceAbstraction>();
     devicesService = mock<DevicesServiceAbstraction>();
-    i18nService = mock<I18nService>();
     dialogRef = mock<DialogRef>();
+    i18nService = mock<I18nService>();
     toastService = mock<ToastService>();
     validationService = mock<ValidationService>();
 
@@ -58,15 +55,12 @@ describe("LoginApprovalDialogComponent", () => {
       imports: [LoginApprovalDialogComponent],
       providers: [
         { provide: DIALOG_DATA, useValue: { notificationId: testNotificationId } },
+        { provide: AccountService, useValue: accountService },
+        { provide: ApiService, useValue: apiService },
         { provide: AuthRequestServiceAbstraction, useValue: authRequestService },
         { provide: DevicesServiceAbstraction, useValue: devicesService },
-        { provide: AccountService, useValue: accountService },
-        { provide: PlatformUtilsService, useValue: mock<PlatformUtilsService>() },
-        { provide: I18nService, useValue: i18nService },
-        { provide: ApiService, useValue: apiService },
-        { provide: AppIdService, useValue: mock<AppIdService>() },
-        { provide: KeyService, useValue: mock<KeyService>() },
         { provide: DialogRef, useValue: dialogRef },
+        { provide: I18nService, useValue: i18nService },
         { provide: ToastService, useValue: toastService },
         { provide: ValidationService, useValue: validationService },
         {
