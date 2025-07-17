@@ -1,8 +1,10 @@
+import { SignedSecurityState } from "../../types";
+
 export class SecurityStateRequest {
-  securityState: string;
+  securityState: SignedSecurityState;
   securityVersion: number;
 
-  constructor(securityState: string, securityVersion: number) {
+  constructor(securityState: SignedSecurityState, securityVersion: number) {
     this.securityState = securityState;
     this.securityVersion = securityVersion;
   }
