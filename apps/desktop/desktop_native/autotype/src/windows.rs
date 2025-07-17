@@ -19,7 +19,7 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
 }
 
 /// Gets the foreground window handle.
-/// 
+///
 /// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
 fn get_foreground_window() -> Result<HWND, ()> {
     let foreground_window_handle = unsafe { GetForegroundWindow() };
@@ -32,7 +32,7 @@ fn get_foreground_window() -> Result<HWND, ()> {
 }
 
 /// Gets the length of the window title bar text.
-/// 
+///
 /// TODO: Future improvement is to use GetLastError for better error handling
 ///
 /// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
@@ -48,7 +48,7 @@ fn get_window_title_length(window_handle: HWND) -> Result<usize, ()> {
 }
 
 /// Gets the window title bar title.
-/// 
+///
 /// TODO: Future improvement is to use GetLastError for better error handling
 ///
 /// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextw
