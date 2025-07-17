@@ -8,4 +8,3 @@ publish.workspace = true
 [target.'cfg(windows)'.dependencies]
 windows = { workspace = true, features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging"] }
 windows-core = { workspace = true }
-windows-result = { workspace = true }

@@ -6,9 +6,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     GetForegroundWindow, GetWindowTextLengthW, GetWindowTextW,
 };
 
-/*
-    Gets the title bar string for the foreground window.
-*/
+/// Gets the title bar string for the foreground window.
 pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
     let Ok(window_handle) = get_foreground_window() else {
         return Err(());
@@ -20,9 +18,9 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
     Ok(window_title)
 }
 
-/*
-    https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
-*/
+/// Gets the foreground window handle.
+/// 
+/// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
 fn get_foreground_window() -> Result<HWND, ()> {
     let foreground_window_handle = unsafe { GetForegroundWindow() };
 
@@ -33,11 +31,11 @@ fn get_foreground_window() -> Result<HWND, ()> {
     Ok(foreground_window_handle)
 }
 
-/*
-    TODO: Future improvement is to use GetLastError for better error handling
-
-    https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
-*/
+/// Gets the length of the window title bar text.
+/// 
+/// TODO: Future improvement is to use GetLastError for better error handling
+///
+/// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
 fn get_window_title_length(window_handle: HWND) -> Result<usize, ()> {
     if window_handle.is_invalid() {
         return Err(());
@@ -49,11 +47,11 @@ fn get_window_title_length(window_handle: HWND) -> Result<usize, ()> {
     }
 }
 
-/*
-    TODO: Future improvement is to use GetLastError for better error handling
-
-    https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextw
-*/
+/// Gets the window title bar title.
+/// 
+/// TODO: Future improvement is to use GetLastError for better error handling
+///
+/// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextw
 fn get_window_title(window_handle: HWND) -> Result<Option<String>, ()> {
     if window_handle.is_invalid() {
         return Err(());
