@@ -622,11 +622,11 @@ export class UserKeyRotationService {
         },
       };
     } else if (currentUserKey.inner().type === EncryptionType.CoseEncrypt0) {
-      const signingKey: WrappedSigningKey = await this.firstValueFromOrThrow(
+      const signingKey = await this.firstValueFromOrThrow(
         this.keyService.userSigningKey$(user.id),
         "User signing key",
       );
-      const securityState: SignedSecurityState = await this.firstValueFromOrThrow(
+      const securityState = await this.firstValueFromOrThrow(
         this.securityStateService.accountSecurityState$(user.id),
         "User security state",
       );
@@ -641,8 +641,8 @@ export class UserKeyRotationService {
             wrappedPrivateKey: currentUserKeyWrappedPrivateKey,
             publicKey: publicKey,
           },
-          signingKey: signingKey,
-          securityState: securityState,
+          signingKey: signingKey!,
+          securityState: securityState!,
         },
       };
     }
