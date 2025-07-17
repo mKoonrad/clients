@@ -23,6 +23,8 @@ export class VerifyingKey {
 
   /**
    * Returns the algorithm of the underlying signature scheme of the verifying key.
+   * @throws A decoding error if the key is not a valid Cose-encoded public signature key.
+   * @throws A unsupported value error if the key is a valid Cose-encode signature key, but the algorithm is not supported.
    */
   async algorithm(): Promise<SigningKeyAlgorithm> {
     await SdkLoadService.Ready;
