@@ -15,14 +15,12 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     @IBOutlet weak var statusLabel: NSTextField!
     @IBOutlet weak var logoImageView: NSImageView!
     
-    // There is something a bit strange about the initialization/deinitialization in this class.
-    // Sometimes deinit won't be called after a request has successfully finished,
-    // which would leave this class hanging in memory and the IPC connection open.
-    //
-    // If instead I make this a static, the deinit gets called correctly after each request.
-    // I think we still might want a static regardless, to be able to reuse the connection if possible.
     private var client: MacOsProviderClient?
     
+    // We made the the getclient method async
+    // This is so that we can check if the app is running, and launch it, without blocking the main thread
+    // Blocking the main thread caused MacOS layouting to 'fail' or at least be very delayed, which caused our getWindowPositioning code to sent 0,0.
+    // We also properly retry the IPC connection which sometimes would take some time to be up and running, depending on CPU load, phase of jupiters moon, etc.
     private func getClient() async -> MacOsProviderClient {
         if let client = self.client {
             return client
@@ -56,7 +54,7 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
 
         logger.log("[autofill-extension] Connecting to Bitwarden over IPC")
         
-        // Retry connection creation, not just status checking
+        // Retry connecting to the Bitwarden IPC with an increasing delay
         let maxRetries = 20
         let delayMs = 500
         var newClient: MacOsProviderClient?
@@ -161,6 +159,9 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         
         logger.log("[autofill-extension] position: Getting window position")
         
+        // To whomever is reading this. Sorry. But MacOS couldn't give us an accurate window positioning, possibly due to animations
+        // So I added some retry logic, as well as a fall back to the mouse position which is likely at the sort of the right place.
+        // In my testing we often succed after 4-7 attempts.
         // Wait for window frame to stabilize (animation to complete)
         var lastFrame: CGRect = .zero
         var stableCount = 0
