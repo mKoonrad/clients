@@ -6,11 +6,7 @@ import { EncString } from "@bitwarden/sdk-internal";
  * to use.
  */
 export class WrappedSigningKey {
-  private innerKey: EncString;
-
-  constructor(innerKey: string) {
-    this.innerKey = innerKey;
-  }
+  constructor(private innerKey: EncString) {}
 
   /**
    * Gets the encrypted signing key as an EncString, encrypted
