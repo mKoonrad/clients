@@ -3,7 +3,7 @@ import { PrivateKeysResponseModel } from "@bitwarden/common/key-management/keys/
 import { ProfileOrganizationResponse } from "../../admin-console/models/response/profile-organization.response";
 import { ProfileProviderOrganizationResponse } from "../../admin-console/models/response/profile-provider-organization.response";
 import { ProfileProviderResponse } from "../../admin-console/models/response/profile-provider.response";
-import { EncString } from "../../platform/models/domain/enc-string";
+import { EncString } from "../../key-management/crypto/models/enc-string";
 import { UserId } from "../../types/guid";
 
 import { BaseResponse } from "./base.response";

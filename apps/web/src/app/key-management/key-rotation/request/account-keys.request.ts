@@ -1,7 +1,7 @@
 import { SecurityStateRequest } from "@bitwarden/common/key-management/security-state/request/security-state.request";
 
 import { PublicKeyEncryptionKeyPairRequestModel } from "../model/public-key-encryption-keypair-request.model";
-import { SignatureKeyPairRequestModel } from "../model/signature-keypair-request-request.model";
+import { SignatureKeyPairRequestModel } from "../model/signature-key-pair-request-request.model";
 import { V1UserCryptographicState } from "../types/v1-cryptographic-state";
 import { V2UserCryptographicState } from "../types/v2-cryptographic-state";
 
