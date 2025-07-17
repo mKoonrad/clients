@@ -42,7 +42,7 @@ const createMockCollection = (
     manage: true,
     assigned: true,
     type: CollectionTypes.DefaultUserCollection,
-    defaultCollection: true,
+    isDefaultCollection: true,
     canEditItems: jest.fn().mockReturnValue(canEdit),
     canEdit: jest.fn(),
     canDelete: jest.fn(),
