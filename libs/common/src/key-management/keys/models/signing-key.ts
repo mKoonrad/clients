@@ -21,34 +21,11 @@ export class WrappedSigningKey {
     return this.innerKey;
   }
 
-  /**
-   * Gets a JSON serializable version of the signing key.
-   */
-  toSerializable(): SerializableWrappedUserSigningKeyPair {
-    return new SerializableWrappedUserSigningKeyPair(this.innerKey);
-  }
-
-  /**
-   * Creates a serializable version of the signing key.
-   */
-  static fromSerializable(serializable: SerializableWrappedUserSigningKeyPair): WrappedSigningKey {
-    return new WrappedSigningKey(serializable.signingKey);
-  }
-}
-
-/**
- * This class is a clear, explicit conversion, leaking the details
- * of the signing key, in order to be serializable with JSON typefest.
- * This is used to store the signing key to local state.
- */
-export class SerializableWrappedUserSigningKeyPair {
-  constructor(readonly signingKey: EncString) {}
-
-  static fromJson(obj: any): SerializableWrappedUserSigningKeyPair | null {
+  static fromJson(obj: any): WrappedSigningKey | null {
     if (obj == null) {
       return null;
     }
 
-    return new SerializableWrappedUserSigningKeyPair(obj.signingKey);
+    return new WrappedSigningKey(obj.signingKey);
   }
 }
