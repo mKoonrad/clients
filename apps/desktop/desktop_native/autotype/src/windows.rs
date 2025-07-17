@@ -38,10 +38,47 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
 pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
     let fake_input = String::from("user@bitwarden.com\tpassword");
     let input: Vec<u16> = fake_input.encode_utf16().collect();
-    println!("Input string: {:?}\nInput vec: {:?}\nInput vec len: {:?}", fake_input, input, input.len());
+    println!("----------\nInput string: {:?}\nInput vec: {:?}\nInput vec len: {:?}", fake_input, input, input.len());
 
-    let mut input_down_keys: Vec<INPUT> = Vec::new();
-    let mut input_up_keys: Vec<INPUT> = Vec::new();
+    let mut keyboard_inputs: Vec<INPUT> = Vec::new();
+
+    // "release" the hotkey keys: alt-ctrl-i
+    keyboard_inputs.push(INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: INPUT_0 {
+            ki: KEYBDINPUT {
+                wVk: VIRTUAL_KEY(0x12), // alt
+                wScan: 0,
+                dwFlags: KEYEVENTF_KEYUP,
+                time: 0,
+                dwExtraInfo: 0,
+            },
+        },
+    });
+    keyboard_inputs.push(INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: INPUT_0 {
+            ki: KEYBDINPUT {
+                wVk: VIRTUAL_KEY(0x11), // ctrl
+                wScan: 0,
+                dwFlags: KEYEVENTF_KEYUP,
+                time: 0,
+                dwExtraInfo: 0,
+            },
+        },
+    });
+    keyboard_inputs.push(INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: INPUT_0 {
+            ki: KEYBDINPUT {
+                wVk: Default::default(),
+                wScan: 105, // i
+                dwFlags: KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
+                time: 0,
+                dwExtraInfo: 0,
+            },
+        },
+    });
 
     for i in input {
         let next_down_input: INPUT = match i {
@@ -105,30 +142,20 @@ pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
             },
         };
 
-        input_down_keys.push(next_down_input);
-        input_up_keys.push(next_up_input);
+        keyboard_inputs.push(next_down_input);
+        keyboard_inputs.push(next_up_input);
     }
 
-    // let inputs: Vec<INPUT> = input_down_keys
-    //     .into_iter()
-    //     .chain(input_up_keys.into_iter())
-    //     .collect();
-    for i in 0..input_down_keys.len() {
-        unsafe { SendInput(&[input_down_keys[i]], std::mem::size_of::<INPUT>() as i32) };
-        thread::sleep_ms(40);
-        unsafe { SendInput(&[input_up_keys[i]], std::mem::size_of::<INPUT>() as i32) };
-        thread::sleep_ms(40);
+    let insert_count = unsafe { SendInput(&keyboard_inputs, std::mem::size_of::<INPUT>() as i32) };
+
+    let e = unsafe { GetLastError().to_hresult().message() };
+    println!("GetLastError(): {:?}", e);
+
+    if insert_count == 0 {
+        return Err(()); // input was blocked by another thread
+    } else if insert_count != keyboard_inputs.len() as u32 {
+        return Err(());
     }
-    //let insert_count = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
-
-    //let e = unsafe { GetLastError().to_hresult().message() };
-    //println!("GetLastError(): {:?}", e);
-
-    // if insert_count == 0 {
-    //     return Err(()); // input was blocked by another thread
-    // } else if insert_count != inputs.len() as u32 {
-    //     return Err(());
-    // }
 
     Ok(())
 }
