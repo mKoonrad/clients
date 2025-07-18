@@ -20,7 +20,7 @@ export class CollectionView implements View, ITreeNodeObject {
   assigned: boolean = false;
   type: CollectionType = CollectionTypes.SharedCollection;
   userDefaultCollectionEmail: string | undefined;
-
+  
   private _name: string | undefined;
 
   constructor(c?: Collection | CollectionAccessDetailsResponse) {
