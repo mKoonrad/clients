@@ -2,6 +2,7 @@ import { Injectable } from "@angular/core";
 import { firstValueFrom } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { CipherType } from "@bitwarden/common/vault/enums";
@@ -15,6 +16,7 @@ export class DefaultChangeLoginPasswordService implements ChangeLoginPasswordSer
   constructor(
     private apiService: ApiService,
     private environmentService: EnvironmentService,
+    private domainSettingsService: DomainSettingsService,
   ) {}
 
   /**
@@ -35,9 +37,12 @@ export class DefaultChangeLoginPasswordService implements ChangeLoginPasswordSer
       return null;
     }
 
-    // When the policy is not enabled, return the first URL
-    // eslint-disable-next-line no-constant-condition
-    if (!false) {
+    const enableFaviconChangePassword = await firstValueFrom(
+      this.domainSettingsService.showFavicons$,
+    );
+
+    // When the setting is not enabled, return the first URL
+    if (!enableFaviconChangePassword) {
       return urls[0].href;
     }
 
