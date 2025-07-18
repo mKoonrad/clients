@@ -3023,6 +3023,34 @@
       }
     }
   },
+  "youDeniedLoginAttemptFromAnotherDevice": {
+    "message": "You denied a login attempt from another device. If this was you, try to log in with the device again."
+  },
+  "webApp": {
+    "message": "Web app"
+  },
+  "mobile": {
+    "message": "Mobile",
+    "description": "Mobile app"
+  },
+  "extension": {
+    "message": "Extension",
+    "description": "Browser extension/addon"
+  },
+  "desktop": {
+    "message": "Desktop",
+    "description": "Desktop app"
+  },
+  "cli": {
+    "message": "CLI"
+  },
+  "sdk": {
+    "message": "SDK",
+    "description": "Software Development Kit"
+  },
+  "server": {
+    "message": "Server"
+  },
   "loginRequest": {
     "message": "Login request"
   },
