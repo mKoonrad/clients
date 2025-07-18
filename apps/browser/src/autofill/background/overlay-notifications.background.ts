@@ -1,6 +1,6 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
-import { filter, firstValueFrom, Observable, Subject, switchMap, timer } from "rxjs";
+import { filter, firstValueFrom, Subject, switchMap, timer } from "rxjs";
 
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { getOptionalUserId } from "@bitwarden/common/auth/services/account.service";
@@ -9,7 +9,7 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { UserId } from "@bitwarden/common/types/guid";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
-import { SecurityTask, SecurityTaskStatus, TaskService } from "@bitwarden/common/vault/tasks";
+import { SecurityTask, SecurityTaskStatus } from "@bitwarden/common/vault/tasks";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
 import { InlineMenuFormFieldData } from "../services/abstractions/autofill-overlay-content.service";
@@ -24,7 +24,6 @@ import {
   WebsiteOriginsWithFields,
 } from "./abstractions/overlay-notifications.background";
 import NotificationBackground from "./notification.background";
-import { T } from "@angular/cdk/portal-directives.d-BoG39gYN";
 
 type LoginSecurityTaskInfo = {
   securityTask: SecurityTask;
@@ -49,7 +48,6 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
   constructor(
     private logService: LogService,
     private notificationBackground: NotificationBackground,
-    private taskService: TaskService,
     private accountService: AccountService,
     private cipherService: CipherService,
   ) {}
@@ -66,7 +64,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
 
     this.logged$
       .pipe(filter(({ message }) => message.uri.indexOf("localhost") > 0))
-      .subscribe(console.log);
+      .subscribe((s) => this.logService.debug(s));
   }
 
   /**
@@ -142,27 +140,27 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
     sender: chrome.runtime.MessageSender,
   ) => {
     this.logged$.next({ message, sender });
-    console.log(
+    this.logService.debug(
       "!this.websiteOriginsWithFields.has(sender.tab.id)",
       !this.websiteOriginsWithFields.has(sender.tab.id),
     );
     if (!this.websiteOriginsWithFields.has(sender.tab.id)) {
-      console.log(this.websiteOriginsWithFields);
+      this.logService.debug(this.websiteOriginsWithFields);
       return;
     }
-    console.log("got here A");
+    this.logService.debug("got here A");
     const { uri, username, password, newPassword } = message;
-    console.log(uri, username, password, newPassword);
+    this.logService.debug(uri, username, password, newPassword);
     if (!username && !password && !newPassword) {
       return;
     }
-    console.log("got here B");
+    this.logService.debug("got here B");
 
     this.clearLoginCipherFormDataSubject.next();
     const formData = { uri, username, password, newPassword };
 
     const existingModifyLoginData = this.modifyLoginCipherFormData.get(sender.tab.id);
-    console.log({ existingModifyLoginData });
+    this.logService.debug({ existingModifyLoginData });
     if (existingModifyLoginData) {
       formData.username = formData.username || existingModifyLoginData.username;
       formData.password = formData.password || existingModifyLoginData.password;
@@ -276,7 +274,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
     if (this.notificationDataIncompleteOnBeforeRequest(tabId)) {
       this.getFormFieldDataFromTab(tabId, frameId).catch((error) => this.logService.error(error));
     } else {
-      console.log("No incomplete, clearing");
+      this.logService.debug("No incomplete, clearing");
       this.clearCompletedWebRequest(requestId, tabId);
     }
   };
@@ -298,7 +296,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
         this.shouldAttemptAtRiskPasswordNotification(modifyLoginData),
       ].some((precondition) => !precondition);
 
-    console.log("notificationDataIncompleteOnBeforeRequest", { result, modifyLoginData });
+    this.logService.debug("notificationDataIncompleteOnBeforeRequest", { result, modifyLoginData });
     return result;
   };
 
@@ -508,7 +506,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
         }
       }
     }
-    console.log({ result });
+    this.logService.debug({ result });
     return result;
   };
 
@@ -518,7 +516,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
    * @param modifyLoginData - The modified login form data
    */
   private shouldAttemptChangedPasswordNotification = (modifyLoginData: InlineMenuFormFieldData) => {
-    console.log("attemptChangedPassword", !!modifyLoginData?.newPassword);
+    this.logService.debug("attemptChangedPassword", !!modifyLoginData?.newPassword);
     return modifyLoginData?.newPassword;
   };
 
@@ -528,7 +526,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
    * @param modifyLoginData - The modified login form data
    */
   private shouldAttemptAddLoginNotification = (modifyLoginData: ModifyLoginCipherFormData) => {
-    console.log(
+    this.logService.debug(
       "attemptAddLogin",
       !!(modifyLoginData?.username && (modifyLoginData.password || modifyLoginData.newPassword)),
     );

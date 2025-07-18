@@ -6,7 +6,6 @@ import { ServerConfig } from "@bitwarden/common/platform/abstractions/config/ser
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { EnvironmentServerConfigData } from "@bitwarden/common/platform/models/data/server-config.data";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
-import { TaskService } from "@bitwarden/common/vault/tasks";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
 import AutofillField from "../models/autofill-field";
@@ -27,7 +26,6 @@ import { OverlayNotificationsBackground } from "./overlay-notifications.backgrou
 describe("OverlayNotificationsBackground", () => {
   let logService: MockProxy<LogService>;
   let notificationBackground: NotificationBackground;
-  let taskService: TaskService;
   let accountService: AccountService;
   let cipherService: CipherService;
   let getEnableChangedPasswordPromptSpy: jest.SpyInstance;
@@ -50,7 +48,6 @@ describe("OverlayNotificationsBackground", () => {
     overlayNotificationsBackground = new OverlayNotificationsBackground(
       logService,
       notificationBackground,
-      taskService,
       accountService,
       cipherService,
     );
