@@ -1,22 +1,12 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { NgClass } from "@angular/common";
-import {
-  Component,
-  computed,
-  ElementRef,
-  HostBinding,
-  inject,
-  Input,
-  model,
-  Signal,
-} from "@angular/core";
+import { Component, computed, ElementRef, HostBinding, input, model } from "@angular/core";
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { debounce, interval } from "rxjs";
 
 import { ButtonLikeAbstraction } from "../shared/button-like.abstraction";
 import { FocusableElement } from "../shared/focusable-element";
-import { ariaDisableElement } from "../utils";
 
 export type IconButtonType = "primary" | "danger" | "contrast" | "main" | "muted" | "nav-contrast";
 
@@ -87,35 +77,35 @@ const styles: Record<IconButtonType, string[]> = {
 
 const disabledStyles: Record<IconButtonType, string[]> = {
   contrast: [
-    "aria-disabled:tw-opacity-60",
-    "aria-disabled:hover:tw-border-transparent",
-    "aria-disabled:hover:tw-bg-transparent",
+    "disabled:tw-opacity-60",
+    "disabled:hover:tw-border-transparent",
+    "disabled:hover:tw-bg-transparent",
   ],
   main: [
-    "aria-disabled:!tw-text-secondary-300",
-    "aria-disabled:hover:tw-border-transparent",
-    "aria-disabled:hover:tw-bg-transparent",
+    "disabled:!tw-text-secondary-300",
+    "disabled:hover:tw-border-transparent",
+    "disabled:hover:tw-bg-transparent",
   ],
   muted: [
-    "aria-disabled:!tw-text-secondary-300",
-    "aria-disabled:hover:tw-border-transparent",
-    "aria-disabled:hover:tw-bg-transparent",
+    "disabled:!tw-text-secondary-300",
+    "disabled:hover:tw-border-transparent",
+    "disabled:hover:tw-bg-transparent",
   ],
   primary: [
-    "aria-disabled:tw-opacity-60",
-    "aria-disabled:hover:tw-border-primary-600",
-    "aria-disabled:hover:tw-bg-primary-600",
+    "disabled:tw-opacity-60",
+    "disabled:hover:tw-border-primary-600",
+    "disabled:hover:tw-bg-primary-600",
   ],
   danger: [
-    "aria-disabled:!tw-text-secondary-300",
-    "aria-disabled:hover:tw-border-transparent",
-    "aria-disabled:hover:tw-bg-transparent",
-    "aria-disabled:hover:!tw-text-secondary-300",
+    "disabled:!tw-text-secondary-300",
+    "disabled:hover:tw-border-transparent",
+    "disabled:hover:tw-bg-transparent",
+    "disabled:hover:!tw-text-secondary-300",
   ],
   "nav-contrast": [
-    "aria-disabled:tw-opacity-60",
-    "aria-disabled:hover:tw-border-transparent",
-    "aria-disabled:hover:tw-bg-transparent",
+    "disabled:tw-opacity-60",
+    "disabled:hover:tw-border-transparent",
+    "disabled:hover:tw-bg-transparent",
   ],
 };
 
@@ -141,15 +131,15 @@ const sizes: Record<IconButtonSize, string[]> = {
   ],
   imports: [NgClass],
   host: {
-    "[attr.aria-disabled]": "disabledAttr()",
+    "[attr.disabled]": "disabledAttr()",
   },
 })
 export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableElement {
-  @Input("bitIconButton") icon: string;
+  readonly icon = model<string>(undefined, { alias: "bitIconButton" });
 
-  @Input() buttonType: IconButtonType = "main";
+  readonly buttonType = input<IconButtonType>("main");
 
-  @Input() size: IconButtonSize = "default";
+  readonly size = model<IconButtonSize>("default");
 
   @HostBinding("class") get classList() {
     return [
@@ -162,13 +152,15 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
       "hover:tw-bg-hover-default",
       "focus:tw-outline-none",
     ]
-      .concat(styles[this.buttonType])
-      .concat(sizes[this.size])
-      .concat(this.showDisabledStyles() || this.disabled() ? disabledStyles[this.buttonType] : []);
+      .concat(styles[this.buttonType()])
+      .concat(sizes[this.size()])
+      .concat(
+        this.showDisabledStyles() || this.disabled() ? disabledStyles[this.buttonType()] : [],
+      );
   }
 
   get iconClass() {
-    return [this.icon, "!tw-m-0"];
+    return [this.icon(), "!tw-m-0"];
   }
 
   protected disabledAttr = computed(() => {
@@ -188,7 +180,7 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
     return this.showLoadingStyle() || (this.disabledAttr() && this.loading() === false);
   });
 
-  loading = model(false);
+  readonly loading = model(false);
 
   /**
    * Determine whether it is appropriate to display a loading spinner. We only want to show
@@ -206,16 +198,11 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
     toObservable(this.loading).pipe(debounce((isLoading) => interval(isLoading ? 75 : 0))),
   );
 
-  disabled = model<boolean>(false);
+  readonly disabled = model<boolean>(false);
 
   getFocusTarget() {
     return this.elementRef.nativeElement;
   }
 
-  private elementRef = inject(ElementRef);
-
-  constructor() {
-    const element = this.elementRef.nativeElement;
-    ariaDisableElement(element, this.disabledAttr as Signal<boolean | undefined>);
-  }
+  constructor(private elementRef: ElementRef) {}
 }
