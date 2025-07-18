@@ -13,11 +13,6 @@ export abstract class BasePolicy {
   abstract description: string;
   abstract type: PolicyType;
   abstract component: any;
-  /**
-   * When defined, will override the description on the policies page.
-   * `description` will still be used in the policy edit dialog.
-   */
-  listDescriptionOverride?: string;
 
   display(organization: Organization) {
     return true;

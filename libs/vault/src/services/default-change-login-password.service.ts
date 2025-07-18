@@ -1,11 +1,7 @@
 import { Injectable } from "@angular/core";
-import { firstValueFrom, switchMap } from "rxjs";
+import { firstValueFrom } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
-import { PolicyType } from "@bitwarden/common/admin-console/enums";
-import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
-import { getUserId } from "@bitwarden/common/auth/services/account.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { CipherType } from "@bitwarden/common/vault/enums";
@@ -19,8 +15,6 @@ export class DefaultChangeLoginPasswordService implements ChangeLoginPasswordSer
   constructor(
     private apiService: ApiService,
     private environmentService: EnvironmentService,
-    private policyService: PolicyService,
-    private accountService: AccountService,
   ) {}
 
   /**
@@ -41,17 +35,9 @@ export class DefaultChangeLoginPasswordService implements ChangeLoginPasswordSer
       return null;
     }
 
-    const helpUsersUpdatePasswordsPolicyEnabled = await firstValueFrom(
-      this.accountService.activeAccount$.pipe(
-        getUserId,
-        switchMap((userId) =>
-          this.policyService.policyAppliesToUser$(PolicyType.HelpUsersUpdatePasswords, userId),
-        ),
-      ),
-    );
-
     // When the policy is not enabled, return the first URL
-    if (!helpUsersUpdatePasswordsPolicyEnabled) {
+    // eslint-disable-next-line no-constant-condition
+    if (!false) {
       return urls[0].href;
     }
 

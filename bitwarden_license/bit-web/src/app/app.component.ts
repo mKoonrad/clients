@@ -1,7 +1,5 @@
 import { Component, OnInit } from "@angular/core";
 
-import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
-import { HelpUsersUpdatePasswordsPolicy } from "@bitwarden/web-vault/app/admin-console/organizations/policies";
 import { AppComponent as BaseAppComponent } from "@bitwarden/web-vault/app/app.component";
 
 import { ActivateAutofillPolicy } from "./admin-console/policies/activate-autofill.component";
@@ -25,12 +23,6 @@ export class AppComponent extends BaseAppComponent implements OnInit {
       new FreeFamiliesSponsorshipPolicy(),
       new ActivateAutofillPolicy(),
     ]);
-
-    void this.configService.getFeatureFlag(FeatureFlag.SecurityTasks).then((enabled) => {
-      if (enabled) {
-        this.policyListService.addPolicies([new HelpUsersUpdatePasswordsPolicy()]);
-      }
-    });
 
     if (!this.policyListService.getPolicies().some((p) => p instanceof AutomaticAppLoginPolicy)) {
       this.policyListService.addPolicies([new AutomaticAppLoginPolicy()]);

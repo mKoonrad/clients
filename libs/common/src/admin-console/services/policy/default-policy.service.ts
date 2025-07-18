@@ -278,9 +278,6 @@ export class DefaultPolicyService implements PolicyService {
       case PolicyType.FreeFamiliesSponsorshipPolicy:
         // free Bitwarden families policy
         return false;
-      case PolicyType.HelpUsersUpdatePasswords:
-        // HelpUsersUpdatePasswords policy applies to everyone
-        return false;
       case PolicyType.RestrictedItemTypes:
         // restricted item types policy
         return false;

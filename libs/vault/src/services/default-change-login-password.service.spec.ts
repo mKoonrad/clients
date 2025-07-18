@@ -7,8 +7,6 @@ import { mock } from "jest-mock-extended";
 import { of } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
-import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import {
   Environment,
   EnvironmentService,
@@ -24,8 +22,6 @@ describe("DefaultChangeLoginPasswordService", () => {
   let service: DefaultChangeLoginPasswordService;
 
   const mockApiService = mock<ApiService>();
-  const mockPolicyService = mock<PolicyService>();
-  const mockAccountService = mock<AccountService>();
 
   beforeEach(() => {
     mockApiService.nativeFetch.mockImplementation(() =>
@@ -38,18 +34,7 @@ describe("DefaultChangeLoginPasswordService", () => {
       } as Environment),
     } as EnvironmentService;
 
-    mockPolicyService.policyAppliesToUser$.mockImplementation(() => of(true));
-
-    mockAccountService.activeAccount$ = of({
-      id: "test-user-id",
-    } as Account);
-
-    service = new DefaultChangeLoginPasswordService(
-      mockApiService,
-      mockEnvironmentService,
-      mockPolicyService,
-      mockAccountService,
-    );
+    service = new DefaultChangeLoginPasswordService(mockApiService, mockEnvironmentService);
   });
 
   it("should return null for non-login ciphers", async () => {
@@ -169,23 +154,5 @@ describe("DefaultChangeLoginPasswordService", () => {
     const url = await service.getChangePasswordUrl(cipher);
 
     expect(url).toBe("https://working.com/.well-known/change-password");
-  });
-
-  it("returns the first URL when the policy is not enabled", async () => {
-    mockPolicyService.policyAppliesToUser$.mockImplementationOnce(() => of(false));
-
-    const cipher = {
-      type: CipherType.Login,
-      login: Object.assign(new LoginView(), {
-        uris: [{ uri: "https://example.com/" }, { uri: "https://another-example.com" }],
-      }),
-    } as CipherView;
-
-    mockApiService.nativeFetch.mockClear();
-
-    const url = await service.getChangePasswordUrl(cipher);
-
-    expect(url).toBe("https://example.com/");
-    expect(mockApiService.nativeFetch).not.toHaveBeenCalled();
   });
 });
