@@ -650,7 +650,7 @@ describe("KeyRotationService", () => {
         userKey: expect.any(SymmetricCryptoKey),
         publicKeyEncryptionKeyPair: {
           wrappedPrivateKey: mockNewEncryptedPrivateKey,
-          publicKey: Utils.fromBufferToB64(new Uint8Array(400)) as UserPublicKey,
+          publicKey: new Uint8Array(400) as UserPublicKey,
         },
       });
     });
@@ -688,7 +688,7 @@ describe("KeyRotationService", () => {
         userKey: TEST_VECTOR_USER_KEY_V2,
         publicKeyEncryptionKeyPair: {
           wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
-          publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+          publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V2) as UnsignedPublicKey,
           signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
         },
         signatureKeyPair: {
@@ -705,7 +705,7 @@ describe("KeyRotationService", () => {
       mockMakeKeysForUserCryptoV2.mockReturnValue({
         userKey: TEST_VECTOR_USER_KEY_V2.toBase64(),
         privateKey: TEST_VECTOR_PRIVATE_KEY_V2,
-        publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+        publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V2) as UnsignedPublicKey,
         signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
         signingKey: TEST_VECTOR_SIGNING_KEY_V2,
         verifyingKey: TEST_VECTOR_VERIFYING_KEY_V2,
@@ -730,7 +730,7 @@ describe("KeyRotationService", () => {
         userKey: TEST_VECTOR_USER_KEY_V2,
         publicKeyEncryptionKeyPair: {
           wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
-          publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+          publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V2),
           signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
         },
         signatureKeyPair: {
@@ -968,10 +968,8 @@ describe("KeyRotationService", () => {
           trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
         } = await keyRotationService.verifyTrust(mockUser);
         expect(wasTrustDenied).toBe(false);
-        expect(trustedEmergencyAccessUsers).toEqual([
-          mockGranteeEmergencyAccessWithPublicKey.publicKey,
-        ]);
-        expect(trustedOrgs).toEqual([mockOrganizationUserResetPasswordEntry.publicKey]);
+        expect(trustedEmergencyAccessUsers).toEqual(emUsers.map((e) => e.publicKey));
+        expect(trustedOrgs).toEqual(orgs.map((o) => o.publicKey));
       },
     );
   });
@@ -1124,8 +1122,8 @@ describe("KeyRotationService", () => {
           version: 1,
           userKey: TEST_VECTOR_USER_KEY_V1,
           publicKeyEncryptionKeyPair: {
-            wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V1),
-            publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+            wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V1,
+            publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V1),
           },
         },
       });
@@ -1140,8 +1138,8 @@ describe("KeyRotationService", () => {
           version: 2,
           userKey: TEST_VECTOR_USER_KEY_V2,
           publicKeyEncryptionKeyPair: {
-            wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V2),
-            publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+            wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+            publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V2) as UnsignedPublicKey,
           },
           signingKey: TEST_VECTOR_SIGNING_KEY_V2 as WrappedSigningKey,
           securityState: TEST_VECTOR_SECURITY_STATE_V2 as SignedSecurityState,
