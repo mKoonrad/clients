@@ -8342,7 +8342,7 @@
   "nameUnavailableSecretDeleted": {
   "message": "Deleted secret Id: $SECRET_ID$",
     "placeholders": {
-      "project_id": {
+      "secret_id": {
         "content": "$1",
         "example": "4d34e8a8"
       }
