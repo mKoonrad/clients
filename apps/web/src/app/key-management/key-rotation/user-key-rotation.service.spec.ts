@@ -11,10 +11,15 @@ import {
   EncString,
 } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import { DeviceTrustServiceAbstraction } from "@bitwarden/common/key-management/device-trust/abstractions/device-trust.service.abstraction";
-import { WrappedSigningKey } from "@bitwarden/common/key-management/keys/models/signing-key";
-import { VerifyingKey } from "@bitwarden/common/key-management/keys/models/verifying-key";
 import { SecurityStateService } from "@bitwarden/common/key-management/security-state/abstractions/security-state.service";
-import { SignedSecurityState } from "@bitwarden/common/key-management/security-state/models/security-state";
+import {
+  SignedPublicKey,
+  SignedSecurityState,
+  UnsignedPublicKey,
+  VerifyingKey,
+  WrappedPrivateKey,
+  WrappedSigningKey,
+} from "@bitwarden/common/key-management/types";
 import { VaultTimeoutService } from "@bitwarden/common/key-management/vault-timeout";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -137,18 +142,18 @@ function createMockWebauthn(id: string): any {
 
 const TEST_VECTOR_USER_KEY_V1 = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
 const TEST_VECTOR_PRIVATE_KEY_V1 =
-  "2.AAAw2vTUePO+CCyokcIfVw==|DTBNlJ5yVsV2Bsk3UU3H6Q==|YvFBff5gxWqM+UsFB6BKimKxhC32AtjF3IStpU1Ijwg=";
+  "2.AAAw2vTUePO+CCyokcIfVw==|DTBNlJ5yVsV2Bsk3UU3H6Q==|YvFBff5gxWqM+UsFB6BKimKxhC32AtjF3IStpU1Ijwg=" as WrappedPrivateKey;
 const TEST_VECTOR_PUBLIC_KEY_V1 = Utils.fromBufferToB64(new Uint8Array(400));
 const TEST_VECTOR_PRIVATE_KEY_V1_ROTATED =
-  "2.AAAw2vTUePO+CCyokcIfVw==|DTBNlJ5yVsV2Bsk3UU3H6Q==|AAAAff5gxWqM+UsFB6BKimKxhC32AtjF3IStpU1Ijwg=";
+  "2.AAAw2vTUePO+CCyokcIfVw==|DTBNlJ5yVsV2Bsk3UU3H6Q==|AAAAff5gxWqM+UsFB6BKimKxhC32AtjF3IStpU1Ijwg=" as WrappedPrivateKey;
 
 const TEST_VECTOR_USER_KEY_V2 = new SymmetricCryptoKey(new Uint8Array(70)) as UserKey;
-const TEST_VECTOR_PRIVATE_KEY_V2 = "7.AAAw2vTUePO+CCyokcIfVw==";
-const TEST_VECTOR_SIGNING_KEY_V2 = "7.AAAw2vTUePO+CCyokcIfVw==";
-const TEST_VECTOR_VERIFYING_KEY_V2 = "AAAw2vTUePO+CCyokcIfVw==";
-const TEST_VECTOR_SECURITY_STATE_V2 = "AAAw2vTUePO+CCyokcIfVw==";
+const TEST_VECTOR_PRIVATE_KEY_V2 = "7.AAAw2vTUePO+CCyokcIfVw==" as WrappedPrivateKey;
+const TEST_VECTOR_SIGNING_KEY_V2 = "7.AAAw2vTUePO+CCyokcIfVw==" as WrappedSigningKey;
+const TEST_VECTOR_VERIFYING_KEY_V2 = "AAAw2vTUePO+CCyokcIfVw==" as VerifyingKey;
+const TEST_VECTOR_SECURITY_STATE_V2 = "AAAw2vTUePO+CCyokcIfVw==" as SignedSecurityState;
 const TEST_VECTOR_PUBLIC_KEY_V2 = Utils.fromBufferToB64(new Uint8Array(400));
-const TEST_VECTOR_SIGNED_PUBLIC_KEY_V2 = "AAAw2vTUePO+CCyokcIfVw==";
+const TEST_VECTOR_SIGNED_PUBLIC_KEY_V2 = "AAAw2vTUePO+CCyokcIfVw==" as SignedPublicKey;
 
 class TestUserKeyRotationService extends UserKeyRotationService {
   override rotateUserKeyMasterPasswordAndEncryptedData(
@@ -201,8 +206,8 @@ class TestUserKeyRotationService extends UserKeyRotationService {
       masterKeyKdfConfig: KdfConfig;
       masterPasswordHint: string;
     },
-    trustedEmergencyAccessGranteesPublicKeys: Uint8Array[],
-    trustedOrganizationPublicKeys: Uint8Array[],
+    trustedEmergencyAccessGranteesPublicKeys: UnsignedPublicKey[],
+    trustedOrganizationPublicKeys: UnsignedPublicKey[],
   ): Promise<UnlockDataRequest> {
     return super.getAccountUnlockDataRequest(
       userId,
@@ -215,8 +220,8 @@ class TestUserKeyRotationService extends UserKeyRotationService {
   }
   override verifyTrust(user: Account): Promise<{
     wasTrustDenied: boolean;
-    trustedOrganizationPublicKeys: Uint8Array[];
-    trustedEmergencyAccessUserPublicKeys: Uint8Array[];
+    trustedOrganizationPublicKeys: UnsignedPublicKey[];
+    trustedEmergencyAccessUserPublicKeys: UnsignedPublicKey[];
   }> {
     return super.verifyTrust(user);
   }
@@ -247,7 +252,7 @@ class TestUserKeyRotationService extends UserKeyRotationService {
   override getCryptographicStateForUser(user: Account): Promise<{
     masterKeyKdfConfig: KdfConfig;
     masterKeySalt: string;
-    cryptographicState: V1CryptographicStateParameters | V2CryptographicStateParameters;
+    cryptographicStateParameters: V1CryptographicStateParameters | V2CryptographicStateParameters;
   }> {
     return super.getCryptographicStateForUser(user);
   }
@@ -557,12 +562,16 @@ describe("KeyRotationService", () => {
 
   describe("getNewAccountKeysV1", () => {
     const currentUserKey = TEST_VECTOR_USER_KEY_V1;
-    const mockEncryptedPrivateKey = new EncString(TEST_VECTOR_PRIVATE_KEY_V1);
-    const mockNewEncryptedPrivateKey = new EncString(TEST_VECTOR_PRIVATE_KEY_V1_ROTATED);
+    const mockEncryptedPrivateKey = TEST_VECTOR_PRIVATE_KEY_V1 as WrappedPrivateKey;
+    const mockNewEncryptedPrivateKey = TEST_VECTOR_PRIVATE_KEY_V1_ROTATED as WrappedPrivateKey;
     beforeAll(() => {
       mockEncryptService.unwrapDecapsulationKey.mockResolvedValue(new Uint8Array(200));
-      mockEncryptService.wrapDecapsulationKey.mockResolvedValue(mockNewEncryptedPrivateKey);
-      mockCryptoFunctionService.rsaExtractPublicKey.mockResolvedValue(new Uint8Array(400));
+      mockEncryptService.wrapDecapsulationKey.mockResolvedValue(
+        new EncString(mockNewEncryptedPrivateKey),
+      );
+      mockCryptoFunctionService.rsaExtractPublicKey.mockResolvedValue(
+        new Uint8Array(400) as UnsignedPublicKey,
+      );
     });
 
     afterAll(() => {
@@ -575,14 +584,14 @@ describe("KeyRotationService", () => {
         userKey: currentUserKey,
         publicKeyEncryptionKeyPair: {
           wrappedPrivateKey: mockEncryptedPrivateKey,
-          publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+          publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V1) as UnsignedPublicKey,
         },
       });
       expect(result).toEqual({
         userKey: expect.any(SymmetricCryptoKey),
         publicKeyEncryptionKeyPair: {
-          wrappedPrivateKey: mockNewEncryptedPrivateKey.encryptedString!,
-          publicKey: Utils.fromBufferToB64(new Uint8Array(400)),
+          wrappedPrivateKey: mockNewEncryptedPrivateKey,
+          publicKey: Utils.fromBufferToB64(new Uint8Array(400)) as UserPublicKey,
         },
       });
     });
@@ -605,14 +614,14 @@ describe("KeyRotationService", () => {
         new PBKDF2KdfConfig(600_000),
         "mockuseremail",
         {
-          version: 2,
+          version: 2 as const,
           userKey: TEST_VECTOR_USER_KEY_V2,
           publicKeyEncryptionKeyPair: {
-            wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V2),
-            publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+            wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+            publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V2) as UnsignedPublicKey,
           },
-          signingKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
-          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+          signingKey: TEST_VECTOR_SIGNING_KEY_V2 as WrappedSigningKey,
+          securityState: TEST_VECTOR_SECURITY_STATE_V2 as SignedSecurityState,
         },
       );
       expect(mockGetV2RotatedAccountKeys).toHaveBeenCalled();
@@ -624,11 +633,11 @@ describe("KeyRotationService", () => {
           signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
         },
         signatureKeyPair: {
-          wrappedSigningKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
-          verifyingKey: new VerifyingKey(TEST_VECTOR_VERIFYING_KEY_V2),
+          wrappedSigningKey: TEST_VECTOR_SIGNING_KEY_V2 as WrappedSigningKey,
+          verifyingKey: TEST_VECTOR_VERIFYING_KEY_V2 as VerifyingKey,
         },
         securityState: {
-          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+          securityState: TEST_VECTOR_SECURITY_STATE_V2 as SignedSecurityState,
           securityStateVersion: 2,
         },
       });
@@ -652,8 +661,8 @@ describe("KeyRotationService", () => {
           version: 1,
           userKey: TEST_VECTOR_USER_KEY_V1,
           publicKeyEncryptionKeyPair: {
-            wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V1),
-            publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+            wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V1 as WrappedPrivateKey,
+            publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V1) as UnsignedPublicKey,
           },
         },
       );
@@ -666,11 +675,11 @@ describe("KeyRotationService", () => {
           signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
         },
         signatureKeyPair: {
-          wrappedSigningKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
-          verifyingKey: new VerifyingKey(TEST_VECTOR_VERIFYING_KEY_V2),
+          wrappedSigningKey: TEST_VECTOR_SIGNING_KEY_V2 as WrappedSigningKey,
+          verifyingKey: TEST_VECTOR_VERIFYING_KEY_V2 as VerifyingKey,
         },
         securityState: {
-          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+          securityState: TEST_VECTOR_SECURITY_STATE_V2 as SignedSecurityState,
           securityStateVersion: 2,
         },
       });
@@ -760,8 +769,8 @@ describe("KeyRotationService", () => {
           masterKeyKdfConfig: new PBKDF2KdfConfig(600_000),
           masterPasswordHint: "mockMasterPasswordHint",
         },
-        [new Uint8Array(1)], // emergency access public key
-        [new Uint8Array(2)], // account recovery public key
+        [new Uint8Array(1) as UnsignedPublicKey], // emergency access public key
+        [new Uint8Array(2) as UnsignedPublicKey], // account recovery public key
       );
       expect(accountUnlockDataRequest.passkeyUnlockData).toEqual([
         {
@@ -900,8 +909,10 @@ describe("KeyRotationService", () => {
           trustedEmergencyAccessUserPublicKeys: trustedEmergencyAccessUsers,
         } = await keyRotationService.verifyTrust(mockUser);
         expect(wasTrustDenied).toBe(false);
-        expect(trustedEmergencyAccessUsers).toEqual(emUsers.map((e) => e.publicKey));
-        expect(trustedOrgs).toEqual(orgs.map((o) => o.publicKey));
+        expect(trustedEmergencyAccessUsers).toEqual([
+          mockGranteeEmergencyAccessWithPublicKey.publicKey,
+        ]);
+        expect(trustedOrgs).toEqual([mockOrganizationUserResetPasswordEntry.publicKey]);
       },
     );
   });
@@ -1023,15 +1034,17 @@ describe("KeyRotationService", () => {
       );
       mockKeyService.userKey$.mockReturnValue(new BehaviorSubject(TEST_VECTOR_USER_KEY_V2));
       mockKeyService.userEncryptedPrivateKey$.mockReturnValue(
-        new BehaviorSubject(TEST_VECTOR_PRIVATE_KEY_V2 as EncryptedString),
+        new BehaviorSubject(TEST_VECTOR_PRIVATE_KEY_V2 as string as EncryptedString),
       );
       mockKeyService.userSigningKey$.mockReturnValue(
-        new BehaviorSubject(new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2)),
+        new BehaviorSubject(TEST_VECTOR_SIGNING_KEY_V2 as WrappedSigningKey),
       );
       mockSecurityStateService.accountSecurityState$.mockReturnValue(
-        new BehaviorSubject(new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2)),
+        new BehaviorSubject(TEST_VECTOR_SECURITY_STATE_V2 as SignedSecurityState),
       );
-      mockCryptoFunctionService.rsaExtractPublicKey.mockResolvedValue(new Uint8Array(400));
+      mockCryptoFunctionService.rsaExtractPublicKey.mockResolvedValue(
+        new Uint8Array(400) as UnsignedPublicKey,
+      );
     });
 
     it("returns the cryptographic state for v1 user", async () => {
@@ -1039,7 +1052,7 @@ describe("KeyRotationService", () => {
         new BehaviorSubject(new SymmetricCryptoKey(new Uint8Array(64)) as UserKey),
       );
       mockKeyService.userEncryptedPrivateKey$.mockReturnValue(
-        new BehaviorSubject(TEST_VECTOR_PRIVATE_KEY_V1 as EncryptedString),
+        new BehaviorSubject(TEST_VECTOR_PRIVATE_KEY_V1 as string as EncryptedString),
       );
       mockKeyService.userSigningKey$.mockReturnValue(new BehaviorSubject(null));
       mockSecurityStateService.accountSecurityState$.mockReturnValue(new BehaviorSubject(null));
@@ -1071,8 +1084,8 @@ describe("KeyRotationService", () => {
             wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V2),
             publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
           },
-          signingKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
-          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+          signingKey: TEST_VECTOR_SIGNING_KEY_V2 as WrappedSigningKey,
+          securityState: TEST_VECTOR_SECURITY_STATE_V2 as SignedSecurityState,
         },
       });
     });
@@ -1115,19 +1128,19 @@ describe("KeyRotationService", () => {
       version: 1,
       userKey: TEST_VECTOR_USER_KEY_V1,
       publicKeyEncryptionKeyPair: {
-        wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V1),
-        publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+        wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V1,
+        publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V1) as UnsignedPublicKey,
       },
     } as V1CryptographicStateParameters;
     const v2Params = {
       version: 2,
       userKey: TEST_VECTOR_USER_KEY_V2,
       publicKeyEncryptionKeyPair: {
-        wrappedPrivateKey: new EncString(TEST_VECTOR_PRIVATE_KEY_V2),
-        publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+        wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+        publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V2) as UnsignedPublicKey,
       },
-      signingKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
-      securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+      signingKey: TEST_VECTOR_SIGNING_KEY_V2,
+      securityState: TEST_VECTOR_SECURITY_STATE_V2,
     } as V2CryptographicStateParameters;
 
     beforeEach(() => {
@@ -1135,22 +1148,22 @@ describe("KeyRotationService", () => {
         userKey: TEST_VECTOR_USER_KEY_V1,
         publicKeyEncryptionKeyPair: {
           wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V1_ROTATED,
-          publicKey: TEST_VECTOR_PUBLIC_KEY_V1,
+          publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V1) as UnsignedPublicKey,
         },
       });
       jest.spyOn(keyRotationService, "getNewAccountKeysV2").mockResolvedValue({
         userKey: TEST_VECTOR_USER_KEY_V2,
         publicKeyEncryptionKeyPair: {
           wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
-          publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+          publicKey: Utils.fromB64ToArray(TEST_VECTOR_PUBLIC_KEY_V2) as UnsignedPublicKey,
           signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
         },
         signatureKeyPair: {
-          wrappedSigningKey: new WrappedSigningKey(TEST_VECTOR_SIGNING_KEY_V2),
-          verifyingKey: new VerifyingKey(TEST_VECTOR_VERIFYING_KEY_V2),
+          wrappedSigningKey: TEST_VECTOR_SIGNING_KEY_V2 as WrappedSigningKey,
+          verifyingKey: TEST_VECTOR_VERIFYING_KEY_V2 as VerifyingKey,
         },
         securityState: {
-          securityState: new SignedSecurityState(TEST_VECTOR_SECURITY_STATE_V2),
+          securityState: TEST_VECTOR_SECURITY_STATE_V2 as SignedSecurityState,
           securityStateVersion: 2,
         },
       });
