@@ -3654,9 +3654,6 @@
   "thisRequestIsNoLongerValid": {
     "message": "This request is no longer valid."
   },
-  "areYouTryingToAccessYourAccount": {
-    "message": "Are you trying to access your account?"
-  },
   "logInConfirmedForEmailOnDevice": {
     "message": "Login confirmed for $EMAIL$ on $DEVICE$",
     "placeholders": {

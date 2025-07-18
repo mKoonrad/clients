@@ -1422,9 +1422,6 @@
   "notificationSentDevicePart1": {
     "message": "Unlock Bitwarden on your device or on the "
   },
-  "areYouTryingToAccessYourAccount": {
-    "message": "Are you trying to access your account?"
-  },
   "accessAttemptBy": {
     "message": "Access attempt by $EMAIL$",
     "placeholders": {
