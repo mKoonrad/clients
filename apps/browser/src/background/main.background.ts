@@ -1817,6 +1817,7 @@ export default class MainBackground {
       this.accountService,
       () => this.generatePassword(),
       (password) => this.addPasswordToHistory(password),
+      this.messagingService,
     );
 
     this.autofillBadgeUpdaterService = new AutofillBadgeUpdaterService(

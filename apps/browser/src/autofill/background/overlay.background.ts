@@ -33,6 +33,7 @@ import {
 } from "@bitwarden/common/platform/abstractions/fido2/fido2-active-request-manager.abstraction";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
+import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { ThemeStateService } from "@bitwarden/common/platform/theming/theme-state.service";
@@ -235,6 +236,7 @@ export class OverlayBackground implements OverlayBackgroundInterface {
     private accountService: AccountService,
     private generatePasswordCallback: () => Promise<string>,
     private addPasswordCallback: (password: string) => Promise<void>,
+    private messagingService: MessagingService,
   ) {
     this.initOverlayEventObservables();
   }
@@ -1855,12 +1857,7 @@ export class OverlayBackground implements OverlayBackgroundInterface {
       allowTotpAutofill: false,
     });
 
-    globalThis.setTimeout(async () => {
-      // @afTODO should trigger notification
-      if (await this.shouldShowSaveLoginInlineMenuList(port.sender.tab)) {
-        await this.openInlineMenu(port.sender, true);
-      }
-    }, 300);
+    globalThis.setTimeout(async () => {}, 300);
   }
 
   /**

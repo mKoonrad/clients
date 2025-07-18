@@ -24,6 +24,7 @@ import {
   WebsiteOriginsWithFields,
 } from "./abstractions/overlay-notifications.background";
 import NotificationBackground from "./notification.background";
+import { OverlayBackground } from "./overlay.background";
 
 type LoginSecurityTaskInfo = {
   securityTask: SecurityTask;
@@ -43,6 +44,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
     formFieldSubmitted: ({ message, sender }) => this.storeModifiedLoginFormData(message, sender),
     collectPageDetailsResponse: ({ message, sender }) =>
       this.handleCollectPageDetailsResponse(message, sender),
+    passwordGenerated: ({ message, sender }) => this.handlePasswordGenerated(message, sender),
   };
 
   constructor(
@@ -50,6 +52,7 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
     private notificationBackground: NotificationBackground,
     private accountService: AccountService,
     private cipherService: CipherService,
+    private overlayBackground: OverlayBackground,
   ) {}
 
   /**
@@ -248,6 +251,22 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
   }
 
   /**
+   * Triggers notifications in response to generated password.
+   *
+   * @param message OverlayNotificationsExtensionMessage
+   * @param sender chrome.runtime.MessageSender
+   */
+  private handlePasswordGenerated = async (
+    message: OverlayNotificationsExtensionMessage,
+    sender: chrome.runtime.MessageSender,
+  ) => {
+    this.logService.debug("message received");
+    const modifyLoginData = this.modifyLoginCipherFormData.get(sender.tab.id);
+
+    await this.triggerNotificationInit(sender.id, modifyLoginData, sender.tab);
+  };
+
+  /**
    * Handles the onBeforeRequest event for web requests. This is used to ensures that the following
    * onCompleted event is only triggered for form submission requests.
    *
@@ -428,15 +447,36 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
   };
 
   /**
-   * Initializes the add login or change password notification based on the modified login form data
-   * and the tab details. This will trigger the notification to be displayed to the user.
+   * Initializes the add login, change password, or security task notification based on the modified login form data
+   * and the tab details. This may trigger the notification to be displayed to the user. Wraps maybeTriggerNotification,
+   * which returns the result to the last attempted, unsent notification.
    *
    * @param requestId - The details of the web response
    * @param modifyLoginData  - The modified login form data
    * @param tab - The tab details
+   *
+   * @returns result
    */
   private triggerNotificationInit = async (
     requestId: chrome.webRequest.ResourceRequest["requestId"],
+    modifyLoginData: InlineMenuFormFieldData,
+    tab: chrome.tabs.Tab,
+  ) => {
+    const result = await this.maybeTriggerNotification(modifyLoginData, tab);
+    this.clearCompletedWebRequest(requestId, tab.id);
+    return result;
+  };
+
+  /**
+   * Does a check on modifyLoginData, which may trigger each notification type.
+   * Notification triggers may fail based on further criteria in "trigger{Type}Notification" fns.
+   *
+   * @param modifyLoginData ModifyLoginCipherFormData
+   * @param tab chrome.tabs.Tab
+   *
+   * @returns result
+   */
+  private maybeTriggerNotification = async (
     modifyLoginData: InlineMenuFormFieldData,
     tab: chrome.tabs.Tab,
   ) => {
