@@ -1,10 +1,14 @@
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
+import { CollectionId, OrganizationId } from "@bitwarden/common/types/guid";
 
 import { CollectionAccessSelectionView } from "./collection-access-selection.view";
 import { CollectionAccessDetailsResponse } from "./collection.response";
 import { CollectionView } from "./collection.view";
 
-export const Unassigned = "unassigned";
+// TODO: this is used to represent the pseudo "Unassigned" collection
+// AND ALSO the user's personal vault - this should be separated out to different consts.
+// The type union allows this to be glossed over for now.
+export const Unassigned = "unassigned" as CollectionId & OrganizationId;
 
 export class CollectionAdminView extends CollectionView {
   groups: CollectionAccessSelectionView[] = [];
