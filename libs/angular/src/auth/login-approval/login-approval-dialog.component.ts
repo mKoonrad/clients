@@ -68,51 +68,54 @@ export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
-    if (this.authRequestId != null) {
-      try {
-        this.authRequestResponse = await this.apiService.getAuthRequest(this.authRequestId);
-      } catch (error) {
-        this.validationService.showError(error);
-        this.logService.error("LoginApprovalDialogComponent: getAuthRequest error", error);
-      }
-
-      if (this.authRequestResponse == null) {
-        this.logService.error("LoginApprovalDialogComponent: authRequestResponse not found");
-        return;
-      }
-
-      const publicKey = Utils.fromB64ToArray(this.authRequestResponse.publicKey);
-
-      this.email = await firstValueFrom(
-        this.accountService.activeAccount$.pipe(map((a) => a?.email)),
-      );
-
-      if (!this.email) {
-        this.logService.error("LoginApprovalDialogComponent: email not found");
-        return;
-      }
-
-      this.fingerprintPhrase = await this.authRequestService.getFingerprintPhrase(
-        this.email,
-        publicKey,
-      );
-
-      this.readableDeviceTypeName = this.devicesService.getReadableDeviceTypeName(
-        this.authRequestResponse.requestDeviceTypeValue,
-      );
-
-      this.updateTimeText();
-
-      this.interval = setInterval(() => {
-        this.updateTimeText();
-      }, RequestTimeUpdate);
-
-      await this.loginApprovalDialogComponentService.showLoginRequestedAlertIfWindowNotVisible(
-        this.email,
-      );
-
-      this.loading = false;
+    if (this.authRequestId == null) {
+      this.logService.error("LoginApprovalDialogComponent: authRequestId is null");
+      return;
     }
+
+    try {
+      this.authRequestResponse = await this.apiService.getAuthRequest(this.authRequestId);
+    } catch (error) {
+      this.validationService.showError(error);
+      this.logService.error("LoginApprovalDialogComponent: getAuthRequest error", error);
+    }
+
+    if (this.authRequestResponse == null) {
+      this.logService.error("LoginApprovalDialogComponent: authRequestResponse not found");
+      return;
+    }
+
+    const publicKey = Utils.fromB64ToArray(this.authRequestResponse.publicKey);
+
+    this.email = await firstValueFrom(
+      this.accountService.activeAccount$.pipe(map((a) => a?.email)),
+    );
+
+    if (!this.email) {
+      this.logService.error("LoginApprovalDialogComponent: email not found");
+      return;
+    }
+
+    this.fingerprintPhrase = await this.authRequestService.getFingerprintPhrase(
+      this.email,
+      publicKey,
+    );
+
+    this.readableDeviceTypeName = this.devicesService.getReadableDeviceTypeName(
+      this.authRequestResponse.requestDeviceTypeValue,
+    );
+
+    this.updateTimeText();
+
+    this.interval = setInterval(() => {
+      this.updateTimeText();
+    }, RequestTimeUpdate);
+
+    await this.loginApprovalDialogComponentService.showLoginRequestedAlertIfWindowNotVisible(
+      this.email,
+    );
+
+    this.loading = false;
   }
 
   /**
