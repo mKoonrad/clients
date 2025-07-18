@@ -4,6 +4,7 @@ import { BehaviorSubject } from "rxjs";
 import { OrganizationUserResetPasswordWithIdRequest } from "@bitwarden/admin-console/common";
 import { Account } from "@bitwarden/common/auth/abstractions/account.service";
 import { WebauthnRotateCredentialRequest } from "@bitwarden/common/auth/models/request/webauthn-rotate-credential.request";
+import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import {
@@ -486,6 +487,64 @@ describe("KeyRotationService", () => {
       expect(arg.accountUnlockData.emergencyAccessUnlockData.length).toBe(1);
       expect(arg.accountUnlockData.organizationAccountRecoveryUnlockData.length).toBe(1);
       expect(arg.accountUnlockData.passkeyUnlockData.length).toBe(2);
+    });
+
+    it("passes the EnrollAeadOnKeyRotation feature flag to getRotatedAccountKeysFlagged", async () => {
+      KeyRotationTrustInfoComponent.open = initialPromptedOpenTrue;
+      AccountRecoveryTrustComponent.open = accountRecoveryTrustOpenTrusted;
+      EmergencyAccessTrustComponent.open = emergencyAccessTrustOpenTrusted;
+      mockKdfConfigService.getKdfConfig$.mockReturnValue(
+        new BehaviorSubject(new PBKDF2KdfConfig(100000)),
+      );
+      mockKeyService.userKey$.mockReturnValue(
+        new BehaviorSubject(new SymmetricCryptoKey(new Uint8Array(64)) as UserKey),
+      );
+      mockKeyService.userEncryptedPrivateKey$.mockReturnValue(
+        new BehaviorSubject(TEST_VECTOR_PRIVATE_KEY_V1 as string as EncryptedString),
+      );
+      mockKeyService.userSigningKey$.mockReturnValue(new BehaviorSubject(null));
+      mockSecurityStateService.accountSecurityState$.mockReturnValue(new BehaviorSubject(null));
+      mockConfigService.getFeatureFlag.mockResolvedValue(true);
+
+      const spy = jest.spyOn(keyRotationService, "getRotatedAccountKeysFlagged").mockResolvedValue({
+        userKey: TEST_VECTOR_USER_KEY_V2,
+        accountKeysRequest: {
+          userKeyEncryptedAccountPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+          accountPublicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+          publicKeyEncryptionKeyPair: {
+            wrappedPrivateKey: TEST_VECTOR_PRIVATE_KEY_V2,
+            publicKey: TEST_VECTOR_PUBLIC_KEY_V2,
+            signedPublicKey: TEST_VECTOR_SIGNED_PUBLIC_KEY_V2,
+          },
+          signatureKeyPair: {
+            wrappedSigningKey: TEST_VECTOR_SIGNING_KEY_V2,
+            verifyingKey: TEST_VECTOR_VERIFYING_KEY_V2,
+            signatureAlgorithm: "ed25519",
+          },
+          securityState: {
+            securityState: TEST_VECTOR_SECURITY_STATE_V2,
+            securityVersion: 2,
+          },
+        },
+      });
+
+      await keyRotationService.rotateUserKeyMasterPasswordAndEncryptedData(
+        "mockMasterPassword",
+        "mockMasterPassword1",
+        mockUser,
+        "masterPasswordHint",
+      );
+
+      expect(mockConfigService.getFeatureFlag).toHaveBeenCalledWith(
+        FeatureFlag.EnrollAeadOnKeyRotation,
+      );
+      expect(spy).toHaveBeenCalledWith(
+        mockUser.id,
+        expect.any(PBKDF2KdfConfig),
+        mockUser.email,
+        expect.objectContaining({ version: 1 }),
+        true,
+      );
     });
 
     it("throws if kdf config is null", async () => {
