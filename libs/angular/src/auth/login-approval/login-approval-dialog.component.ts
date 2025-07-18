@@ -137,7 +137,6 @@ export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
     if (this.authRequestResponse.requestApproved || this.authRequestResponse.responseDate != null) {
       this.toastService.showToast({
         variant: "info",
-        title: "",
         message: this.i18nService.t("thisRequestIsNoLongerValid"),
       });
     } else {
@@ -155,7 +154,6 @@ export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
     if (loginResponse.requestApproved) {
       this.toastService.showToast({
         variant: "success",
-        title: "",
         message: this.i18nService.t(
           "loginRequestApprovedForEmailOnDevice",
           this.email,
@@ -165,7 +163,6 @@ export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
     } else {
       this.toastService.showToast({
         variant: "info",
-        title: "",
         message: this.i18nService.t("youDeniedLoginAttemptFromAnotherDevice"),
       });
     }
@@ -213,7 +210,6 @@ export class LoginApprovalDialogComponent implements OnInit, OnDestroy {
       this.dialogRef.close();
       this.toastService.showToast({
         variant: "info",
-        title: "",
         message: this.i18nService.t("loginRequestHasAlreadyExpired"),
       });
     }
