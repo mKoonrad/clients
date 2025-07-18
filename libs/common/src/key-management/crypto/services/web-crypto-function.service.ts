@@ -322,7 +322,7 @@ export class WebCryptoFunctionService implements CryptoFunctionService {
     return new Uint8Array(buffer);
   }
 
-  async rsaExtractPublicKey(privateKey: Uint8Array): Promise<UnsignedPublicKey> {
+  async rsaExtractPublicKey(privateKey: Uint8Array): Promise<Uint8Array> {
     const rsaParams = {
       name: "RSA-OAEP",
       // Have to specify some algorithm

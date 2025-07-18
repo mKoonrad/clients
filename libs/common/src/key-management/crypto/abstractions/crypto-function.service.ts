@@ -4,7 +4,6 @@ import {
 } from "../../../platform/models/domain/decrypt-parameters";
 import { SymmetricCryptoKey } from "../../../platform/models/domain/symmetric-crypto-key";
 import { CsprngArray } from "../../../types/csprng";
-import { UnsignedPublicKey } from "../../types";
 
 export abstract class CryptoFunctionService {
   abstract pbkdf2(
@@ -71,7 +70,7 @@ export abstract class CryptoFunctionService {
     privateKey: Uint8Array,
     algorithm: "sha1" | "sha256",
   ): Promise<Uint8Array>;
-  abstract rsaExtractPublicKey(privateKey: Uint8Array): Promise<UnsignedPublicKey>;
+  abstract rsaExtractPublicKey(privateKey: Uint8Array): Promise<Uint8Array>;
   abstract rsaGenerateKeyPair(length: 1024 | 2048 | 4096): Promise<[Uint8Array, Uint8Array]>;
   /**
    * Generates a key of the given length suitable for use in AES encryption

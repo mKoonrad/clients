@@ -253,7 +253,9 @@ export class UserKeyRotationService {
     const newUserKeyWrappedPrivateKey = (
       await this.encryptService.wrapDecapsulationKey(privateKey, newUserKey)
     ).encryptedString! as string as WrappedPrivateKey;
-    const publicKey = await this.cryptoFunctionService.rsaExtractPublicKey(privateKey);
+    const publicKey = (await this.cryptoFunctionService.rsaExtractPublicKey(
+      privateKey,
+    )) as UnsignedPublicKey;
 
     return {
       userKey: newUserKey,
@@ -601,12 +603,12 @@ export class UserKeyRotationService {
         "Private key",
       ))!,
     ).encryptedString! as string as WrappedPrivateKey;
-    const publicKey = await this.cryptoFunctionService.rsaExtractPublicKey(
+    const publicKey = (await this.cryptoFunctionService.rsaExtractPublicKey(
       await this.encryptService.unwrapDecapsulationKey(
         new EncString(currentUserKeyWrappedPrivateKey),
         currentUserKey,
       ),
-    );
+    )) as UnsignedPublicKey;
 
     if (this.isV1User(currentUserKey)) {
       return {

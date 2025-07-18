@@ -863,7 +863,7 @@ export class DefaultKeyService implements KeyServiceAbstraction {
       return null;
     }
 
-    return (await this.cryptoFunctionService.rsaExtractPublicKey(privateKey)) as UserPublicKey;
+    return await this.cryptoFunctionService.rsaExtractPublicKey(privateKey);
   }
 
   userPrivateKey$(userId: UserId): Observable<UserPrivateKey | null> {
