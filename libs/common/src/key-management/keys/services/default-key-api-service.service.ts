@@ -1,15 +1,15 @@
 import { UserId } from "@bitwarden/common/types/guid";
 
 import { ApiService } from "../../../abstractions/api.service";
-import { PublicAccountKeysResponseModel } from "../response/public-account-keys.response";
+import { PublicKeysResponseModel } from "../response/public-keys.response";
 
 import { KeyApiService } from "./abstractions/key-api-service.abstraction";
 
 export class DefaultKeyApiService implements KeyApiService {
   constructor(private apiService: ApiService) {}
 
-  async getUserPublicKeys(id: UserId): Promise<PublicAccountKeysResponseModel> {
+  async getUserPublicKeys(id: UserId): Promise<PublicKeysResponseModel> {
     const response = await this.apiService.send("GET", "/users/" + id + "/keys", null, true, true);
-    return new PublicAccountKeysResponseModel(response);
+    return new PublicKeysResponseModel(response);
   }
 }

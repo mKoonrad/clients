@@ -1,5 +1,5 @@
-import { PublicAccountKeysResponseModel } from "../../response/public-account-keys.response";
+import { PublicKeysResponseModel } from "../../response/public-keys.response";
 
 export abstract class KeyApiService {
-  abstract getUserPublicKeys(id: string): Promise<PublicAccountKeysResponseModel>;
+  abstract getUserPublicKeys(id: string): Promise<PublicKeysResponseModel>;
 }

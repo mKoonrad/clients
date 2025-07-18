@@ -2,7 +2,10 @@ import { SignedPublicKey } from "@bitwarden/sdk-internal";
 
 import { UnsignedPublicKey, VerifyingKey } from "../../types";
 
-export class PublicAccountKeysResponseModel {
+/**
+ * The publicly accessible view of an entity (account / org)'s keys. That includes the encryption public key, and the verifying key if available.
+ */
+export class PublicKeysResponseModel {
   readonly publicKey: UnsignedPublicKey;
   readonly verifyingKey: VerifyingKey | null;
   readonly signedPublicKey?: SignedPublicKey | null;

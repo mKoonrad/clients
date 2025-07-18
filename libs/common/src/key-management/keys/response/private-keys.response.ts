@@ -3,6 +3,10 @@ import { SecurityStateResponse } from "../../security-state/response/security-st
 import { PublicKeyEncryptionKeyPairResponse } from "./public-key-encryption-key-pair.response";
 import { SignatureKeyPairResponse } from "./signature-key-pair.response";
 
+/**
+ * The privately accessible view of an entity (account / org)'s keys.
+ * This includes the full key-pairs for public-key encryption and signing, as well as the security state if available.
+ */
 export class PrivateKeysResponseModel {
   readonly publicKeyEncryptionKeyPair: PublicKeyEncryptionKeyPairResponse;
   readonly signatureKeyPair: SignatureKeyPairResponse | null = null;
