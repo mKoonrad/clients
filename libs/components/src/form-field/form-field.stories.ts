@@ -350,9 +350,7 @@ export const ButtonInputGroup: Story = {
         <input bitInput placeholder="Placeholder" />
         <button bitSuffix bitIconButton="bwi-eye" [appA11yTitle]="'Hide Label'"></button>
         <button bitSuffix bitIconButton="bwi-clone" [appA11yTitle]="'Clone Label'"></button>
-        <button bitSuffix bitLink>
-          Apply
-        </button>
+        <button bitSuffix bitIconButton="bwi-ellipsis-v" [appA11yTitle]="'Menu Label'"></button>
       </bit-form-field>
     `,
   }),

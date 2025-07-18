@@ -14,11 +14,11 @@ import {
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { debounce, interval } from "rxjs";
 
-import { ButtonLikeAbstraction, ButtonType } from "../shared/button-like.abstraction";
+import { ButtonLikeAbstraction } from "../shared/button-like.abstraction";
 import { FocusableElement } from "../shared/focusable-element";
 import { ariaDisableElement } from "../utils";
 
-export type IconButtonType = ButtonType | "contrast" | "main" | "muted" | "light";
+export type IconButtonType = "primary" | "danger" | "contrast" | "main" | "muted" | "nav-contrast";
 
 const focusRing = [
   // Workaround for box-shadow with transparent offset issue:
@@ -30,7 +30,7 @@ const focusRing = [
   "before:tw-content-['']",
   "before:tw-block",
   "before:tw-absolute",
-  "before:-tw-inset-[2px]",
+  "before:-tw-inset-[1px]",
   "before:tw-rounded-lg",
   "before:tw-transition",
   "before:tw-ring-2",
@@ -43,17 +43,13 @@ const styles: Record<IconButtonType, string[]> = {
     "tw-bg-transparent",
     "!tw-text-contrast",
     "tw-border-transparent",
-    "hover:tw-bg-transparent-hover",
-    "hover:tw-border-text-contrast",
+    "hover:!tw-bg-hover-contrast",
     "focus-visible:before:tw-ring-text-contrast",
     ...focusRing,
   ],
   main: [
     "tw-bg-transparent",
     "!tw-text-main",
-    "tw-border-transparent",
-    "hover:tw-bg-transparent-hover",
-    "hover:tw-border-primary-600",
     "focus-visible:before:tw-ring-primary-600",
     ...focusRing,
   ],
@@ -63,51 +59,30 @@ const styles: Record<IconButtonType, string[]> = {
     "tw-border-transparent",
     "aria-expanded:tw-bg-text-muted",
     "aria-expanded:!tw-text-contrast",
-    "hover:tw-bg-transparent-hover",
-    "hover:tw-border-primary-600",
     "focus-visible:before:tw-ring-primary-600",
     "aria-expanded:hover:tw-bg-secondary-700",
     "aria-expanded:hover:tw-border-secondary-700",
     ...focusRing,
   ],
   primary: [
-    "tw-bg-primary-600",
-    "!tw-text-contrast",
-    "tw-border-primary-600",
-    "hover:tw-bg-primary-600",
-    "hover:tw-border-primary-600",
-    "focus-visible:before:tw-ring-primary-600",
-    ...focusRing,
-  ],
-  secondary: [
     "tw-bg-transparent",
-    "!tw-text-muted",
-    "tw-border-text-muted",
-    "hover:!tw-text-contrast",
-    "hover:tw-bg-text-muted",
+    "!tw-text-primary-600",
     "focus-visible:before:tw-ring-primary-600",
     ...focusRing,
   ],
   danger: [
     "tw-bg-transparent",
     "!tw-text-danger-600",
-    "tw-border-transparent",
-    "hover:!tw-text-danger-600",
-    "hover:tw-bg-transparent",
-    "hover:tw-border-primary-600",
     "focus-visible:before:tw-ring-primary-600",
     ...focusRing,
   ],
-  light: [
-    "tw-bg-transparent",
+  "nav-contrast": [
     "!tw-text-alt2",
-    "tw-border-transparent",
-    "hover:tw-bg-transparent-hover",
-    "hover:tw-border-text-alt2",
+    "tw-bg-transparent",
+    "hover:!tw-bg-hover-contrast",
     "focus-visible:before:tw-ring-text-alt2",
     ...focusRing,
   ],
-  unstyled: [],
 };
 
 const disabledStyles: Record<IconButtonType, string[]> = {
@@ -131,31 +106,24 @@ const disabledStyles: Record<IconButtonType, string[]> = {
     "aria-disabled:hover:tw-border-primary-600",
     "aria-disabled:hover:tw-bg-primary-600",
   ],
-  secondary: [
-    "aria-disabled:tw-opacity-60",
-    "aria-disabled:hover:tw-border-text-muted",
-    "aria-disabled:hover:tw-bg-transparent",
-    "aria-disabled:hover:!tw-text-muted",
-  ],
   danger: [
     "aria-disabled:!tw-text-secondary-300",
     "aria-disabled:hover:tw-border-transparent",
     "aria-disabled:hover:tw-bg-transparent",
     "aria-disabled:hover:!tw-text-secondary-300",
   ],
-  light: [
+  "nav-contrast": [
     "aria-disabled:tw-opacity-60",
     "aria-disabled:hover:tw-border-transparent",
     "aria-disabled:hover:tw-bg-transparent",
   ],
-  unstyled: [],
 };
 
 export type IconButtonSize = "default" | "small";
 
 const sizes: Record<IconButtonSize, string[]> = {
-  default: ["tw-px-2.5", "tw-py-1.5"],
-  small: ["tw-leading-none", "tw-text-base", "tw-p-1"],
+  default: ["tw-text-xl", "tw-p-2.5"],
+  small: ["tw-text-base", "tw-p-2"],
 };
 /**
   * Icon buttons are used when no text accompanies the button. It consists of an icon that may be updated to any icon in the `bwi-font`, a `title` attribute, and an `aria-label`.
@@ -186,11 +154,12 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
   @HostBinding("class") get classList() {
     return [
       "tw-font-semibold",
-      "tw-border",
-      "tw-border-solid",
-      "tw-rounded-lg",
+      "tw-leading-[0px]",
+      "tw-border-none",
+      "tw-rounded-md",
       "tw-transition",
       "hover:tw-no-underline",
+      "hover:tw-bg-hover-default",
       "focus:tw-outline-none",
     ]
       .concat(styles[this.buttonType])
