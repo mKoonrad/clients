@@ -3,7 +3,7 @@ import { Component, DestroyRef } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { firstValueFrom } from "rxjs";
 
-import { LoginApprovalDialogComponent } from "@bitwarden/angular/auth/login-approval/login-approval-dialog.component";
+import { LoginApprovalDialogComponent } from "@bitwarden/angular/auth/login-approval";
 import { AuthRequestApiServiceAbstraction } from "@bitwarden/auth/common";
 import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import {

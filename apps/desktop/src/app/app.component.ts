@@ -24,7 +24,7 @@ import {
 } from "rxjs";
 
 import { CollectionService } from "@bitwarden/admin-console/common";
-import { LoginApprovalDialogComponent } from "@bitwarden/angular/auth/login-approval/login-approval-dialog.component";
+import { LoginApprovalDialogComponent } from "@bitwarden/angular/auth/login-approval";
 import { DeviceTrustToastService } from "@bitwarden/angular/auth/services/device-trust-toast.service.abstraction";
 import { ModalRef } from "@bitwarden/angular/components/modal/modal.ref";
 import { DocumentLangSetter } from "@bitwarden/angular/platform/i18n";

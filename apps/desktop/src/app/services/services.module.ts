@@ -5,7 +5,7 @@ import { Router } from "@angular/router";
 import { Subject, merge } from "rxjs";
 
 import { OrganizationUserApiService } from "@bitwarden/admin-console/common";
-import { LoginApprovalDialogComponentServiceAbstraction } from "@bitwarden/angular/auth/login-approval/login-approval-dialog-component.service.abstraction";
+import { LoginApprovalDialogComponentServiceAbstraction } from "@bitwarden/angular/auth/login-approval";
 import { SetInitialPasswordService } from "@bitwarden/angular/auth/password-management/set-initial-password/set-initial-password.service.abstraction";
 import { SafeProvider, safeProvider } from "@bitwarden/angular/platform/utils/safe-provider";
 import {
