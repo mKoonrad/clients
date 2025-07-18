@@ -26,19 +26,14 @@ export class AppComponent extends BaseAppComponent implements OnInit {
       new ActivateAutofillPolicy(),
     ]);
 
-    this.configService.getFeatureFlag(FeatureFlag.SecurityTasks).then((enabled) => {
+    void this.configService.getFeatureFlag(FeatureFlag.SecurityTasks).then((enabled) => {
       if (enabled) {
         this.policyListService.addPolicies([new HelpUsersUpdatePasswordsPolicy()]);
       }
     });
 
-    this.configService.getFeatureFlag(FeatureFlag.IdpAutoSubmitLogin).then((enabled) => {
-      if (
-        enabled &&
-        !this.policyListService.getPolicies().some((p) => p instanceof AutomaticAppLoginPolicy)
-      ) {
-        this.policyListService.addPolicies([new AutomaticAppLoginPolicy()]);
-      }
-    });
+    if (!this.policyListService.getPolicies().some((p) => p instanceof AutomaticAppLoginPolicy)) {
+      this.policyListService.addPolicies([new AutomaticAppLoginPolicy()]);
+    }
   }
 }

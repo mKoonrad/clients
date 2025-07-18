@@ -16,8 +16,7 @@ import {
 } from "rxjs";
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
-import { AnonLayoutWrapperDataService } from "@bitwarden/auth/angular";
-import { PinServiceAbstraction } from "@bitwarden/auth/common";
+import { LogoutService, PinServiceAbstraction } from "@bitwarden/auth/common";
 import { InternalPolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
 import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
@@ -42,6 +41,7 @@ import { PasswordStrengthServiceAbstraction } from "@bitwarden/common/tools/pass
 import { UserKey } from "@bitwarden/common/types/key";
 import {
   AsyncActionsModule,
+  AnonLayoutWrapperDataService,
   ButtonModule,
   DialogService,
   FormFieldModule,
@@ -77,7 +77,6 @@ const AUTOPROMPT_BIOMETRICS_PROCESS_RELOAD_DELAY = 5000;
 @Component({
   selector: "bit-lock",
   templateUrl: "lock.component.html",
-  standalone: true,
   imports: [
     CommonModule,
     JslibModule,
@@ -157,6 +156,7 @@ export class LockComponent implements OnInit, OnDestroy {
     private userAsymmetricKeysRegenerationService: UserAsymmetricKeysRegenerationService,
 
     private biometricService: BiometricsService,
+    private logoutService: LogoutService,
 
     private lockComponentService: LockComponentService,
     private anonLayoutWrapperDataService: AnonLayoutWrapperDataService,
@@ -249,7 +249,7 @@ export class LockComponent implements OnInit, OnDestroy {
 
   private async handleActiveAccountChange(activeAccount: Account) {
     // this account may be unlocked, prevent any prompts so we can redirect to vault
-    if (await this.keyService.hasUserKeyInMemory(activeAccount.id)) {
+    if (await this.keyService.hasUserKey(activeAccount.id)) {
       return;
     }
 
@@ -354,7 +354,9 @@ export class LockComponent implements OnInit, OnDestroy {
     });
 
     if (confirmed && this.activeAccount != null) {
-      this.messagingService.send("logout", { userId: this.activeAccount.id });
+      await this.logoutService.logout(this.activeAccount.id);
+      // navigate to root so redirect guard can properly route next active user or null user to correct page
+      await this.router.navigate(["/"]);
     }
   }
 
@@ -388,6 +390,8 @@ export class LockComponent implements OnInit, OnDestroy {
         this.unlockingViaBiometrics = false;
         return;
       }
+
+      this.logService.error("[LockComponent] Failed to unlock via biometrics.", e);
 
       let biometricTranslatedErrorDesc;
 
@@ -572,6 +576,9 @@ export class LockComponent implements OnInit, OnDestroy {
     if (this.activeAccount == null) {
       throw new Error("No active user.");
     }
+
+    // Add a mark to indicate that the user has unlocked their vault. A good starting point for measuring unlock performance.
+    this.logService.mark("Vault unlocked");
 
     await this.keyService.setUserKey(key, this.activeAccount.id);
 

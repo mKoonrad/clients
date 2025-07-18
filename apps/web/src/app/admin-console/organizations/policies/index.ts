@@ -3,7 +3,7 @@ export { BasePolicy, BasePolicyComponent } from "./base-policy.component";
 export { DisableSendPolicy } from "./disable-send.component";
 export { MasterPasswordPolicy } from "./master-password.component";
 export { PasswordGeneratorPolicy } from "./password-generator.component";
-export { PersonalOwnershipPolicy } from "./personal-ownership.component";
+export { OrganizationDataOwnershipPolicy } from "./organization-data-ownership.component";
 export { RequireSsoPolicy } from "./require-sso.component";
 export { ResetPasswordPolicy } from "./reset-password.component";
 export { SendOptionsPolicy } from "./send-options.component";
@@ -12,3 +12,4 @@ export { TwoFactorAuthenticationPolicy } from "./two-factor-authentication.compo
 export { PoliciesComponent } from "./policies.component";
 export { RemoveUnlockWithPinPolicy } from "./remove-unlock-with-pin.component";
 export { HelpUsersUpdatePasswordsPolicy } from "./help-users-update-passwords.component";
+export { RestrictedItemTypesPolicy } from "./restricted-item-types.component";
