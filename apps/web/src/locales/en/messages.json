@@ -2104,9 +2104,6 @@
   "languageDesc": {
     "message": "Change the language used by the web vault."
   },
-  "faviconDesc": {
-    "message": "Show a recognizable image next to each login."
-  },
   "showIconsChangePasswordUrls": {
     "message": "Show website icons and retrieve change password URLs"
   },

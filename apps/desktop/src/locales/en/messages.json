@@ -1290,9 +1290,6 @@
     "message": "Automatically clear copied values from your clipboard.",
     "description": "Clipboard is the operating system thing where you copy/paste data to on your device."
   },
-  "faviconDesc": {
-    "message": "Show a recognizable image next to each login."
-  },
   "showIconsChangePasswordUrls": {
     "message": "Show website icons and retrieve change password URLs"
   },

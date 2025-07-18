@@ -1757,14 +1757,8 @@
   "popupU2fCloseMessage": {
     "message": "This browser cannot process U2F requests in this popup window. Do you want to open this popup in a new window so that you can log in using U2F?"
   },
-  "faviconDesc": {
-    "message": "Show a recognizable image next to each login."
-  },
   "showIconsChangePasswordUrls": {
     "message": "Show website icons and retrieve change password URLs"
-  },
-  "faviconDescAlt": {
-    "message": "Show a recognizable image next to each login. Applies to all logged in accounts."
   },
   "enableBadgeCounter": {
     "message": "Show badge counter"
