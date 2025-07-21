@@ -43,7 +43,7 @@ export class DialogComponent implements AfterViewInit {
   protected dialogRef = inject(DialogRef, { optional: true });
   private scrollableBody = viewChild.required(CdkScrollable);
   protected bodyHasScrolledFrom = hasScrolledFrom(this.scrollableBody);
-  protected isScrollable: boolean;
+  protected isScrollable = false;
 
   /** Background color */
   readonly background = input<"default" | "alt">("default");
