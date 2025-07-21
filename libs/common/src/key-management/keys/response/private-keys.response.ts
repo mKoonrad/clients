@@ -13,7 +13,7 @@ export class PrivateKeysResponseModel {
   readonly securityState: SecurityStateResponse | null = null;
 
   constructor(response: unknown) {
-    if (typeof response !== "object" || response === null) {
+    if (typeof response !== "object" || response == null) {
       throw new TypeError("Response must be an object");
     }
 

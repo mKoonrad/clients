@@ -11,7 +11,7 @@ export class PublicKeysResponseModel {
   readonly signedPublicKey?: SignedPublicKey | null;
 
   constructor(response: unknown) {
-    if (typeof response !== "object" || response === null) {
+    if (typeof response !== "object" || response == null) {
       throw new TypeError("Response must be an object");
     }
 

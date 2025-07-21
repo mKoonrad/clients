@@ -4,7 +4,7 @@ export class SecurityStateResponse {
   readonly securityState: SignedSecurityState | null = null;
 
   constructor(response: unknown) {
-    if (typeof response !== "object" || response === null) {
+    if (typeof response !== "object" || response == null) {
       throw new TypeError("Response must be an object");
     }
 

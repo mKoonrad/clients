@@ -5,7 +5,7 @@ export class SignatureKeyPairResponse {
   readonly verifyingKey: VerifyingKey;
 
   constructor(response: unknown) {
-    if (typeof response !== "object" || response === null) {
+    if (typeof response !== "object" || response == null) {
       throw new TypeError("Response must be an object");
     }
 
