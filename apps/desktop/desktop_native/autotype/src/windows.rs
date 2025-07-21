@@ -16,7 +16,6 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
     let Ok(window_handle) = get_foreground_window() else {
         return Err(());
     };
-
     let Ok(Some(window_title)) = get_window_title(window_handle) else {
         return Err(());
     };
