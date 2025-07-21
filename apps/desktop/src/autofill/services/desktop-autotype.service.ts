@@ -47,6 +47,7 @@ export class DesktopAutotypeService {
 
     // ipc stuff
     ipc.autofill.listenAutotypeRequest(async (windowTitle) => {
+      console.log("listenAutotypeRequest (desktop-autotype.service.ts)");
       windowTitle = windowTitle.toLowerCase();
 
       let ciphers = await firstValueFrom(this.accountService.activeAccount$.pipe(
@@ -60,21 +61,21 @@ export class DesktopAutotypeService {
             return false;
           }
 
-          console.log("checking uri: " + u.uri);
+          //console.log("checking uri: " + u.uri);
 
           let uri = u.uri.substring(4).toLowerCase();
 
-          console.log("matching on uri: " + uri);
-          console.log("matches? " + (windowTitle.indexOf(uri) > -1))
+          //console.log("matching on uri: " + uri);
+          //console.log("matches? " + (windowTitle.indexOf(uri) > -1))
 
           return windowTitle.indexOf(uri) > -1;
         });
       });
 
       let first = possibleCiphers?.at(0);
-      console.log(first);
-      console.log("finally returning:\n" + first?.login?.username + "\n" + first?.login?.password);
-
+      //console.log(first);
+      //console.log("finally returning:\n" + first?.login?.username + "\n" + first?.login?.password);
+      console.log("    returning: " + first?.login?.username + " " + first?.login?.password);
       return { username: first?.login?.username, password: first?.login?.password };
     });
   }

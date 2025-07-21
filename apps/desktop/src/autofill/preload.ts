@@ -89,6 +89,7 @@ export default {
       },
     );
   },
+
   listenPasskeyAssertionWithoutUserInterface: (
     fn: (
       clientId: number,
@@ -127,16 +128,19 @@ export default {
       },
     );
   },
+
   configureAutotype: (
     enabled: boolean,
   ) => {
     ipcRenderer.send("autofill.configureAutotype", { enabled });
   },
+
   listenAutotypeRequest: (
     fn: (
       windowTitle: string,
     ) => Promise<{ username?: string, password?: string }>,
   ) => {
+    console.log("listenAutotypeRequest (preload.ts)");
     ipcRenderer.on(
       "autofill.listenAutotypeRequest",
       async (
@@ -145,9 +149,14 @@ export default {
           windowTitle: string;
         },
       ) => {
+        console.log("autofill.listenAutotypeRequest (preload.ts)");
+        console.log("    receiving windowTitle: " + data.windowTitle);
+        console.log("    calling fn(" + data.windowTitle + ")");
         const result = await fn(data.windowTitle);
+        console.log("    result from await: " + result.username);
+        console.log("autofill.completeAutotypeRequest, sending fake data");
 
-        ipcRenderer.send("autofill.completeAutotypeRequest", result);
+        ipcRenderer.send("autofill.completeAutotypeRequest", { username: "fake username", password: "fake password "});
       },
     );
   },

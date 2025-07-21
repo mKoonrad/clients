@@ -22,6 +22,7 @@ export class MainDesktopAutotypeService {
     // });
 
     ipcMain.on("autofill.configureAutotype", (event, data) => {
+      console.log("autofill.configureAutotype receiving: " + data.enabled)
       if (data.enabled) {
         this.enableAutotype();
       } else {
@@ -30,36 +31,50 @@ export class MainDesktopAutotypeService {
     });
 
     ipcMain.on("autofill.completeAutotypeRequest", (event, data) => {
+      console.log("autofill.completeAutotypeRequest (main-desktop-autotype.service.ts)");
+      console.log("    receiving data: " + data.username + " " + data.password);
+      console.log(data);
       const { username, password } = data;
-      console.log("username: " + username + "\npassword: " + password);
+      //console.log("completeAutotypeRequest fn");
+      //console.log("username: " + username + "\npassword: " + password);
 
-      let inputString = "";
-      autotype.typeInput(new Array<number>());
+      let inputString = username + '\t' + password;
+      let inputArray = new Array<number>();
+
+      for (let i = 0; i < inputString.length; i++) {
+        inputArray.push(inputString.charCodeAt(i));
+      }
+
+      //console.log("Passing this to desktop_native: " + inputArray);
+
+      autotype.typeInput(inputArray);
     });
   }
 
   private enableAutotype() {
     // eslint-disable-next-line no-console
-    console.log("Enabling Autotype...");
+    //console.log("Enabling Autotype...");
 
     const result = globalShortcut.register(this.keySequence, () => {
       this.doAutotype();
     });
 
     // eslint-disable-next-line no-console
-    console.log("enable autotype shortcut result: " + result);
+    //console.log("enable autotype shortcut result: " + result);
   }
 
   private disableAutotype() {
     // eslint-disable-next-line no-console
-    console.log("Disabling Autotype...");
+    //console.log("Disabling Autotype...");
   }
 
   private doAutotype() {
     const windowTitle = autotype.getForegroundWindowTitle();
     // eslint-disable-next-line no-console
-    console.log("Window Title: " + windowTitle);
+    //console.log("Window Title: " + windowTitle);
 
+    console.log("autofill.listenAutotypeRequest send (main-desktop-autotype.service.ts)");
+    console.log("    sending windowTitle: " + windowTitle);
     this.windowMain.win.webContents.send("autofill.listenAutotypeRequest", {
       windowTitle,
     });

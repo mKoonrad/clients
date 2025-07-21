@@ -36,9 +36,9 @@ pub fn get_foreground_window_title() -> std::result::Result<String, ()> {
 ///
 /// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 pub fn type_input(input: Vec<u16>) -> Result<(), ()> {
-    let fake_input = String::from("user@bitwarden.com\tpassword");
-    let input: Vec<u16> = fake_input.encode_utf16().collect();
-    println!("----------\nInput string: {:?}\nInput vec: {:?}\nInput vec len: {:?}", fake_input, input, input.len());
+    //let fake_input = String::from("user@bitwarden.com\tpassword");
+    //let input: Vec<u16> = fake_input.encode_utf16().collect();
+    println!("----------\nInput vec: {:?}\nInput vec len: {:?}", input, input.len());
 
     let mut keyboard_inputs: Vec<INPUT> = Vec::new();
 
