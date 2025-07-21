@@ -30,21 +30,14 @@ const focusRing = [
 
 const styles: Record<IconButtonType, string[]> = {
   contrast: [
-    "tw-bg-transparent",
     "!tw-text-contrast",
     "tw-border-transparent",
     "hover:!tw-bg-hover-contrast",
     "focus-visible:before:tw-ring-text-contrast",
     ...focusRing,
   ],
-  main: [
-    "tw-bg-transparent",
-    "!tw-text-main",
-    "focus-visible:before:tw-ring-primary-600",
-    ...focusRing,
-  ],
+  main: ["!tw-text-main", "focus-visible:before:tw-ring-primary-600", ...focusRing],
   muted: [
-    "tw-bg-transparent",
     "!tw-text-muted",
     "tw-border-transparent",
     "aria-expanded:tw-bg-text-muted",
@@ -54,58 +47,13 @@ const styles: Record<IconButtonType, string[]> = {
     "aria-expanded:hover:tw-border-secondary-700",
     ...focusRing,
   ],
-  primary: [
-    "tw-bg-transparent",
-    "!tw-text-primary-600",
-    "focus-visible:before:tw-ring-primary-600",
-    ...focusRing,
-  ],
-  danger: [
-    "tw-bg-transparent",
-    "!tw-text-danger-600",
-    "focus-visible:before:tw-ring-primary-600",
-    ...focusRing,
-  ],
+  primary: ["!tw-text-primary-600", "focus-visible:before:tw-ring-primary-600", ...focusRing],
+  danger: ["!tw-text-danger-600", "focus-visible:before:tw-ring-primary-600", ...focusRing],
   "nav-contrast": [
     "!tw-text-alt2",
-    "tw-bg-transparent",
     "hover:!tw-bg-hover-contrast",
     "focus-visible:before:tw-ring-text-alt2",
     ...focusRing,
-  ],
-};
-
-const disabledStyles: Record<IconButtonType, string[]> = {
-  contrast: [
-    "disabled:tw-opacity-60",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
-  ],
-  main: [
-    "disabled:!tw-text-secondary-300",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
-  ],
-  muted: [
-    "disabled:!tw-text-secondary-300",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
-  ],
-  primary: [
-    "disabled:tw-opacity-60",
-    "disabled:hover:tw-border-primary-600",
-    "disabled:hover:tw-bg-primary-600",
-  ],
-  danger: [
-    "disabled:!tw-text-secondary-300",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
-    "disabled:hover:!tw-text-secondary-300",
-  ],
-  "nav-contrast": [
-    "disabled:tw-opacity-60",
-    "disabled:hover:tw-border-transparent",
-    "disabled:hover:tw-bg-transparent",
   ],
 };
 
@@ -148,6 +96,7 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
       "tw-border-none",
       "tw-rounded-md",
       "tw-transition",
+      "tw-bg-transparent",
       "hover:tw-no-underline",
       "hover:tw-bg-hover-default",
       "focus:tw-outline-none",
@@ -155,7 +104,9 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
       .concat(styles[this.buttonType()])
       .concat(sizes[this.size()])
       .concat(
-        this.showDisabledStyles() || this.disabled() ? disabledStyles[this.buttonType()] : [],
+        this.showDisabledStyles() || this.disabled()
+          ? ["disabled:tw-opacity-60", "disabled:hover:!tw-bg-transparent"]
+          : [],
       );
   }
 
