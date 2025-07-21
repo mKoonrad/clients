@@ -4,9 +4,5 @@
     "strictTemplates": true
   },
   "files": ["src/polyfills.ts", "src/main.ts", "src/theme.ts"],
-  "include": [
-    "src/connectors/*.ts",
-    "src/**/*.stories.ts",
-    "src/**/*.spec.ts",
-  ]
+  "include": ["src/connectors/*.ts", "src/**/*.stories.ts", "src/**/*.spec.ts"]
 }

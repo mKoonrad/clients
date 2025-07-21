@@ -30,7 +30,7 @@ export class SendAccessFileComponent {
     private encryptService: EncryptService,
     private fileDownloadService: FileDownloadService,
     private sendApiService: SendApiService,
-  ) { }
+  ) {}
 
   protected download = async () => {
     if (this.send == null || this.decKey == null) {

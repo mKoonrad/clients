@@ -42,7 +42,7 @@ export class InitService {
     private sdkLoadService: SdkLoadService,
     private taskService: TaskService,
     @Inject(DOCUMENT) private document: Document,
-  ) { }
+  ) {}
 
   init() {
     return async () => {
