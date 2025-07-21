@@ -76,8 +76,7 @@ export abstract class CryptoFunctionService {
     | { mode: "cbc"; parameters: CbcDecryptParameters<Uint8Array | string> }
     | { mode: "ecb"; parameters: EcbDecryptParameters<Uint8Array | string> }): Promise<string>;
   /**
-   * @deprecated Only used by DDG integration until DDG uses PKCS#7 padding, and by lastpass importer.
-   * DO NOT USE THIS FOR NEW CODE.
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Only used by DDG integration until DDG uses PKCS#7 padding, and by lastpass importer.
    */
   abstract aesDecrypt(
     data: Uint8Array,
