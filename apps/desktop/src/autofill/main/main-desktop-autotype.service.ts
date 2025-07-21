@@ -32,13 +32,13 @@ export class MainDesktopAutotypeService {
 
     ipcMain.on("autofill.completeAutotypeRequest", (event, data) => {
       console.log("autofill.completeAutotypeRequest (main-desktop-autotype.service.ts)");
-      console.log("    receiving data: " + data.username + " " + data.password);
+      console.log("    receiving data: " + data.response.username + " " + data.response.password);
       console.log(data);
-      const { username, password } = data;
+      const { windowTitle, response } = data;
       //console.log("completeAutotypeRequest fn");
       //console.log("username: " + username + "\npassword: " + password);
 
-      let inputString = username + '\t' + password;
+      let inputString = response.username + '\t' + response.password;
       let inputArray = new Array<number>();
 
       for (let i = 0; i < inputString.length; i++) {
