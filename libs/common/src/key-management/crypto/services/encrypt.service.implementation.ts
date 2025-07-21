@@ -1,12 +1,12 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
+import { EncString } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { SdkLoadService } from "@bitwarden/common/platform/abstractions/sdk/sdk-load.service";
 import { EncryptionType } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { EncArrayBuffer } from "@bitwarden/common/platform/models/domain/enc-array-buffer";
-import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import { PureCrypto } from "@bitwarden/sdk-internal";
 
@@ -17,10 +17,17 @@ export class EncryptServiceImplementation implements EncryptService {
     protected cryptoFunctionService: CryptoFunctionService,
     protected logService: LogService,
     protected logMacFailures: boolean,
-  ) { }
+  ) {}
 
   // Proxy functions; Their implementation are temporary before moving at this level to the SDK
   async encryptString(plainValue: string, key: SymmetricCryptoKey): Promise<EncString> {
+    if (plainValue == null) {
+      this.logService.warning(
+        "[EncryptService] WARNING: encryptString called with null value. Returning null, but this behavior is deprecated and will be removed.",
+      );
+      return null;
+    }
+
     await SdkLoadService.Ready;
     return new EncString(PureCrypto.symmetric_encrypt_string(plainValue, key.toEncoded()));
   }
