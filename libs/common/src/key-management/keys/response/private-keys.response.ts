@@ -27,11 +27,19 @@ export class PrivateKeysResponseModel {
       response.publicKeyEncryptionKeyPair,
     );
 
-    if ("signatureKeyPair" in response && typeof response.signatureKeyPair === "object") {
+    if (
+      "signatureKeyPair" in response &&
+      typeof response.signatureKeyPair === "object" &&
+      response.signatureKeyPair !== null
+    ) {
       this.signatureKeyPair = new SignatureKeyPairResponse(response.signatureKeyPair);
     }
 
-    if ("securityState" in response && typeof response.securityState === "object") {
+    if (
+      "securityState" in response &&
+      typeof response.securityState === "object" &&
+      response.securityState !== null
+    ) {
       this.securityState = new SecurityStateResponse(response.securityState);
     }
 
