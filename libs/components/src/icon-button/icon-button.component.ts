@@ -1,10 +1,20 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { NgClass } from "@angular/common";
-import { Component, computed, ElementRef, HostBinding, input, model } from "@angular/core";
+import {
+  Component,
+  computed,
+  ElementRef,
+  HostBinding,
+  inject,
+  input,
+  model,
+  OnInit,
+} from "@angular/core";
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { debounce, interval } from "rxjs";
 
+import { A11yTitleDirective } from "../a11y";
 import { ButtonLikeAbstraction, ButtonType } from "../shared/button-like.abstraction";
 import { FocusableElement } from "../shared/focusable-element";
 
@@ -148,7 +158,7 @@ const sizes: Record<IconButtonSize, string[]> = {
   small: ["tw-leading-none", "tw-text-base", "tw-p-1"],
 };
 /**
-  * Icon buttons are used when no text accompanies the button. It consists of an icon that may be updated to any icon in the `bwi-font`, a `title` attribute, and an `aria-label`.
+  * Icon buttons are used when no text accompanies the button. It consists of an icon that may be updated to any icon in the `bwi-font`, a `title` attribute, and an `aria-label` that are added via the `appA11yTitle` input.
 
   * The most common use of the icon button is in the banner, toast, and modal components as a close button. It can also be found in tables as the 3 dot option menu, or on navigation list items when there are options that need to be collapsed into a menu.
 
@@ -166,12 +176,17 @@ const sizes: Record<IconButtonSize, string[]> = {
     "[attr.disabled]": "disabledAttr()",
   },
 })
-export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableElement {
+export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableElement, OnInit {
   readonly icon = model<string>(undefined, { alias: "bitIconButton" });
 
   readonly buttonType = input<IconButtonType>("main");
 
   readonly size = model<IconButtonSize>("default");
+
+  private readonly appA11yTitle: A11yTitleDirective = inject(A11yTitleDirective, {
+    self: true,
+    optional: true,
+  });
 
   @HostBinding("class") get classList() {
     return [
@@ -236,4 +251,12 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
   }
 
   constructor(private elementRef: ElementRef) {}
+
+  ngOnInit() {
+    if (!this.appA11yTitle) {
+      throw new Error(
+        "IconButtonComponent requires the A11yTitleDirective to be present in the template. To fix, add `appA11yTitle='<Your button label here>'` to the button element.",
+      );
+    }
+  }
 }

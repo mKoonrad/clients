@@ -1,12 +1,18 @@
-import { Meta, StoryObj } from "@storybook/angular";
+import { Meta, StoryObj, moduleMetadata } from "@storybook/angular";
 
 import { formatArgsForCodeSnippet } from "../../../../.storybook/format-args-for-code-snippet";
+import { A11yTitleDirective } from "../a11y/a11y-title.directive";
 
 import { BitIconButtonComponent } from "./icon-button.component";
 
 export default {
   title: "Component Library/Icon Button",
   component: BitIconButtonComponent,
+  decorators: [
+    moduleMetadata({
+      imports: [A11yTitleDirective],
+    }),
+  ],
   args: {
     bitIconButton: "bwi-plus",
   },
@@ -29,7 +35,7 @@ export const Default: Story = {
   render: (args) => ({
     props: args,
     template: /*html*/ `
-      <button ${formatArgsForCodeSnippet<BitIconButtonComponent>(args)}>Button</button>
+      <button appA11yTitle="Your button label here" ${formatArgsForCodeSnippet<BitIconButtonComponent>(args)}>Button</button>
     `,
   }),
 };
@@ -83,7 +89,7 @@ export const Light: Story = {
     template: /*html*/ `
     <div class="tw-bg-background-alt2 tw-p-6 tw-w-full tw-inline-block">
       <!-- <div> used only to provide dark background color -->
-      <button ${formatArgsForCodeSnippet<BitIconButtonComponent>(args)}>Button</button>
+      <button appA11yTitle="Your button label here" ${formatArgsForCodeSnippet<BitIconButtonComponent>(args)}>Button</button>
     </div>
       `,
   }),
@@ -98,7 +104,7 @@ export const Contrast: Story = {
     template: /*html*/ `
     <div class="tw-bg-primary-600 tw-p-6 tw-w-full tw-inline-block">
       <!-- <div> used only to provide dark background color -->
-      <button ${formatArgsForCodeSnippet<BitIconButtonComponent>(args)}>Button</button>
+      <button appA11yTitle="Your button label here" ${formatArgsForCodeSnippet<BitIconButtonComponent>(args)}>Button</button>
     </div>
       `,
   }),
