@@ -91,6 +91,9 @@ describe("BiometricMessageHandlerService", () => {
       },
     };
     cryptoFunctionService.randomBytes.mockResolvedValue(new Uint8Array(64) as CsprngArray);
+    cryptoFunctionService.rsaEncrypt.mockResolvedValue(
+      Utils.fromUtf8ToArray("encrypted") as CsprngArray,
+    );
 
     service = new BiometricMessageHandlerService(
       cryptoFunctionService,

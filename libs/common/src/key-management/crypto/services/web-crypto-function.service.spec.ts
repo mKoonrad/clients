@@ -85,7 +85,7 @@ describe("WebCrypto Function Service", () => {
       prk32Byte,
       64,
       "BnIqJlfnHm0e/2iB/15cbHyR19ARPIcWRp4oNS22CD9BV+" +
-      "/queOZenPNkDhmlVyL2WZ3OSU5+7ISNF5NhNfvZA==",
+        "/queOZenPNkDhmlVyL2WZ3OSU5+7ISNF5NhNfvZA==",
     );
     testHkdfExpand("sha512", prk64Byte, 32, "uLWbMWodSBms5uGJ5WTRTesyW+MD7nlpCZvagvIRXlk=");
     testHkdfExpand(
@@ -93,7 +93,7 @@ describe("WebCrypto Function Service", () => {
       prk64Byte,
       64,
       "uLWbMWodSBms5uGJ5WTRTesyW+MD7nlpCZvagvIRXlkY5Pv0sB+" +
-      "MqvaopmkC6sD/j89zDwTV9Ib2fpucUydO8w==",
+        "MqvaopmkC6sD/j89zDwTV9Ib2fpucUydO8w==",
     );
 
     it("should fail with prk too small", async () => {
@@ -152,40 +152,6 @@ describe("WebCrypto Function Service", () => {
     testHmac("sha1", Sha1Mac);
     testHmac("sha256", Sha256Mac);
     testHmac("sha512", Sha512Mac);
-  });
-
-  describe("compare", () => {
-    it("should successfully compare two of the same values", async () => {
-      const cryptoFunctionService = getWebCryptoFunctionService();
-      const a = new Uint8Array(2);
-      a[0] = 1;
-      a[1] = 2;
-      const equal = await cryptoFunctionService.compare(a, a);
-      expect(equal).toBe(true);
-    });
-
-    it("should successfully compare two different values of the same length", async () => {
-      const cryptoFunctionService = getWebCryptoFunctionService();
-      const a = new Uint8Array(2);
-      a[0] = 1;
-      a[1] = 2;
-      const b = new Uint8Array(2);
-      b[0] = 3;
-      b[1] = 4;
-      const equal = await cryptoFunctionService.compare(a, b);
-      expect(equal).toBe(false);
-    });
-
-    it("should successfully compare two different values of different lengths", async () => {
-      const cryptoFunctionService = getWebCryptoFunctionService();
-      const a = new Uint8Array(2);
-      a[0] = 1;
-      a[1] = 2;
-      const b = new Uint8Array(2);
-      b[0] = 3;
-      const equal = await cryptoFunctionService.compare(a, b);
-      expect(equal).toBe(false);
-    });
   });
 
   describe("compareFast", () => {
@@ -302,9 +268,9 @@ describe("WebCrypto Function Service", () => {
       const privKey = Utils.fromB64ToArray(RsaPrivateKey);
       const data = Utils.fromB64ToArray(
         "A1/p8BQzN9UrbdYxUY2Va5+kPLyfZXF9JsZrjeEXcaclsnHurdxVAJcnbEqYMP3UXV" +
-        "4YAS/mpf+Rxe6/X0WS1boQdA0MAHSgx95hIlAraZYpiMLLiJRKeo2u8YivCdTM9V5vuAEJwf9Tof/qFsFci3sApdbATkorCT" +
-        "zFOIEPF2S1zgperEP23M01mr4dWVdYN18B32YF67xdJHMbFhp5dkQwv9CmscoWq7OE5HIfOb+JAh7BEZb+CmKhM3yWJvoR/D" +
-        "/5jcercUtK2o+XrzNrL4UQ7yLZcFz6Bfwb/j6ICYvqd/YJwXNE6dwlL57OfwJyCdw2rRYf0/qI00t9u8Iitw==",
+          "4YAS/mpf+Rxe6/X0WS1boQdA0MAHSgx95hIlAraZYpiMLLiJRKeo2u8YivCdTM9V5vuAEJwf9Tof/qFsFci3sApdbATkorCT" +
+          "zFOIEPF2S1zgperEP23M01mr4dWVdYN18B32YF67xdJHMbFhp5dkQwv9CmscoWq7OE5HIfOb+JAh7BEZb+CmKhM3yWJvoR/D" +
+          "/5jcercUtK2o+XrzNrL4UQ7yLZcFz6Bfwb/j6ICYvqd/YJwXNE6dwlL57OfwJyCdw2rRYf0/qI00t9u8Iitw==",
       );
       const decValue = await cryptoFunctionService.rsaDecrypt(data, privKey, "sha1");
       expect(Utils.fromBufferToUtf8(decValue)).toBe("EncryptMe!");

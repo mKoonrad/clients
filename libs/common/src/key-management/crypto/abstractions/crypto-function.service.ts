@@ -6,12 +6,20 @@ import { SymmetricCryptoKey } from "../../../platform/models/domain/symmetric-cr
 import { CsprngArray } from "../../../types/csprng";
 
 export abstract class CryptoFunctionService {
+  /**
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Implement low-level crypto operations
+   * in the SDK instead. Further, you should probably never find yourself using this low-level crypto function.
+   */
   abstract pbkdf2(
     password: string | Uint8Array,
     salt: string | Uint8Array,
     algorithm: "sha256" | "sha512",
     iterations: number,
   ): Promise<Uint8Array>;
+  /**
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Implement low-level crypto operations
+   * in the SDK instead. Further, you should probably never find yourself using this low-level crypto function.
+   */
   abstract hkdf(
     ikm: Uint8Array,
     salt: string | Uint8Array,
@@ -19,19 +27,27 @@ export abstract class CryptoFunctionService {
     outputByteSize: number,
     algorithm: "sha256" | "sha512",
   ): Promise<Uint8Array>;
+  /**
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Implement low-level crypto operations
+   * in the SDK instead. Further, you should probably never find yourself using this low-level crypto function.
+   */
   abstract hkdfExpand(
     prk: Uint8Array,
     info: string | Uint8Array,
     outputByteSize: number,
     algorithm: "sha256" | "sha512",
   ): Promise<Uint8Array>;
+  /**
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Implement low-level crypto operations
+   * in the SDK instead. Further, you should probably never find yourself using this low-level crypto function.
+   */
   abstract hash(
     value: string | Uint8Array,
     algorithm: "sha1" | "sha256" | "sha512" | "md5",
   ): Promise<Uint8Array>;
   /**
-   * Calculates the HMAC of a value using the given key and algorithm.
-   * @deprecated Only used by DDG integration, until DDG uses PKCS#7 padding. DO NOT USE THIS FOR NEW CODE.
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Implement low-level crypto operations
+   * in the SDK instead. Further, you should probably never find yourself using this low-level crypto function.
    */
   abstract hmacFast(
     value: Uint8Array | string,
@@ -40,7 +56,8 @@ export abstract class CryptoFunctionService {
   ): Promise<Uint8Array | string>;
   abstract compareFast(a: Uint8Array | string, b: Uint8Array | string): Promise<boolean>;
   /**
-   *  @deprecated DO NOT USE THIS FOR NEW CODE.
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Implement low-level crypto operations
+   * in the SDK instead. Further, you should probably never find yourself using this low-level crypto function.
    */
   abstract aesDecryptFastParameters(
     data: string,
@@ -49,7 +66,8 @@ export abstract class CryptoFunctionService {
     key: SymmetricCryptoKey,
   ): CbcDecryptParameters<Uint8Array | string>;
   /**
-   * @deprecated DO NOT USE THIS FOR NEW CODE.
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Implement low-level crypto operations
+   * in the SDK instead. Further, you should probably never find yourself using this low-level crypto function.
    */
   abstract aesDecryptFast({
     mode,
@@ -68,7 +86,8 @@ export abstract class CryptoFunctionService {
     mode: "cbc" | "ecb",
   ): Promise<Uint8Array>;
   /**
-   * @deprecated Only used by DDG and Biometrics IPC. DO NOT USE THIS FOR NEW CODE.
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Implement low-level crypto operations
+   * in the SDK instead. Further, you should probably never find yourself using this low-level crypto function.
    */
   abstract rsaEncrypt(
     data: Uint8Array,
@@ -76,8 +95,8 @@ export abstract class CryptoFunctionService {
     algorithm: "sha1" | "sha256",
   ): Promise<Uint8Array>;
   /**
-   *
-   * @deprecated DO NOTE USE THIS FOR NEW CODE.
+   * @deprecated HAZMAT WARNING: DO NOT USE THIS FOR NEW CODE. Implement low-level crypto operations
+   * in the SDK instead. Further, you should probably never find yourself using this low-level crypto function.
    */
   abstract rsaDecrypt(
     data: Uint8Array,
@@ -92,7 +111,6 @@ export abstract class CryptoFunctionService {
   abstract aesGenerateKey(bitLength: 128 | 192 | 256 | 512): Promise<CsprngArray>;
   /**
    * Generates a random array of bytes of the given length. Uses a cryptographically secure random number generator.
-   *
    * Do not use this for generating encryption keys. Use aesGenerateKey or rsaGenerateKeyPair instead.
    */
   abstract randomBytes(length: number): Promise<CsprngArray>;
