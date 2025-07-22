@@ -30,7 +30,7 @@ export class PrivateKeysResponseModel {
     if (
       "signatureKeyPair" in response &&
       typeof response.signatureKeyPair === "object" &&
-      response.signatureKeyPair !== null
+      response.signatureKeyPair != null
     ) {
       this.signatureKeyPair = new SignatureKeyPairResponse(response.signatureKeyPair);
     }
