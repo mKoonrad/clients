@@ -1,15 +1,8 @@
-import { Observable } from "rxjs";
-
-import { SendHashedPassword } from "../../../key-management/sends/send-password.service";
-import { SendAccessToken } from "../models/send-access-token";
-import {
-  GetSendAcccessTokenError,
-  TryGetSendAccessTokenError,
-} from "../services/send-token.service";
+import { SendHashedPasswordB64 } from "../types/send-hashed-password-b64.type";
 
 export type SendPasswordCredentials = {
   type: "password";
-  passwordHash: SendHashedPassword;
+  passwordHash: SendHashedPasswordB64;
 };
 
 // Credentials for sending an OTP to the user's email address.
@@ -42,9 +35,9 @@ export abstract class SendTokenService {
    * @param sendId The ID of the send to retrieve the access token for.
    * @returns An observable that emits a SendAccessToken if successful, or a TryGetSendAccessTokenError if not.
    */
-  abstract tryGetSendAccessToken$: (
-    sendId: string,
-  ) => Observable<SendAccessToken | TryGetSendAccessTokenError>;
+  // abstract tryGetSendAccessToken$: (
+  //   sendId: string,
+  // ) => Observable<SendAccessToken | TryGetSendAccessTokenError>;
 
   /**
    * Retrieves a SendAccessToken for the given sendId using the provided credentials.
@@ -54,19 +47,19 @@ export abstract class SendTokenService {
    * @param sendAccessCredentials The credentials to use for accessing the send.
    * @returns An observable that emits a SendAccessToken if successful, or a GetSendAcccessTokenError if not.
    */
-  abstract getSendAccessToken$: (
-    sendId: string,
-    sendAccessCredentials: SendAccessCredentials,
-  ) => Observable<SendAccessToken | GetSendAcccessTokenError>;
+  // abstract getSendAccessToken$: (
+  //   sendId: string,
+  //   sendAccessCredentials: SendAccessCredentials,
+  // ) => Observable<SendAccessToken | GetSendAcccessTokenError>;
 
   /**
    * Hashes a password for send access.
    * @param password The raw password string to hash.
    * @param keyMaterialUrlB64 The base64 URL encoded key material string.
-   * @returns A promise that resolves to the hashed password as a SendHashedPassword.
+   * @returns A promise that resolves to the hashed password as a SendHashedPasswordB64.
    */
-  abstract hashPassword: (
+  abstract hashSendPassword: (
     password: string,
     keyMaterialUrlB64: string,
-  ) => Promise<SendHashedPassword>;
+  ) => Promise<SendHashedPasswordB64>;
 }
