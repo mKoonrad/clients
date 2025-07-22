@@ -130,8 +130,6 @@ export class Fido2VaultComponent implements OnInit, OnDestroy {
           this.logService.error("Failed to load ciphers", error);
         });
     });
-
-    await this.closeModal();
   }
 
   private async validateCipherAccess(cipher: CipherView): Promise<boolean> {
