@@ -1,5 +1,9 @@
+<!-- 
+  end padding is less than start padding to prioritize visual alignment when icon buttons are used at the end of the end slot.
+  other elements used at the end of the end slot may need to add their own margin/padding to achieve visual alignment.
+-->
 <header
-  class="tw-py-3 bit-compact:tw-p-2 tw-pe-1 bit-compact:tw-pe-0.5 tw-transition-colors tw-duration-200 tw-border-0 tw-border-b tw-border-solid"
+  class="tw-py-3 bit-compact:tw-py-2 tw-pe-1 bit-compact:tw-pe-0.5 tw-transition-colors tw-duration-200 tw-border-0 tw-border-b tw-border-solid"
   [ngClass]="{
     'tw-bg-background-alt tw-border-transparent':
       this.background === 'alt' && !pageContentScrolled(),

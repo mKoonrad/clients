@@ -50,7 +50,7 @@
     >
       <div
         #prefixContainer
-        class="tw-flex tw-items-center tw-gap-1 tw-ps-3 [&:has([biticonbutton])]:tw-ps-1 tw-py-1"
+        class="tw-flex tw-items-center tw-gap-1 tw-ps-3 has-[[biticonbutton]]:tw-ps-1 tw-py-1"
         [hidden]="!prefixHasChildren()"
       >
         <ng-container *ngTemplateOutlet="prefixContent"></ng-container>
@@ -67,7 +67,7 @@
       </div>
       <div
         #suffixContainer
-        class="tw-flex tw-items-center tw-pe-3 [&:has([biticonbutton])]:tw-pe-1 tw-py-1"
+        class="tw-flex tw-items-center tw-pe-3 has-[[biticonbutton]]:tw-pe-1 tw-py-1"
         [hidden]="!suffixHasChildren()"
       >
         <ng-container *ngTemplateOutlet="suffixContent"></ng-container>

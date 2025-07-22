@@ -60,8 +60,8 @@ const styles: Record<IconButtonType, string[]> = {
 export type IconButtonSize = "default" | "small";
 
 const sizes: Record<IconButtonSize, string[]> = {
-  default: ["tw-text-xl", "tw-p-2.5"],
-  small: ["tw-text-base", "tw-p-2"],
+  default: ["tw-text-xl", "tw-p-2.5", "tw-rounded-md"],
+  small: ["tw-text-base", "tw-p-2", "tw-rounded"],
 };
 /**
   * Icon buttons are used when no text accompanies the button. It consists of an icon that may be updated to any icon in the `bwi-font`, a `title` attribute, and an `aria-label`.
@@ -94,7 +94,6 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
       "tw-font-semibold",
       "tw-leading-[0px]",
       "tw-border-none",
-      "tw-rounded-md",
       "tw-transition",
       "tw-bg-transparent",
       "hover:tw-no-underline",
