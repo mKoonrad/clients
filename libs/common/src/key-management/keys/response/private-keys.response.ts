@@ -38,7 +38,7 @@ export class PrivateKeysResponseModel {
     if (
       "securityState" in response &&
       typeof response.securityState === "object" &&
-      response.securityState !== null
+      response.securityState != null
     ) {
       this.securityState = new SecurityStateResponse(response.securityState);
     }
