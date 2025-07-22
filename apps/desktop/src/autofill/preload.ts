@@ -143,7 +143,7 @@ export default {
   //   console.log("listenAutotypeRequest (preload.ts)");
   //   ipcRenderer.on(
   //     "autofill.listenAutotypeRequest",
-  //     (
+  //     async (
   //       event,
   //       data: {
   //         windowTitle: string;
@@ -154,7 +154,7 @@ export default {
   //       // console.log("autofill.listenAutotypeRequest (preload.ts)");
   //       // console.log("    receiving windowTitle: " + data.windowTitle);
   //       // console.log("    calling fn(" + data.windowTitle + ")");
-  //       // const result = fn(data.windowTitle);
+  //       // const result = await fn(data.windowTitle);
   //       // console.log("    result from await: " + JSON.stringify(result));
   //       // console.log("autofill.completeAutotypeRequest, sending fake data");
 
@@ -164,7 +164,7 @@ export default {
   //   );
   // },
 
-    listenAutotypeRequest: (
+  listenAutotypeRequest: (
     fn: (
       windowTitle: string,
       completeCallback: (error: Error | null, response: { username?: string, password?: string }) => void,

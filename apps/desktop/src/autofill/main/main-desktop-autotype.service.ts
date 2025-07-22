@@ -42,6 +42,7 @@ export class MainDesktopAutotypeService {
       let inputArray = new Array<number>();
 
       for (let i = 0; i < inputString.length; i++) {
+        console.log(inputString[i] + " " + inputString.charCodeAt(i));
         inputArray.push(inputString.charCodeAt(i));
       }
 

@@ -46,43 +46,39 @@ export class DesktopAutotypeService {
     }
 
     // ipc stuff
-    ipc.autofill.listenAutotypeRequest(async (windowTitle) => {
-      console.log("listenAutotypeRequest (desktop-autotype.service.ts)");
-      windowTitle = windowTitle.toLowerCase();
+    // ipc.autofill.listenAutotypeRequest(async (windowTitle) => {
+    //   console.log("listenAutotypeRequest (desktop-autotype.service.ts)");
+    //   windowTitle = windowTitle.toLowerCase();
 
-      let ciphers = await firstValueFrom(this.accountService.activeAccount$.pipe(
-        map((account) => account?.id),
-        filter((userId): userId is UserId => userId != null),
-        switchMap((userId) => this.cipherService.cipherViews$(userId)),
-      ));
-      let possibleCiphers = ciphers.filter(c => {
-        return c.login?.username && c.login?.password && c.login?.uris.some(u => {
-          if (u.uri?.indexOf("APP:") !== 0) {
-            return false;
-          }
+    //   let ciphers = await firstValueFrom(this.accountService.activeAccount$.pipe(
+    //     map((account) => account?.id),
+    //     filter((userId): userId is UserId => userId != null),
+    //     switchMap((userId) => this.cipherService.cipherViews$(userId)),
+    //   ));
+    //   let possibleCiphers = ciphers.filter(c => {
+    //     return c.login?.username && c.login?.password && c.login?.uris.some(u => {
+    //       if (u.uri?.indexOf("APP:") !== 0) {
+    //         return false;
+    //       }
 
-          //console.log("checking uri: " + u.uri);
+    //       //console.log("checking uri: " + u.uri);
 
-          let uri = u.uri.substring(4).toLowerCase();
+    //       let uri = u.uri.substring(4).toLowerCase();
 
-          //console.log("matching on uri: " + uri);
-          //console.log("matches? " + (windowTitle.indexOf(uri) > -1))
+    //       //console.log("matching on uri: " + uri);
+    //       //console.log("matches? " + (windowTitle.indexOf(uri) > -1))
 
-          return windowTitle.indexOf(uri) > -1;
-        });
-      });
+    //       return windowTitle.indexOf(uri) > -1;
+    //     });
+    //   });
 
-      let first = possibleCiphers?.at(0);
-      //console.log(first);
-      //console.log("finally returning:\n" + first?.login?.username + "\n" + first?.login?.password);
-      console.log("    returning: " + first?.login?.username + " " + first?.login?.password);
-      //return { username: first?.login?.username, password: first?.login?.password };
-      return { username: "fake username 1", password: "fake password 1"};
-    });
-
-
-
-
+    //   let first = possibleCiphers?.at(0);
+    //   //console.log(first);
+    //   //console.log("finally returning:\n" + first?.login?.username + "\n" + first?.login?.password);
+    //   console.log("    returning: " + first?.login?.username + " " + first?.login?.password);
+    //   //return { username: first?.login?.username, password: first?.login?.password };
+    //   return { username: "fake username 1", password: "fake password 1"};
+    // });
 
     ipc.autofill.listenAutotypeRequest(
       async (windowTitle, callback) => {
@@ -114,9 +110,6 @@ export class DesktopAutotypeService {
         let first = possibleCiphers?.at(0);
 
         return callback(null, { username: first?.login?.username, password: first?.login?.password });
-
-
-
 
         // // For some reason the credentialId is passed as an empty array in the request, so we need to
         // // get it from the cipher. For that we use the recordIdentifier, which is the cipherId.
