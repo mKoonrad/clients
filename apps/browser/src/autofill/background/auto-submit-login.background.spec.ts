@@ -336,7 +336,7 @@ describe("AutoSubmitLoginBackground", () => {
         it("updates the most recent id host when a tab is updated", () => {
           triggerTabOnUpdatedEvent(
             newTabId,
-            mock<chrome.tabs.TabChangeInfo>({ url: validIpdUrl1 }),
+            mock<chrome.tabs.OnUpdatedInfo>({ url: validIpdUrl1 }),
             newTab,
           );
 

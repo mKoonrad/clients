@@ -156,7 +156,9 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    *
    * @param details - The details of the request.
    */
-  private handleOnBeforeRequest = (details: chrome.webRequest.WebRequestBodyDetails) => {
+  private handleOnBeforeRequest = (
+    details: chrome.webRequest.OnBeforeRequestDetails,
+  ): undefined => {
     const requestInitiator = this.getRequestInitiator(details);
     const isValidInitiator = this.isValidInitiator(requestInitiator);
 
@@ -186,7 +188,7 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    * @param isValidInitiator - A flag indicating if the initiator of the request is valid.
    */
   private postRequestEncounteredAfterSubmission = (
-    details: chrome.webRequest.WebRequestBodyDetails,
+    details: chrome.webRequest.OnBeforeRequestDetails,
     isValidInitiator: boolean,
   ) => {
     return details.method === "POST" && this.validAutoSubmitHosts.size > 0 && isValidInitiator;
@@ -200,7 +202,7 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    * @param isValidInitiator - A flag indicating if the initiator of the request is valid.
    */
   private requestRedirectsToInvalidHost = (
-    details: chrome.webRequest.WebRequestBodyDetails,
+    details: chrome.webRequest.OnBeforeRequestDetails,
     isValidInitiator: boolean,
   ) => {
     return (
@@ -216,7 +218,7 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    *
    * @param details - The details of the request.
    */
-  private setupAutoSubmitFlow = (details: chrome.webRequest.WebRequestBodyDetails) => {
+  private setupAutoSubmitFlow = (details: chrome.webRequest.OnBeforeRequestDetails) => {
     if (this.isRequestInMainFrame(details)) {
       this.currentAutoSubmitHostData = {
         url: details.url,
@@ -283,7 +285,7 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    * @param details - The details of the request.
    */
   private handleWebRequestOnBeforeRedirect = (
-    details: chrome.webRequest.WebRedirectionResponseDetails,
+    details: chrome.webRequest.OnBeforeRedirectDetails,
   ) => {
     if (this.isRequestInMainFrame(details) && this.urlContainsAutoSubmitHash(details.redirectUrl)) {
       this.validAutoSubmitHosts.add(this.getUrlHost(details.redirectUrl));
@@ -349,7 +351,7 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    */
   private disableAutoSubmitFlow = async (
     requestInitiator: string,
-    details: chrome.webRequest.WebRequestBodyDetails,
+    details: chrome.webRequest.OnBeforeRequestDetails,
   ) => {
     if (this.isValidAutoSubmitHost(requestInitiator)) {
       this.removeUrlFromAutoSubmitHosts(requestInitiator);
@@ -385,7 +387,7 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    * @param initiator - The initiator of the request.
    */
   private shouldRouteTriggerAutoSubmit = (
-    details: chrome.webRequest.ResourceRequest,
+    details: chrome.webRequest.OnBeforeRequestDetails,
     initiator: string,
   ) => {
     if (this.isRequestInMainFrame(details)) {
@@ -444,7 +446,7 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    *
    * @param details - The details of the request.
    */
-  private getRequestInitiator = (details: chrome.webRequest.ResourceRequest) => {
+  private getRequestInitiator = (details: chrome.webRequest.OnBeforeRequestDetails) => {
     if (!this.isSafariBrowser) {
       return details.initiator || (details as browser.webRequest._OnBeforeRequestDetails).originUrl;
     }
@@ -465,7 +467,12 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    *
    * @param details - The details of the request.
    */
-  private isRequestInMainFrame = (details: chrome.webRequest.ResourceRequest) => {
+  private isRequestInMainFrame = (
+    details: SetPartial<
+      chrome.webRequest.WebRequestDetails,
+      "documentId" | "documentLifecycle" | "frameType"
+    >,
+  ) => {
     if (this.isSafariBrowser) {
       return details.frameId === 0;
     }
@@ -540,7 +547,7 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    *
    * @param activeInfo - The active tab information.
    */
-  private handleSafariTabOnActivated = async (activeInfo: chrome.tabs.TabActiveInfo) => {
+  private handleSafariTabOnActivated = async (activeInfo: chrome.tabs.OnActivatedInfo) => {
     if (activeInfo.tabId < 0) {
       return;
     }
@@ -557,7 +564,7 @@ export class AutoSubmitLoginBackground implements AutoSubmitLoginBackgroundAbstr
    * @param tabId - The tab ID associated with the URL.
    * @param changeInfo - The change information of the tab.
    */
-  private handleSafariTabOnUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
+  private handleSafariTabOnUpdated = (tabId: number, changeInfo: chrome.tabs.OnUpdatedInfo) => {
     if (changeInfo) {
       this.setMostRecentIdpHost(changeInfo.url, tabId);
     }
