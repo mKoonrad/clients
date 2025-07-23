@@ -358,10 +358,6 @@ export class DesktopFido2UserInterfaceSession implements Fido2UserInterfaceSessi
             timeout(1000 * 60 * 5), // 5 minutes
           ),
         );
-
-        if (status2 === AuthenticationStatus.Unlocked) {
-          await this.router.navigate(["/"]);
-        }
       } catch (error) {
         this.logService.warning("Error while waiting for vault to unlock", error);
       }
