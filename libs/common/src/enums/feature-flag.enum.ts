@@ -11,7 +11,6 @@ import { ServerConfig } from "../platform/abstractions/config/server-config";
 // eslint-disable-next-line @bitwarden/platform/no-enums
 export enum FeatureFlag {
   /* Admin Console Team */
-  SeparateCustomRolePermissions = "pm-19917-separate-custom-role-permissions",
   CreateDefaultLocation = "pm-19467-create-default-location",
 
   /* Auth */
@@ -36,9 +35,6 @@ export enum FeatureFlag {
   AllowTrialLengthZero = "pm-20322-allow-trial-length-0",
   PM21881_ManagePaymentDetailsOutsideCheckout = "pm-21881-manage-payment-details-outside-checkout",
 
-  /* Data Insights and Reporting */
-  EnableRiskInsightsNotifications = "enable-risk-insights-notifications",
-
   /* Key Management */
   PrivateKeyRegeneration = "pm-12241-private-key-regeneration",
   PM4154_BulkEncryptionService = "PM-4154-bulk-encryption-service",
@@ -54,6 +50,8 @@ export enum FeatureFlag {
   PM8851_BrowserOnboardingNudge = "pm-8851-browser-onboarding-nudge",
   PM9111ExtensionPersistAddEditForm = "pm-9111-extension-persist-add-edit-form",
   PM19941MigrateCipherDomainToSdk = "pm-19941-migrate-cipher-domain-to-sdk",
+  PM22134SdkCipherListView = "pm-22134-sdk-cipher-list-view",
+  PM22136_SdkCipherEncryption = "pm-22136-sdk-cipher-encryption",
   CipherKeyEncryption = "cipher-key-encryption",
   EndUserNotifications = "pm-10609-end-user-notifications",
   RemoveCardItemTypePolicy = "pm-16442-remove-card-item-type-policy",
@@ -78,7 +76,6 @@ const FALSE = false as boolean;
  */
 export const DefaultFeatureFlagValue = {
   /* Admin Console Team */
-  [FeatureFlag.SeparateCustomRolePermissions]: FALSE,
   [FeatureFlag.CreateDefaultLocation]: FALSE,
 
   /* Autofill */
@@ -88,9 +85,6 @@ export const DefaultFeatureFlagValue = {
   [FeatureFlag.UseTreeWalkerApiForPageDetailsCollection]: FALSE,
   [FeatureFlag.MacOsNativeCredentialSync]: FALSE,
   [FeatureFlag.WindowsDesktopAutotype]: FALSE,
-
-  /* Data Insights and Reporting */
-  [FeatureFlag.EnableRiskInsightsNotifications]: FALSE,
 
   /* Tools */
   [FeatureFlag.DesktopSendUIRefresh]: FALSE,
@@ -102,7 +96,9 @@ export const DefaultFeatureFlagValue = {
   [FeatureFlag.EndUserNotifications]: FALSE,
   [FeatureFlag.PM19941MigrateCipherDomainToSdk]: FALSE,
   [FeatureFlag.RemoveCardItemTypePolicy]: FALSE,
+  [FeatureFlag.PM22134SdkCipherListView]: FALSE,
   [FeatureFlag.PM19315EndUserActivationMvp]: FALSE,
+  [FeatureFlag.PM22136_SdkCipherEncryption]: FALSE,
 
   /* Auth */
   [FeatureFlag.PM16117_SetInitialPasswordRefactor]: FALSE,

@@ -814,8 +814,9 @@ export default class MainBackground {
     );
 
     this.devicesService = new DevicesServiceImplementation(
-      this.devicesApiService,
       this.appIdService,
+      this.devicesApiService,
+      this.i18nService,
     );
 
     this.authRequestApiService = new DefaultAuthRequestApiService(this.apiService, this.logService);
@@ -1069,6 +1070,7 @@ export default class MainBackground {
       this.pinService,
       this.accountService,
       this.sdkService,
+      this.restrictedItemTypesService,
     );
 
     this.individualVaultExportService = new IndividualVaultExportService(
