@@ -80,6 +80,13 @@ const sizes: Record<IconButtonSize, string[]> = {
   imports: [NgClass],
   host: {
     "[attr.disabled]": "disabledAttr()",
+    /**
+     * When the `bitIconButton` input is dynamic from a consumer, Angular doesn't put the
+     * `bitIconButton` attribute into the DOM. We use the attribute as a css selector in
+     * a number of components, so this manual attr binding makes sure that the css selector
+     * works when the input is dynamic.
+     */
+    "[attr.bitIconButton]": "icon()",
   },
 })
 export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableElement {
