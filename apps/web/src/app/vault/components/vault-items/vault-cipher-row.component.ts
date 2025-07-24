@@ -189,6 +189,11 @@ export class VaultCipherRowComponent<C extends CipherViewLike> implements OnInit
     return this.i18nService.t("noAccess");
   }
 
+  protected get showCopyUsername(): boolean {
+    const usernameCopy = CipherViewLikeUtils.hasCopyableValue(this.cipher, "username");
+    return this.isNotDeletedLoginCipher && usernameCopy;
+  }
+
   protected get showCopyPassword(): boolean {
     const passwordCopy = CipherViewLikeUtils.hasCopyableValue(this.cipher, "password");
     return this.isNotDeletedLoginCipher && this.cipher.viewPassword && passwordCopy;
@@ -202,16 +207,20 @@ export class VaultCipherRowComponent<C extends CipherViewLike> implements OnInit
     return this.isNotDeletedLoginCipher && this.canLaunch;
   }
 
+  protected get isDeletedCanRestore(): boolean {
+    return CipherViewLikeUtils.isDeleted(this.cipher) && this.canRestoreCipher;
+  }
+
   protected get hideMenu() {
     return !(
-      (this.isNotDeletedLoginCipher ||
-        (CipherViewLikeUtils.isDeleted(this.cipher) && this.canRestoreCipher)) &&
-      (this.showCopyPassword ||
-        this.showCopyTotp ||
-        this.showLaunchUri ||
-        this.showAttachments ||
-        this.showClone ||
-        this.canEditCipher)
+      this.isDeletedCanRestore ||
+      this.showCopyUsername ||
+      this.showCopyPassword ||
+      this.showCopyTotp ||
+      this.showLaunchUri ||
+      this.showAttachments ||
+      this.showClone ||
+      this.canEditCipher
     );
   }
 
