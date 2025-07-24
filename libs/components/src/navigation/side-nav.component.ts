@@ -1,5 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { CdkTrapFocus } from "@angular/cdk/a11y";
 import { CommonModule } from "@angular/common";
 import { Component, ElementRef, input, viewChild } from "@angular/core";
