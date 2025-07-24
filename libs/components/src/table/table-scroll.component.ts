@@ -1,5 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import {
   CdkVirtualScrollViewport,
   CdkFixedSizeVirtualScroll,
@@ -81,7 +79,7 @@ export class TableScrollComponent
   /**
    * Observer for table header, applies padding on resize.
    */
-  private headerObserver: ResizeObserver;
+  private headerObserver?: ResizeObserver;
 
   constructor(
     private zone: NgZone,
