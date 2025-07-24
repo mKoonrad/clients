@@ -9,7 +9,7 @@ import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.servi
 import { TaskService } from "@bitwarden/common/vault/tasks";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
-import { NotificationTypes } from "../notification/abstractions/notification-bar";
+import { NotificationType, NotificationTypes } from "../notification/abstractions/notification-bar";
 import { generateDomainMatchPatterns, isInvalidResponseStatusCode } from "../utils";
 
 import {
