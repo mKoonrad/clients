@@ -268,7 +268,6 @@ export class OverlayNotificationsBackground implements OverlayNotificationsBackg
       !modifyLoginData ||
       !this.shouldAttemptNotification(modifyLoginData, NotificationTypes.Add) ||
       !this.shouldAttemptNotification(modifyLoginData, NotificationTypes.Change)
-      // || !this.shouldAttemptNotification(modifyLoginData, NotificationTypes.AtRiskPassword)
     );
   };
 
