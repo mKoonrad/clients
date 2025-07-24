@@ -5,12 +5,11 @@ import {
   Component,
   Output,
   TemplateRef,
-  ViewChild,
   EventEmitter,
-  ContentChildren,
-  QueryList,
   AfterContentInit,
   input,
+  viewChild,
+  contentChildren,
 } from "@angular/core";
 
 import { MenuItemDirective } from "./menu-item.directive";
@@ -22,10 +21,9 @@ import { MenuItemDirective } from "./menu-item.directive";
   imports: [CdkTrapFocus],
 })
 export class MenuComponent implements AfterContentInit {
-  @ViewChild(TemplateRef) templateRef: TemplateRef<any>;
+  readonly templateRef = viewChild(TemplateRef);
   @Output() closed = new EventEmitter<void>();
-  @ContentChildren(MenuItemDirective, { descendants: true })
-  menuItems: QueryList<MenuItemDirective>;
+  readonly menuItems = contentChildren(MenuItemDirective, { descendants: true });
   keyManager?: FocusKeyManager<MenuItemDirective>;
 
   readonly ariaRole = input<"menu" | "dialog">("menu");
@@ -34,7 +32,7 @@ export class MenuComponent implements AfterContentInit {
 
   ngAfterContentInit() {
     if (this.ariaRole() === "menu") {
-      this.keyManager = new FocusKeyManager(this.menuItems)
+      this.keyManager = new FocusKeyManager(this.menuItems())
         .withWrap()
         .skipPredicate((item) => item.disabled);
     }

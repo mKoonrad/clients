@@ -5,11 +5,11 @@ import { CommonModule } from "@angular/common";
 import {
   AfterContentChecked,
   Component,
-  ContentChild,
   Directive,
   OnDestroy,
   TemplateRef,
   input,
+  contentChild,
 } from "@angular/core";
 import { Observable } from "rxjs";
 
@@ -32,7 +32,7 @@ export class TableComponent implements OnDestroy, AfterContentChecked {
   readonly dataSource = input<TableDataSource<any>>();
   readonly layout = input<"auto" | "fixed">("auto");
 
-  @ContentChild(TableBodyDirective) templateVariable: TableBodyDirective;
+  readonly templateVariable = contentChild(TableBodyDirective);
 
   protected rows$: Observable<any[]>;
 

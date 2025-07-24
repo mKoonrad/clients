@@ -8,8 +8,8 @@ import {
   ElementRef,
   HostBinding,
   signal,
-  ViewChild,
   input,
+  viewChild,
 } from "@angular/core";
 
 import { ToggleGroupComponent } from "./toggle-group.component";
@@ -25,8 +25,8 @@ export class ToggleComponent<TValue> implements AfterContentChecked, AfterViewIn
   id = nextId++;
 
   readonly value = input<TValue>();
-  @ViewChild("labelContent") labelContent: ElementRef<HTMLSpanElement>;
-  @ViewChild("bitBadgeContainer") bitBadgeContainer: ElementRef<HTMLSpanElement>;
+  readonly labelContent = viewChild<ElementRef<HTMLSpanElement>>("labelContent");
+  readonly bitBadgeContainer = viewChild<ElementRef<HTMLSpanElement>>("bitBadgeContainer");
 
   constructor(private groupComponent: ToggleGroupComponent<TValue>) {}
 
@@ -100,12 +100,12 @@ export class ToggleComponent<TValue> implements AfterContentChecked, AfterViewIn
 
   ngAfterContentChecked() {
     this.bitBadgeContainerHasChidlren.set(
-      this.bitBadgeContainer?.nativeElement.childElementCount > 0,
+      this.bitBadgeContainer()?.nativeElement.childElementCount > 0,
     );
   }
 
   ngAfterViewInit() {
-    const labelText = this.labelContent?.nativeElement.innerText;
+    const labelText = this.labelContent()?.nativeElement.innerText;
     if (labelText) {
       this.labelTitle.set(labelText);
     }

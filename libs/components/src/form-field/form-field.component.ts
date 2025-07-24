@@ -9,10 +9,11 @@ import {
   ElementRef,
   HostBinding,
   HostListener,
-  ViewChild,
   signal,
   input,
   Input,
+  contentChild,
+  viewChild,
 } from "@angular/core";
 
 import { I18nPipe } from "@bitwarden/ui-common";
@@ -31,13 +32,13 @@ import { BitFormFieldControl } from "./form-field-control";
 })
 export class BitFormFieldComponent implements AfterContentChecked {
   @ContentChild(BitFormFieldControl) input: BitFormFieldControl;
-  @ContentChild(BitHintComponent) hint: BitHintComponent;
-  @ContentChild(BitLabel) label: BitLabel;
+  readonly hint = contentChild(BitHintComponent);
+  readonly label = contentChild(BitLabel);
 
-  @ViewChild("prefixContainer") prefixContainer: ElementRef<HTMLDivElement>;
-  @ViewChild("suffixContainer") suffixContainer: ElementRef<HTMLDivElement>;
+  readonly prefixContainer = viewChild<ElementRef<HTMLDivElement>>("prefixContainer");
+  readonly suffixContainer = viewChild<ElementRef<HTMLDivElement>>("suffixContainer");
 
-  @ViewChild(BitErrorComponent) error: BitErrorComponent;
+  readonly error = viewChild(BitErrorComponent);
 
   readonly disableMargin = input(false, { transform: booleanAttribute });
 
@@ -104,15 +105,17 @@ export class BitFormFieldComponent implements AfterContentChecked {
   }
 
   ngAfterContentChecked(): void {
-    if (this.error) {
-      this.input.ariaDescribedBy = this.error.id;
-    } else if (this.hint) {
-      this.input.ariaDescribedBy = this.hint.id;
+    const error = this.error();
+    const hint = this.hint();
+    if (error) {
+      this.input.ariaDescribedBy = error.id;
+    } else if (hint) {
+      this.input.ariaDescribedBy = hint.id;
     } else {
       this.input.ariaDescribedBy = undefined;
     }
 
-    this.prefixHasChildren.set(this.prefixContainer?.nativeElement.childElementCount > 0);
-    this.suffixHasChildren.set(this.suffixContainer?.nativeElement.childElementCount > 0);
+    this.prefixHasChildren.set(this.prefixContainer()?.nativeElement.childElementCount > 0);
+    this.suffixHasChildren.set(this.suffixContainer()?.nativeElement.childElementCount > 0);
   }
 }

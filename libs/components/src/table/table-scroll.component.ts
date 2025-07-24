@@ -9,7 +9,6 @@ import { CommonModule } from "@angular/common";
 import {
   AfterContentChecked,
   Component,
-  ContentChild,
   OnDestroy,
   TemplateRef,
   Directive,
@@ -18,6 +17,7 @@ import {
   ElementRef,
   TrackByFunction,
   input,
+  contentChild,
 } from "@angular/core";
 
 import { ScrollLayoutDirective } from "../layout";
@@ -69,7 +69,7 @@ export class TableScrollComponent
   /** Optional trackBy function. */
   readonly trackBy = input<TrackByFunction<any> | undefined>();
 
-  @ContentChild(BitRowDef) protected rowDef: BitRowDef;
+  protected readonly rowDef = contentChild(BitRowDef);
 
   /**
    * Height of the thead element (in pixels).

@@ -76,7 +76,7 @@ export class MenuTriggerForDirective implements OnDestroy {
     this.isOpen = true;
     this.overlayRef = this.overlay.create(this.defaultMenuConfig);
 
-    const templatePortal = new TemplatePortal(menu.templateRef, this.viewContainerRef);
+    const templatePortal = new TemplatePortal(menu.templateRef(), this.viewContainerRef);
     this.overlayRef.attach(templatePortal);
 
     this.closedEventsSub =

@@ -80,7 +80,7 @@ export class PopoverTriggerForDirective implements OnDestroy, AfterViewInit {
     this.popoverOpen.set(true);
     this.overlayRef = this.overlay.create(this.defaultPopoverConfig);
 
-    const templatePortal = new TemplatePortal(this.popover().templateRef, this.viewContainerRef);
+    const templatePortal = new TemplatePortal(this.popover().templateRef(), this.viewContainerRef);
 
     this.overlayRef.attach(templatePortal);
     this.closedEventsSub = this.getClosedEvents().subscribe(() => {

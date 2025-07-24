@@ -6,9 +6,9 @@ import {
   ContentChild,
   OnInit,
   TemplateRef,
-  ViewChild,
   ViewContainerRef,
   input,
+  viewChild,
 } from "@angular/core";
 
 import { TabLabelDirective } from "./tab-label.directive";
@@ -34,7 +34,7 @@ export class TabComponent implements OnInit {
    */
   readonly contentTabIndex = input<number | undefined>();
 
-  @ViewChild(TemplateRef, { static: true }) implicitContent: TemplateRef<unknown>;
+  readonly implicitContent = viewChild(TemplateRef);
   @ContentChild(TabLabelDirective) templateLabel: TabLabelDirective;
 
   private _contentPortal: TemplatePortal | null = null;
@@ -48,6 +48,6 @@ export class TabComponent implements OnInit {
   constructor(private _viewContainerRef: ViewContainerRef) {}
 
   ngOnInit(): void {
-    this._contentPortal = new TemplatePortal(this.implicitContent, this._viewContainerRef);
+    this._contentPortal = new TemplatePortal(this.implicitContent(), this._viewContainerRef);
   }
 }

@@ -1,7 +1,7 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { NgTemplateOutlet } from "@angular/common";
-import { Component, ContentChild, HostBinding, Optional, Input, Self, input } from "@angular/core";
+import { Component, HostBinding, Optional, Input, Self, input, contentChild } from "@angular/core";
 import { ControlValueAccessor, NgControl, Validators } from "@angular/forms";
 
 import { I18nPipe } from "@bitwarden/ui-common";
@@ -38,7 +38,7 @@ export class RadioGroupComponent implements ControlValueAccessor {
   readonly id = input(`bit-radio-group-${nextId++}`);
   @HostBinding("class") classList = ["tw-block", "tw-mb-4"];
 
-  @ContentChild(BitLabel) protected label: BitLabel;
+  protected readonly label = contentChild(BitLabel);
 
   constructor(@Optional() @Self() private ngControl?: NgControl) {
     if (ngControl != null) {
