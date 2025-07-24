@@ -19,7 +19,7 @@ import { MenuItemDirective } from "./menu-item.directive";
   imports: [CdkTrapFocus],
 })
 export class MenuComponent implements AfterContentInit {
-  readonly templateRef = viewChild(TemplateRef);
+  readonly templateRef = viewChild.required(TemplateRef);
   @Output() closed = new EventEmitter<void>();
   readonly menuItems = contentChildren(MenuItemDirective, { descendants: true });
   keyManager?: FocusKeyManager<MenuItemDirective>;

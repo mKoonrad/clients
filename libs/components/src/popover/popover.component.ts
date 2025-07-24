@@ -12,7 +12,7 @@ import { TypographyModule } from "../typography";
   exportAs: "popoverComponent",
 })
 export class PopoverComponent {
-  readonly templateRef = viewChild(TemplateRef);
+  readonly templateRef = viewChild.required(TemplateRef);
   readonly title = input("");
   @Output() closed = new EventEmitter();
 }
