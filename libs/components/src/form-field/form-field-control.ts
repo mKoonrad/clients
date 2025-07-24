@@ -13,7 +13,7 @@ export type InputTypes =
   | "time";
 
 export abstract class BitFormFieldControl {
-  abstract ariaDescribedBy: string;
+  abstract ariaDescribedBy?: string;
   abstract id: Signal<string>;
   abstract labelForId: string;
   abstract required: boolean;
