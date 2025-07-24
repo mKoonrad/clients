@@ -1,5 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { FocusKeyManager } from "@angular/cdk/a11y";
 import { AfterContentInit, Component, forwardRef, input, contentChildren } from "@angular/core";
 
@@ -24,7 +22,7 @@ export class TabNavBarComponent implements AfterContentInit {
    * Focus key manager for keeping tab controls accessible.
    * https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/tablist_role#keyboard_interactions
    */
-  keyManager: FocusKeyManager<TabLinkComponent>;
+  keyManager?: FocusKeyManager<TabLinkComponent>;
 
   ngAfterContentInit(): void {
     this.keyManager = new FocusKeyManager(this.tabLabels())
@@ -35,10 +33,10 @@ export class TabNavBarComponent implements AfterContentInit {
 
   updateActiveLink() {
     // Keep the keyManager in sync with active tabs
-    const items = this.tabLabels;
+    const items = this.tabLabels();
     for (let i = 0; i < items.length; i++) {
       if (items[i].active) {
-        this.keyManager.updateActiveItem(i);
+        this.keyManager?.updateActiveItem(i);
       }
     }
   }
