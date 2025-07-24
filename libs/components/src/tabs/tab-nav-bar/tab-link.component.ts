@@ -1,5 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { FocusableOption } from "@angular/cdk/a11y";
 import {
   AfterViewInit,
@@ -25,8 +23,8 @@ import { TabNavBarComponent } from "./tab-nav-bar.component";
 export class TabLinkComponent implements FocusableOption, AfterViewInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
-  readonly tabItem = viewChild(TabListItemDirective);
-  readonly routerLinkActive = viewChild<RouterLinkActive>("rla");
+  readonly tabItem = viewChild.required(TabListItemDirective);
+  readonly routerLinkActive = viewChild.required<RouterLinkActive>("rla");
 
   readonly routerLinkMatchOptions: IsActiveMatchOptions = {
     queryParams: "ignored",
