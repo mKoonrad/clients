@@ -1,5 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { NgClass } from "@angular/common";
 import { booleanAttribute, Component, HostBinding, input, contentChild } from "@angular/core";
 
@@ -22,10 +20,10 @@ export class FormControlComponent {
 
   readonly disableMargin = input(false, { transform: booleanAttribute });
 
-  protected readonly formControl = contentChild(BitFormControlAbstraction);
+  protected readonly formControl = contentChild.required(BitFormControlAbstraction);
 
   @HostBinding("class") get classes() {
-    return []
+    return ([] as string[])
       .concat(this.inline() ? ["tw-inline-block", "tw-me-4"] : ["tw-block"])
       .concat(this.disableMargin() ? [] : ["tw-mb-4"]);
   }
