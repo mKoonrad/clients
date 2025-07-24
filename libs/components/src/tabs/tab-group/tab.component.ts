@@ -1,5 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { TemplatePortal } from "@angular/cdk/portal";
 import {
   Component,
@@ -34,8 +32,8 @@ export class TabComponent implements OnInit {
    */
   readonly contentTabIndex = input<number | undefined>();
 
-  readonly implicitContent = viewChild(TemplateRef);
-  @ContentChild(TabLabelDirective) templateLabel: TabLabelDirective;
+  readonly implicitContent = viewChild.required(TemplateRef);
+  @ContentChild(TabLabelDirective) templateLabel?: TabLabelDirective;
 
   private _contentPortal: TemplatePortal | null = null;
 
@@ -43,7 +41,7 @@ export class TabComponent implements OnInit {
     return this._contentPortal;
   }
 
-  isActive: boolean;
+  isActive: boolean = false;
 
   constructor(private _viewContainerRef: ViewContainerRef) {}
 
