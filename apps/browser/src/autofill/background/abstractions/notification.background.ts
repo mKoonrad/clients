@@ -75,6 +75,8 @@ type ChangePasswordMessageData = {
   currentPassword: string;
   newPassword: string;
   url: string;
+  username: string;
+  password: string;
 };
 
 type AddLoginMessageData = {
@@ -121,18 +123,6 @@ type NotificationBackgroundExtensionMessageHandlers = {
   bgCloseNotificationBar: ({ message, sender }: BackgroundOnMessageHandlerParams) => Promise<void>;
   bgOpenAtRiskPasswords: ({ message, sender }: BackgroundOnMessageHandlerParams) => Promise<void>;
   bgAdjustNotificationBar: ({ message, sender }: BackgroundOnMessageHandlerParams) => Promise<void>;
-  bgTriggerAddLoginNotification: ({
-    message,
-    sender,
-  }: BackgroundOnMessageHandlerParams) => Promise<boolean>;
-  bgTriggerChangedPasswordNotification: ({
-    message,
-    sender,
-  }: BackgroundOnMessageHandlerParams) => Promise<boolean>;
-  bgTriggerAtRiskPasswordNotification: ({
-    message,
-    sender,
-  }: BackgroundOnMessageHandlerParams) => Promise<boolean>;
   bgRemoveTabFromNotificationQueue: ({ sender }: BackgroundSenderParam) => void;
   bgSaveCipher: ({ message, sender }: BackgroundOnMessageHandlerParams) => void;
   bgOpenAddEditVaultItemPopout: ({
