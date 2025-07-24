@@ -1,5 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { isDataSource } from "@angular/cdk/collections";
 import { CommonModule } from "@angular/common";
 import {
@@ -34,7 +32,7 @@ export class TableComponent implements OnDestroy, AfterContentChecked {
 
   readonly templateVariable = contentChild(TableBodyDirective);
 
-  protected rows$: Observable<any[]>;
+  protected rows$?: Observable<any[]>;
 
   private _initialized = false;
 
