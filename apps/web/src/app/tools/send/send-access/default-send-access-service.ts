@@ -70,7 +70,7 @@ export class DefaultSendAccessService implements SendAccessService {
     switch (response.statusCode) {
       case 401:
         this.logger.debug(response, "redirecting to password flow");
-        url = this.router.createUrlTree(["send/", sendId]);
+        url = this.router.createUrlTree(["send/password", sendId]);
         break;
 
       case 404:
