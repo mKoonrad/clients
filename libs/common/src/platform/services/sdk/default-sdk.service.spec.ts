@@ -9,6 +9,7 @@ import { BitwardenClient } from "@bitwarden/sdk-internal";
 import { ObservableTracker } from "../../../../spec";
 import { ApiService } from "../../../abstractions/api.service";
 import { AccountInfo, AccountService } from "../../../auth/abstractions/account.service";
+import { EncryptedString } from "../../../key-management/crypto/models/enc-string";
 import { UserId } from "../../../types/guid";
 import { UserKey } from "../../../types/key";
 import { Environment, EnvironmentService } from "../../abstractions/environment.service";
@@ -17,7 +18,6 @@ import { SdkClientFactory } from "../../abstractions/sdk/sdk-client-factory";
 import { SdkLoadService } from "../../abstractions/sdk/sdk-load.service";
 import { UserNotLoggedInError } from "../../abstractions/sdk/sdk.service";
 import { Rc } from "../../misc/reference-counting/rc";
-import { EncryptedString } from "../../models/domain/enc-string";
 import { SymmetricCryptoKey } from "../../models/domain/symmetric-crypto-key";
 
 import { DefaultSdkService } from "./default-sdk.service";

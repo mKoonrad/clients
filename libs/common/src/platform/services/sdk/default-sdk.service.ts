@@ -28,6 +28,7 @@ import { ApiService } from "../../../abstractions/api.service";
 import { EncryptedOrganizationKeyData } from "../../../admin-console/models/data/encrypted-organization-key.data";
 import { AccountInfo, AccountService } from "../../../auth/abstractions/account.service";
 import { DeviceType } from "../../../enums/device-type.enum";
+import { EncryptedString } from "../../../key-management/crypto/models/enc-string";
 import { OrganizationId, UserId } from "../../../types/guid";
 import { UserKey } from "../../../types/key";
 import { Environment, EnvironmentService } from "../../abstractions/environment.service";
@@ -37,7 +38,6 @@ import { SdkLoadService } from "../../abstractions/sdk/sdk-load.service";
 import { SdkService, UserNotLoggedInError } from "../../abstractions/sdk/sdk.service";
 import { compareValues } from "../../misc/compare-values";
 import { Rc } from "../../misc/reference-counting/rc";
-import { EncryptedString } from "../../models/domain/enc-string";
 
 // A symbol that represents an overridden client that is explicitly set to undefined,
 // blocking the creation of an internal client for that user.
@@ -240,6 +240,7 @@ export class DefaultSdkService implements SdkService {
             },
       privateKey,
       signingKey: undefined,
+      securityState: undefined,
     });
 
     // We initialize the org crypto even if the org_keys are
