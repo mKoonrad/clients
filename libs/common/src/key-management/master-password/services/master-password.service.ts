@@ -7,7 +7,6 @@ import { KeyGenerationService } from "../../../platform/abstractions/key-generat
 import { LogService } from "../../../platform/abstractions/log.service";
 import { StateService } from "../../../platform/abstractions/state.service";
 import { EncryptionType } from "../../../platform/enums";
-import { EncryptedString, EncString } from "../../../platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "../../../platform/models/domain/symmetric-crypto-key";
 import {
   MASTER_PASSWORD_DISK,
@@ -18,6 +17,7 @@ import {
 import { UserId } from "../../../types/guid";
 import { MasterKey, UserKey } from "../../../types/key";
 import { EncryptService } from "../../crypto/abstractions/encrypt.service";
+import { EncryptedString, EncString } from "../../crypto/models/enc-string";
 import { InternalMasterPasswordServiceAbstraction } from "../abstractions/master-password.service.abstraction";
 
 /** Memory since master key shouldn't be available on lock */
@@ -130,7 +130,7 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
   }
 
   async setMasterKeyEncryptedUserKey(encryptedKey: EncString, userId: UserId): Promise<void> {
-    if (encryptedKey == null) {
+    if (encryptedKey == null || encryptedKey.encryptedString == null) {
       throw new Error("Encrypted Key is required.");
     }
     if (userId == null) {
@@ -148,6 +148,17 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
     if (userId == null) {
       throw new Error("User ID is required.");
     }
+
+    // Don't overwrite AdminForcePasswordReset with any other reasons other than None
+    // as we must allow a reset when the user has completed admin account recovery
+    const currentReason = await firstValueFrom(this.forceSetPasswordReason$(userId));
+    if (
+      currentReason === ForceSetPasswordReason.AdminForcePasswordReset &&
+      reason !== ForceSetPasswordReason.None
+    ) {
+      return;
+    }
+
     await this.stateProvider.getUser(userId, FORCE_SET_PASSWORD_REASON).update((_) => reason);
   }
 
@@ -155,7 +166,7 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
     masterKey: MasterKey,
     userId: UserId,
     userKey?: EncString,
-  ): Promise<UserKey> {
+  ): Promise<UserKey | null> {
     userKey ??= await this.getMasterKeyEncryptedUserKey(userId);
     masterKey ??= await firstValueFrom(this.masterKey$(userId));
 
@@ -163,30 +174,32 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
       throw new Error("No master key found.");
     }
 
-    let decUserKey: Uint8Array;
+    let decUserKey: SymmetricCryptoKey;
 
     if (userKey.encryptionType === EncryptionType.AesCbc256_B64) {
-      decUserKey = await this.encryptService.decryptToBytes(
-        userKey,
-        masterKey,
-        "Content: User Key; Encrypting Key: Master Key",
-      );
+      try {
+        decUserKey = await this.encryptService.unwrapSymmetricKey(userKey, masterKey);
+      } catch {
+        this.logService.warning("Failed to decrypt user key with master key.");
+        return null;
+      }
     } else if (userKey.encryptionType === EncryptionType.AesCbc256_HmacSha256_B64) {
-      const newKey = await this.keyGenerationService.stretchKey(masterKey);
-      decUserKey = await this.encryptService.decryptToBytes(
-        userKey,
-        newKey,
-        "Content: User Key; Encrypting Key: Stretched Master Key",
-      );
+      try {
+        const newKey = await this.keyGenerationService.stretchKey(masterKey);
+        decUserKey = await this.encryptService.unwrapSymmetricKey(userKey, newKey);
+      } catch {
+        this.logService.warning("Failed to decrypt user key with stretched master key.");
+        return null;
+      }
     } else {
       throw new Error("Unsupported encryption type.");
     }
 
     if (decUserKey == null) {
-      this.logService.warning("Failed to decrypt user key with master key.");
+      this.logService.warning("Failed to decrypt user key with master key, user key is null.");
       return null;
     }
 
-    return new SymmetricCryptoKey(decUserKey) as UserKey;
+    return decUserKey as UserKey;
   }
 }

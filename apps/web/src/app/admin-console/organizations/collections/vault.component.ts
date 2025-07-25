@@ -29,13 +29,13 @@ import {
 import {
   CollectionAdminService,
   CollectionAdminView,
+  CollectionService,
   CollectionView,
   Unassigned,
 } from "@bitwarden/admin-console/common";
 import { SearchPipe } from "@bitwarden/angular/pipes/search.pipe";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { EventCollectionService } from "@bitwarden/common/abstractions/event/event-collection.service";
-import { SearchService } from "@bitwarden/common/abstractions/search.service";
 import { OrganizationApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization-api.service.abstraction";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
@@ -55,6 +55,7 @@ import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SyncService } from "@bitwarden/common/platform/sync";
 import { CipherId, CollectionId, OrganizationId, UserId } from "@bitwarden/common/types/guid";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
+import { SearchService } from "@bitwarden/common/vault/abstractions/search.service";
 import { TotpService } from "@bitwarden/common/vault/abstractions/totp.service";
 import { CipherType } from "@bitwarden/common/vault/enums";
 import { CipherRepromptType } from "@bitwarden/common/vault/enums/cipher-reprompt-type";
@@ -78,8 +79,8 @@ import {
   DecryptionFailureDialogComponent,
   PasswordRepromptService,
 } from "@bitwarden/vault";
-import { OrganizationWarningsService } from "@bitwarden/web-vault/app/billing/services/organization-warnings.service";
-import { ResellerRenewalWarningComponent } from "@bitwarden/web-vault/app/billing/warnings/reseller-renewal-warning.component";
+import { OrganizationResellerRenewalWarningComponent } from "@bitwarden/web-vault/app/billing/warnings/components/organization-reseller-renewal-warning.component";
+import { OrganizationWarningsService } from "@bitwarden/web-vault/app/billing/warnings/services/organization-warnings.service";
 
 import { BillingNotificationService } from "../../../billing/services/billing-notification.service";
 import {
@@ -88,7 +89,7 @@ import {
 } from "../../../billing/services/reseller-warning.service";
 import { TrialFlowService } from "../../../billing/services/trial-flow.service";
 import { FreeTrial } from "../../../billing/types/free-trial";
-import { FreeTrialWarningComponent } from "../../../billing/warnings/free-trial-warning.component";
+import { OrganizationFreeTrialWarningComponent } from "../../../billing/warnings/components/organization-free-trial-warning.component";
 import { SharedModule } from "../../../shared";
 import { AssignCollectionsWebComponent } from "../../../vault/components/assign-collections";
 import {
@@ -125,20 +126,21 @@ import {
   BulkCollectionsDialogResult,
 } from "./bulk-collections-dialog";
 import { CollectionAccessRestrictedComponent } from "./collection-access-restricted.component";
-import { getNestedCollectionTree, getFlatCollectionTree } from "./utils";
+import { getFlatCollectionTree, getNestedCollectionTree } from "./utils";
 import { VaultFilterModule } from "./vault-filter/vault-filter.module";
 import { VaultHeaderComponent } from "./vault-header/vault-header.component";
 
 const BroadcasterSubscriptionId = "OrgVaultComponent";
 const SearchTextDebounceInterval = 200;
 
+// FIXME: update to use a const object instead of a typescript enum
+// eslint-disable-next-line @bitwarden/platform/no-enums
 enum AddAccessStatusType {
   All = 0,
   AddAccess = 1,
 }
 
 @Component({
-  standalone: true,
   selector: "app-org-vault",
   templateUrl: "vault.component.html",
   imports: [
@@ -149,8 +151,8 @@ enum AddAccessStatusType {
     SharedModule,
     BannerModule,
     NoItemsModule,
-    FreeTrialWarningComponent,
-    ResellerRenewalWarningComponent,
+    OrganizationFreeTrialWarningComponent,
+    OrganizationResellerRenewalWarningComponent,
   ],
   providers: [
     RoutedVaultFilterService,
@@ -263,6 +265,7 @@ export class VaultComponent implements OnInit, OnDestroy {
     private accountService: AccountService,
     private billingNotificationService: BillingNotificationService,
     private organizationWarningsService: OrganizationWarningsService,
+    private collectionService: CollectionService,
   ) {}
 
   async ngOnInit() {
@@ -360,8 +363,7 @@ export class VaultComponent implements OnInit, OnDestroy {
         if (this.organization.canEditAllCiphers) {
           return collections;
         }
-        // The user is only allowed to add/edit items to assigned collections that are not readonly
-        return collections.filter((c) => c.assigned && !c.readOnly);
+        return collections.filter((c) => c.assigned);
       }),
       shareReplay({ refCount: true, bufferSize: 1 }),
     );
@@ -536,7 +538,7 @@ export class VaultComponent implements OnInit, OnDestroy {
         const filterFunction = createFilterFunction(filter);
 
         if (await this.searchService.isSearchable(this.userId, searchText)) {
-          return await this.searchService.searchCiphers(
+          return await this.searchService.searchCiphers<CipherView>(
             this.userId,
             searchText,
             [filterFunction],
@@ -749,10 +751,13 @@ export class VaultComponent implements OnInit, OnDestroy {
   }
 
   async navigateToPaymentMethod() {
-    await this.router.navigate(
-      ["organizations", `${this.organization?.id}`, "billing", "payment-method"],
-      { state: { launchPaymentModalAutomatically: true } },
+    const managePaymentDetailsOutsideCheckout = await this.configService.getFeatureFlag(
+      FeatureFlag.PM21881_ManagePaymentDetailsOutsideCheckout,
     );
+    const route = managePaymentDetailsOutsideCheckout ? "payment-details" : "payment-method";
+    await this.router.navigate(["organizations", `${this.organization?.id}`, "billing", route], {
+      state: { launchPaymentModalAutomatically: true },
+    });
   }
 
   addAccessToggle(e: AddAccessStatusType) {
@@ -769,7 +774,7 @@ export class VaultComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  async onVaultItemsEvent(event: VaultItemEvent) {
+  async onVaultItemsEvent(event: VaultItemEvent<CipherView>) {
     this.processingEvent = true;
 
     try {
@@ -853,6 +858,7 @@ export class VaultComponent implements OnInit, OnDestroy {
     const dialogRef = AttachmentsV2Component.open(this.dialogService, {
       cipherId: cipher.id as CipherId,
       organizationId: cipher.organizationId as OrganizationId,
+      admin: true,
     });
 
     const result = await firstValueFrom(dialogRef.closed);
@@ -1064,6 +1070,7 @@ export class VaultComponent implements OnInit, OnDestroy {
     if (unassignedCiphers.length > 0 || editAccessCiphers.length > 0) {
       await this.cipherService.restoreManyWithServer(
         [...unassignedCiphers, ...editAccessCiphers],
+        this.userId,
         this.organization.id,
       );
     }
@@ -1128,16 +1135,18 @@ export class VaultComponent implements OnInit, OnDestroy {
     }
     try {
       await this.apiService.deleteCollection(this.organization?.id, collection.id);
+      await this.collectionService.delete([collection.id as CollectionId], this.userId);
       this.toastService.showToast({
         variant: "success",
         title: null,
         message: this.i18nService.t("deletedCollectionId", collection.name),
       });
 
+      // Clear the cipher cache to clear the deleted collection from the cipher state
+      await this.cipherService.clear();
+
       // Navigate away if we deleted the collection we were viewing
       if (this.selectedCollection?.node.id === collection.id) {
-        // Clear the cipher cache to clear the deleted collection from the cipher state
-        await this.cipherService.clear();
         void this.router.navigate([], {
           queryParams: { collectionId: this.selectedCollection.parent?.node.id ?? null },
           queryParamsHandling: "merge",

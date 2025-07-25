@@ -1,4 +1,3 @@
-import { DIALOG_DATA, DialogConfig, DialogRef } from "@angular/cdk/dialog";
 import { Component, Inject } from "@angular/core";
 import {
   AbstractControl,
@@ -19,7 +18,10 @@ import { EncryptService } from "@bitwarden/common/key-management/crypto/abstract
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { OrgKey } from "@bitwarden/common/types/key";
 import {
+  DialogRef,
   ButtonModule,
+  DialogConfig,
+  DIALOG_DATA,
   DialogModule,
   DialogService,
   FormFieldModule,
@@ -38,7 +40,6 @@ interface AddSponsorshipDialogParams {
 
 @Component({
   templateUrl: "add-sponsorship-dialog.component.html",
-  standalone: true,
   imports: [
     JslibModule,
     ButtonModule,
@@ -74,7 +75,9 @@ export class AddSponsorshipDialogComponent {
         asyncValidators: [this.isOrganizationMember.bind(this)],
         updateOn: "change",
       }),
-      sponsorshipNote: new FormControl<string | null>("", {}),
+      sponsorshipNote: new FormControl<string | null>("", {
+        validators: [Validators.maxLength(1000)],
+      }),
     });
   }
 
@@ -86,6 +89,8 @@ export class AddSponsorshipDialogComponent {
   }
 
   protected async save() {
+    this.sponsorshipEmailControl.markAllAsTouched();
+
     if (this.sponsorshipForm.invalid) {
       return;
     }

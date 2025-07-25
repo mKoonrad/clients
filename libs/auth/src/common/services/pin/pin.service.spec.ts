@@ -2,10 +2,10 @@ import { mock } from "jest-mock-extended";
 
 import { CryptoFunctionService } from "@bitwarden/common/key-management/crypto/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
+import { EncString } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import { KeyGenerationService } from "@bitwarden/common/platform/abstractions/key-generation.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
-import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import {
   FakeAccountService,
@@ -259,11 +259,11 @@ describe("PinService", () => {
       });
 
       it("should create a userKeyEncryptedPin from the provided PIN and userKey", async () => {
-        encryptService.encrypt.mockResolvedValue(mockUserKeyEncryptedPin);
+        encryptService.encryptString.mockResolvedValue(mockUserKeyEncryptedPin);
 
         const result = await sut.createUserKeyEncryptedPin(mockPin, mockUserKey);
 
-        expect(encryptService.encrypt).toHaveBeenCalledWith(mockPin, mockUserKey);
+        expect(encryptService.encryptString).toHaveBeenCalledWith(mockPin, mockUserKey);
         expect(result).toEqual(mockUserKeyEncryptedPin);
       });
     });
@@ -425,7 +425,7 @@ describe("PinService", () => {
       mockDecryptUserKeyFn();
 
       sut.getUserKeyEncryptedPin = jest.fn().mockResolvedValue(mockUserKeyEncryptedPin);
-      encryptService.decryptToUtf8.mockResolvedValue(mockPin);
+      encryptService.decryptString.mockResolvedValue(mockPin);
       cryptoFunctionService.compareFast.calledWith(mockPin, "1234").mockResolvedValue(true);
     }
 
@@ -434,7 +434,7 @@ describe("PinService", () => {
         .fn()
         .mockResolvedValue(pinKeyEncryptedUserKeyPersistant);
       sut.makePinKey = jest.fn().mockResolvedValue(mockPinKey);
-      encryptService.decryptToBytes.mockResolvedValue(mockUserKey.toEncoded());
+      encryptService.unwrapSymmetricKey.mockResolvedValue(mockUserKey);
     }
 
     function mockPinEncryptedKeyDataByPinLockType(pinLockType: PinLockType) {
@@ -490,7 +490,7 @@ describe("PinService", () => {
         it(`should return null when PIN doesn't match after successful user key decryption`, async () => {
           // Arrange
           await setupDecryptUserKeyWithPinMocks(pinLockType);
-          encryptService.decryptToUtf8.mockResolvedValue("9999"); // non matching PIN
+          encryptService.decryptString.mockResolvedValue("9999"); // non matching PIN
 
           // Act
           const result = await sut.decryptUserKeyWithPin(mockPin, mockUserId);

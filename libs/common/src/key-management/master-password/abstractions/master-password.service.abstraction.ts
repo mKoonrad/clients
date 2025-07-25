@@ -1,9 +1,9 @@
 import { Observable } from "rxjs";
 
 import { ForceSetPasswordReason } from "../../../auth/models/domain/force-set-password-reason";
-import { EncString } from "../../../platform/models/domain/enc-string";
 import { UserId } from "../../../types/guid";
 import { MasterKey, UserKey } from "../../../types/key";
+import { EncString } from "../../crypto/models/enc-string";
 
 export abstract class MasterPasswordServiceAbstraction {
   /**
@@ -37,13 +37,13 @@ export abstract class MasterPasswordServiceAbstraction {
    * @param userKey The user's encrypted symmetric key
    * @throws If either the MasterKey or UserKey are not resolved, or if the UserKey encryption type
    *         is neither AesCbc256_B64 nor AesCbc256_HmacSha256_B64
-   * @returns The user key
+   * @returns The user key or null if the masterkey is wrong
    */
   abstract decryptUserKeyWithMasterKey: (
     masterKey: MasterKey,
     userId: string,
     userKey?: EncString,
-  ) => Promise<UserKey>;
+  ) => Promise<UserKey | null>;
 }
 
 export abstract class InternalMasterPasswordServiceAbstraction extends MasterPasswordServiceAbstraction {

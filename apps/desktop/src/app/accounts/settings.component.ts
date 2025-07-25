@@ -24,6 +24,7 @@ import { getUserId } from "@bitwarden/common/auth/services/account.service";
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
 import { DeviceType } from "@bitwarden/common/enums";
+import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import {
   VaultTimeout,
   VaultTimeoutAction,
@@ -37,6 +38,7 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
+import { ValidationService } from "@bitwarden/common/platform/abstractions/validation.service";
 import { Theme, ThemeTypes } from "@bitwarden/common/platform/enums/theme-type.enum";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { ThemeStateService } from "@bitwarden/common/platform/theming/theme-state.service";
@@ -45,7 +47,9 @@ import { DialogService } from "@bitwarden/components";
 import { KeyService, BiometricStateService, BiometricsStatus } from "@bitwarden/key-management";
 
 import { SetPinComponent } from "../../auth/components/set-pin.component";
+import { SshAgentPromptType } from "../../autofill/models/ssh-agent-setting";
 import { DesktopAutofillSettingsService } from "../../autofill/services/desktop-autofill-settings.service";
+import { DesktopAutotypeService } from "../../autofill/services/desktop-autotype.service";
 import { DesktopBiometricsService } from "../../key-management/biometrics/desktop.biometrics.service";
 import { DesktopSettingsService } from "../../platform/services/desktop-settings.service";
 import { NativeMessagingManifestService } from "../services/native-messaging-manifest.service";
@@ -53,6 +57,7 @@ import { NativeMessagingManifestService } from "../services/native-messaging-man
 @Component({
   selector: "app-settings",
   templateUrl: "settings.component.html",
+  standalone: false,
 })
 export class SettingsComponent implements OnInit, OnDestroy {
   // For use in template
@@ -63,14 +68,17 @@ export class SettingsComponent implements OnInit, OnDestroy {
   localeOptions: any[];
   themeOptions: any[];
   clearClipboardOptions: any[];
+  sshAgentPromptBehaviorOptions: any[];
   supportsBiometric: boolean;
   private timerId: any;
   showAlwaysShowDock = false;
   requireEnableTray = false;
   showDuckDuckGoIntegrationOption = false;
+  showEnableAutotype = false;
   showOpenAtLoginOption = false;
   isWindows: boolean;
   isLinux: boolean;
+  isMac: boolean;
 
   enableTrayText: string;
   enableTrayDescText: string;
@@ -126,8 +134,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }),
     enableHardwareAcceleration: true,
     enableSshAgent: false,
+    sshAgentPromptBehavior: SshAgentPromptType.Always,
     allowScreenshots: false,
     enableDuckDuckGoBrowserIntegration: false,
+    enableAutotype: false,
     theme: [null as Theme | null],
     locale: [null as string | null],
   });
@@ -151,6 +161,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     private dialogService: DialogService,
     private userVerificationService: UserVerificationServiceAbstraction,
     private desktopSettingsService: DesktopSettingsService,
+    private desktopAutotypeService: DesktopAutotypeService,
     private biometricStateService: BiometricStateService,
     private biometricsService: DesktopBiometricsService,
     private desktopAutofillSettingsService: DesktopAutofillSettingsService,
@@ -158,32 +169,35 @@ export class SettingsComponent implements OnInit, OnDestroy {
     private logService: LogService,
     private nativeMessagingManifestService: NativeMessagingManifestService,
     private configService: ConfigService,
+    private validationService: ValidationService,
   ) {
-    const isMac = this.platformUtilsService.getDevice() === DeviceType.MacOsDesktop;
+    this.isMac = this.platformUtilsService.getDevice() === DeviceType.MacOsDesktop;
+    this.isLinux = this.platformUtilsService.getDevice() === DeviceType.LinuxDesktop;
+    this.isWindows = this.platformUtilsService.getDevice() === DeviceType.WindowsDesktop;
 
     // Workaround to avoid ghosting trays https://github.com/electron/electron/issues/17622
     this.requireEnableTray = this.platformUtilsService.getDevice() === DeviceType.LinuxDesktop;
 
-    const trayKey = isMac ? "enableMenuBar" : "enableTray";
+    const trayKey = this.isMac ? "enableMenuBar" : "enableTray";
     this.enableTrayText = this.i18nService.t(trayKey);
     this.enableTrayDescText = this.i18nService.t(trayKey + "Desc");
 
-    const minToTrayKey = isMac ? "enableMinToMenuBar" : "enableMinToTray";
+    const minToTrayKey = this.isMac ? "enableMinToMenuBar" : "enableMinToTray";
     this.enableMinToTrayText = this.i18nService.t(minToTrayKey);
     this.enableMinToTrayDescText = this.i18nService.t(minToTrayKey + "Desc");
 
-    const closeToTrayKey = isMac ? "enableCloseToMenuBar" : "enableCloseToTray";
+    const closeToTrayKey = this.isMac ? "enableCloseToMenuBar" : "enableCloseToTray";
     this.enableCloseToTrayText = this.i18nService.t(closeToTrayKey);
     this.enableCloseToTrayDescText = this.i18nService.t(closeToTrayKey + "Desc");
 
-    const startToTrayKey = isMac ? "startToMenuBar" : "startToTray";
+    const startToTrayKey = this.isMac ? "startToMenuBar" : "startToTray";
     this.startToTrayText = this.i18nService.t(startToTrayKey);
     this.startToTrayDescText = this.i18nService.t(startToTrayKey + "Desc");
 
     this.showOpenAtLoginOption = !ipc.platform.isWindowsStore;
 
     // DuckDuckGo browser is only for macos initially
-    this.showDuckDuckGoIntegrationOption = isMac;
+    this.showDuckDuckGoIntegrationOption = this.isMac;
 
     const localeOptions: any[] = [];
     this.i18nService.supportedTranslationLocales.forEach((locale) => {
@@ -212,20 +226,31 @@ export class SettingsComponent implements OnInit, OnDestroy {
       { name: this.i18nService.t("twoMinutes"), value: 120 },
       { name: this.i18nService.t("fiveMinutes"), value: 300 },
     ];
+    this.sshAgentPromptBehaviorOptions = [
+      {
+        name: this.i18nService.t("sshAgentPromptBehaviorAlways"),
+        value: SshAgentPromptType.Always,
+      },
+      { name: this.i18nService.t("sshAgentPromptBehaviorNever"), value: SshAgentPromptType.Never },
+      {
+        name: this.i18nService.t("sshAgentPromptBehaviorRememberUntilLock"),
+        value: SshAgentPromptType.RememberUntilLock,
+      },
+    ];
   }
 
   async ngOnInit() {
     this.vaultTimeoutOptions = await this.generateVaultTimeoutOptions();
     const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
-    this.isLinux = (await this.platformUtilsService.getDevice()) === DeviceType.LinuxDesktop;
 
-    if (activeAccount == null || activeAccount.id == null) {
-      return;
-    }
+    // Autotype is for Windows initially
+    const isWindows = this.platformUtilsService.getDevice() === DeviceType.WindowsDesktop;
+    const windowsDesktopAutotypeFeatureFlag = await this.configService.getFeatureFlag(
+      FeatureFlag.WindowsDesktopAutotype,
+    );
+    this.showEnableAutotype = isWindows && windowsDesktopAutotypeFeatureFlag;
 
     this.userHasMasterPassword = await this.userVerificationService.hasMasterPassword();
-
-    this.isWindows = this.platformUtilsService.getDevice() === DeviceType.WindowsDesktop;
 
     this.currentUserEmail = activeAccount.email;
     this.currentUserId = activeAccount.id;
@@ -312,7 +337,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.desktopSettingsService.hardwareAcceleration$,
       ),
       enableSshAgent: await firstValueFrom(this.desktopSettingsService.sshAgentEnabled$),
+      sshAgentPromptBehavior: await firstValueFrom(
+        this.desktopSettingsService.sshAgentPromptBehavior$,
+      ),
       allowScreenshots: !(await firstValueFrom(this.desktopSettingsService.preventScreenshots$)),
+      enableAutotype: await firstValueFrom(this.desktopAutotypeService.autotypeEnabled$),
       theme: await firstValueFrom(this.themeStateService.selectedTheme$),
       locale: await firstValueFrom(this.i18nService.userSetLocale$),
     };
@@ -361,7 +390,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.form.controls.pin.valueChanges
       .pipe(
         concatMap(async (value) => {
-          await this.updatePin(value);
+          await this.updatePinHandler(value);
           this.refreshTimeoutSettings$.next();
         }),
         takeUntil(this.destroy$),
@@ -371,7 +400,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.form.controls.biometric.valueChanges
       .pipe(
         concatMap(async (enabled) => {
-          await this.updateBiometric(enabled);
+          await this.updateBiometricHandler(enabled);
           this.refreshTimeoutSettings$.next();
         }),
         takeUntil(this.destroy$),
@@ -429,7 +458,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     await this.vaultTimeoutSettingsService.setVaultTimeoutOptions(
       activeAccount.id,
       newValue,
-      this.form.value.vaultTimeoutAction,
+      this.form.getRawValue().vaultTimeoutAction,
     );
   }
 
@@ -467,6 +496,18 @@ export class SettingsComponent implements OnInit, OnDestroy {
     );
   }
 
+  async updatePinHandler(value: boolean) {
+    try {
+      await this.updatePin(value);
+    } catch (error) {
+      this.logService.error("Error updating unlock with PIN: ", error);
+      this.form.controls.pin.setValue(!value, { emitEvent: false });
+      this.validationService.showError(error);
+    } finally {
+      this.messagingService.send("redrawMenu");
+    }
+  }
+
   async updatePin(value: boolean) {
     if (value) {
       const dialogRef = SetPinComponent.open(this.dialogService);
@@ -488,10 +529,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
         await this.updateRequirePasswordOnStart();
       }
 
-      await this.vaultTimeoutSettingsService.clear();
+      const userId = await firstValueFrom(this.accountService.activeAccount$.pipe(getUserId));
+      await this.vaultTimeoutSettingsService.clear(userId);
     }
+  }
 
-    this.messagingService.send("redrawMenu");
+  async updateBiometricHandler(value: boolean) {
+    try {
+      await this.updateBiometric(value);
+    } catch (error) {
+      this.logService.error("Error updating unlock with biometrics: ", error);
+      this.form.controls.biometric.setValue(false, { emitEvent: false });
+      this.validationService.showError(error);
+    } finally {
+      this.messagingService.send("redrawMenu");
+    }
   }
 
   async updateBiometric(enabled: boolean) {
@@ -500,61 +552,55 @@ export class SettingsComponent implements OnInit, OnDestroy {
     // The bug should resolve itself once the angular issue is resolved.
     // See: https://github.com/angular/angular/issues/13063
 
-    try {
-      if (!enabled || !this.supportsBiometric) {
-        this.form.controls.biometric.setValue(false, { emitEvent: false });
-        await this.biometricStateService.setBiometricUnlockEnabled(false);
-        await this.keyService.refreshAdditionalKeys();
-        return;
-      }
+    const activeUserId = await firstValueFrom(this.accountService.activeAccount$.pipe(getUserId));
+    if (!enabled || !this.supportsBiometric) {
+      this.form.controls.biometric.setValue(false, { emitEvent: false });
+      await this.biometricStateService.setBiometricUnlockEnabled(false);
+      await this.keyService.refreshAdditionalKeys(activeUserId);
+      return;
+    }
 
-      const status = await this.biometricsService.getBiometricsStatus();
+    const status = await this.biometricsService.getBiometricsStatus();
 
-      if (status === BiometricsStatus.AutoSetupNeeded) {
-        await this.biometricsService.setupBiometrics();
-      } else if (status === BiometricsStatus.ManualSetupNeeded) {
-        const confirmed = await this.dialogService.openSimpleDialog({
-          title: { key: "biometricsManualSetupTitle" },
-          content: { key: "biometricsManualSetupDesc" },
-          type: "warning",
-        });
-        if (confirmed) {
-          this.platformUtilsService.launchUri("https://bitwarden.com/help/biometrics/");
-        }
-        return;
+    if (status === BiometricsStatus.AutoSetupNeeded) {
+      await this.biometricsService.setupBiometrics();
+    } else if (status === BiometricsStatus.ManualSetupNeeded) {
+      const confirmed = await this.dialogService.openSimpleDialog({
+        title: { key: "biometricsManualSetupTitle" },
+        content: { key: "biometricsManualSetupDesc" },
+        type: "warning",
+      });
+      if (confirmed) {
+        this.platformUtilsService.launchUri("https://bitwarden.com/help/biometrics/");
       }
+      return;
+    }
 
-      await this.biometricStateService.setBiometricUnlockEnabled(true);
-      if (this.isWindows) {
-        // Recommended settings for Windows Hello
-        this.form.controls.requirePasswordOnStart.setValue(true);
-        this.form.controls.autoPromptBiometrics.setValue(false);
-        await this.biometricStateService.setPromptAutomatically(false);
-        await this.biometricStateService.setRequirePasswordOnStart(true);
-        await this.biometricStateService.setDismissedRequirePasswordOnStartCallout();
-      } else if (this.isLinux) {
-        // Similar to Windows
-        this.form.controls.requirePasswordOnStart.setValue(true);
-        this.form.controls.autoPromptBiometrics.setValue(false);
-        await this.biometricStateService.setPromptAutomatically(false);
-        await this.biometricStateService.setRequirePasswordOnStart(true);
-        await this.biometricStateService.setDismissedRequirePasswordOnStartCallout();
-      }
-      await this.keyService.refreshAdditionalKeys();
+    await this.biometricStateService.setBiometricUnlockEnabled(true);
+    if (this.isWindows) {
+      // Recommended settings for Windows Hello
+      this.form.controls.requirePasswordOnStart.setValue(true);
+      this.form.controls.autoPromptBiometrics.setValue(false);
+      await this.biometricStateService.setPromptAutomatically(false);
+      await this.biometricStateService.setRequirePasswordOnStart(true);
+      await this.biometricStateService.setDismissedRequirePasswordOnStartCallout();
+    } else if (this.isLinux) {
+      // Similar to Windows
+      this.form.controls.requirePasswordOnStart.setValue(true);
+      this.form.controls.autoPromptBiometrics.setValue(false);
+      await this.biometricStateService.setPromptAutomatically(false);
+      await this.biometricStateService.setRequirePasswordOnStart(true);
+      await this.biometricStateService.setDismissedRequirePasswordOnStartCallout();
+    }
+    await this.keyService.refreshAdditionalKeys(activeUserId);
 
-      const activeUserId = await firstValueFrom(
-        this.accountService.activeAccount$.pipe(map((a) => a?.id)),
-      );
-      // Validate the key is stored in case biometrics fail.
-      const biometricSet =
-        (await this.biometricsService.getBiometricsStatusForUser(activeUserId)) ===
-        BiometricsStatus.Available;
-      this.form.controls.biometric.setValue(biometricSet, { emitEvent: false });
-      if (!biometricSet) {
-        await this.biometricStateService.setBiometricUnlockEnabled(false);
-      }
-    } finally {
-      this.messagingService.send("redrawMenu");
+    // Validate the key is stored in case biometrics fail.
+    const biometricSet =
+      (await this.biometricsService.getBiometricsStatusForUser(activeUserId)) ===
+      BiometricsStatus.Available;
+    this.form.controls.biometric.setValue(biometricSet, { emitEvent: false });
+    if (!biometricSet) {
+      await this.biometricStateService.setBiometricUnlockEnabled(false);
     }
   }
 
@@ -580,7 +626,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
       await this.biometricStateService.setRequirePasswordOnStart(false);
     }
     await this.biometricStateService.setDismissedRequirePasswordOnStartCallout();
-    await this.keyService.refreshAdditionalKeys();
+    const userId = await firstValueFrom(this.accountService.activeAccount$.pipe(getUserId));
+    await this.keyService.refreshAdditionalKeys(userId);
   }
 
   async saveFavicons() {
@@ -779,8 +826,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   async saveSshAgent() {
-    this.logService.debug("Saving Ssh Agent settings", this.form.value.enableSshAgent);
     await this.desktopSettingsService.setSshAgentEnabled(this.form.value.enableSshAgent);
+  }
+
+  async saveSshAgentPromptBehavior() {
+    await this.desktopSettingsService.setSshAgentPromptBehavior(
+      this.form.value.sshAgentPromptBehavior,
+    );
   }
 
   async savePreventScreenshots() {
@@ -808,6 +860,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.form.controls.allowScreenshots.setValue(true, { emitEvent: false });
       }
     }
+  }
+
+  async saveEnableAutotype() {
+    await this.desktopAutotypeService.setAutotypeEnabledState(this.form.value.enableAutotype);
   }
 
   private async generateVaultTimeoutOptions(): Promise<VaultTimeoutOption[]> {
@@ -851,30 +907,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return "unlockWithWindowsHello";
       case DeviceType.LinuxDesktop:
         return "unlockWithPolkit";
-      default:
-        throw new Error("Unsupported platform");
-    }
-  }
-
-  get autoPromptBiometricsText() {
-    switch (this.platformUtilsService.getDevice()) {
-      case DeviceType.MacOsDesktop:
-        return "autoPromptTouchId";
-      case DeviceType.WindowsDesktop:
-        return "autoPromptWindowsHello";
-      case DeviceType.LinuxDesktop:
-        return "autoPromptPolkit";
-      default:
-        throw new Error("Unsupported platform");
-    }
-  }
-
-  get additionalBiometricSettingsText() {
-    switch (this.platformUtilsService.getDevice()) {
-      case DeviceType.MacOsDesktop:
-        return "additionalTouchIdSettings";
-      case DeviceType.WindowsDesktop:
-        return "additionalWindowsHelloSettings";
       default:
         throw new Error("Unsupported platform");
     }
