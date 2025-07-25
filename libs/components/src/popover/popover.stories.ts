@@ -80,6 +80,7 @@ export const Default: Story = {
           type="button"
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
+          aria-label="Open popover"
           #triggerRef="popoverTrigger"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -144,6 +145,7 @@ export const InitiallyOpen: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           [popoverOpen]="true"
+          aria-label="Open popover"
           #triggerRef="popoverTrigger"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -170,6 +172,7 @@ export const RightStart: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -193,6 +196,7 @@ export const RightCenter: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -216,6 +220,7 @@ export const RightEnd: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -239,6 +244,7 @@ export const LeftStart: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -262,6 +268,7 @@ export const LeftCenter: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -284,6 +291,7 @@ export const LeftEnd: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -307,6 +315,7 @@ export const BelowStart: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -330,6 +339,7 @@ export const BelowCenter: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -353,6 +363,7 @@ export const BelowEnd: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -376,6 +387,7 @@ export const AboveStart: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -399,6 +411,7 @@ export const AboveCenter: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
@@ -422,6 +435,7 @@ export const AboveEnd: Story = {
           class="tw-border-none tw-bg-transparent tw-text-primary-600"
           [bitPopoverTriggerFor]="myPopover"
           #triggerRef="popoverTrigger"
+          aria-label="Open popover"
           [position]="'${args.position}'"
         >
           <i class="bwi bwi-question-circle"></i>
