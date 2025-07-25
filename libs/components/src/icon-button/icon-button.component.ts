@@ -6,7 +6,7 @@ import {
   computed,
   ElementRef,
   HostBinding,
-  inject,
+  // inject,
   input,
   model,
   OnInit,
@@ -14,7 +14,8 @@ import {
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { debounce, interval } from "rxjs";
 
-import { A11yTitleDirective } from "../a11y";
+// import { A11yTitleDirective } from "../a11y";
+import { setA11yTitleAndAriaLabel } from "../a11y/setA11yTitleAndAriaLabel";
 import { ButtonLikeAbstraction, ButtonType } from "../shared/button-like.abstraction";
 import { FocusableElement } from "../shared/focusable-element";
 
@@ -183,10 +184,12 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
 
   readonly size = model<IconButtonSize>("default");
 
-  private readonly appA11yTitle: A11yTitleDirective = inject(A11yTitleDirective, {
-    self: true,
-    optional: true,
-  });
+  // private readonly appA11yTitleDirective: A11yTitleDirective = inject(A11yTitleDirective, {
+  //   self: true,
+  //   optional: true,
+  // });
+
+  readonly label = input.required<string>();
 
   @HostBinding("class") get classList() {
     return [
@@ -253,10 +256,6 @@ export class BitIconButtonComponent implements ButtonLikeAbstraction, FocusableE
   constructor(private elementRef: ElementRef) {}
 
   ngOnInit() {
-    if (!this.appA11yTitle) {
-      throw new Error(
-        "IconButtonComponent requires the A11yTitleDirective to be present in the template. To fix, add `appA11yTitle='<Your button label here>'` to the button element.",
-      );
-    }
+    setA11yTitleAndAriaLabel(this.elementRef.nativeElement, this.label());
   }
 }
