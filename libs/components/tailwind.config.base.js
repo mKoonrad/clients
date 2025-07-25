@@ -138,7 +138,7 @@ module.exports = {
     },
     fontFamily: {
       sans: [
-        '"DM Sans"',
+        "Roboto",
         '"Helvetica Neue"',
         "Helvetica",
         "Arial",
