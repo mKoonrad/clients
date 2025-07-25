@@ -29,14 +29,14 @@ const template = `
     <bit-form-field>
       <bit-label>Email</bit-label>
       <input bitInput formControlName="email" />
-      <button type="button" appA11yTitle="Refresh" bitSuffix bitIconButton="bwi-refresh" bitFormButton [bitAction]="refresh"></button>
+      <button type="button" label="Refresh" bitSuffix bitIconButton="bwi-refresh" bitFormButton [bitAction]="refresh"></button>
     </bit-form-field>
 
     <button class="tw-me-2" type="submit" buttonType="primary" bitButton bitFormButton>Submit</button>
     <button class="tw-me-2" type="button" buttonType="secondary" bitButton bitFormButton>Cancel</button>
     <button class="tw-me-2" type="button" buttonType="danger" bitButton bitFormButton [bitAction]="delete">Delete</button>
     <button class="tw-me-2" type="button" buttonType="secondary" bitButton bitFormButton [disabled]="true">Disabled</button>
-    <button class="tw-me-2" type="button" buttonType="secondary" bitIconButton="bwi-star" appA11yTitle="Delete" bitFormButton [bitAction]="delete">Delete</button>
+    <button class="tw-me-2" type="button" buttonType="secondary" bitIconButton="bwi-star" label="Delete" bitFormButton [bitAction]="delete">Delete</button>
   </form>`;
 
 @Component({
