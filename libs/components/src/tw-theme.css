@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import "@angular/cdk/a11y-prebuilt.css";
 @import "@angular/cdk/text-field-prebuilt.css";
 @import "./reset.css";
@@ -9,6 +5,10 @@
 @import "./toast/toast.tokens.css";
 @import "./toast/toastr.css";
 @import "./search/search.component.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --color-transparent-hover: rgb(0 0 0 / 0.02);
