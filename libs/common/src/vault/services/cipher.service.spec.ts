@@ -1,5 +1,5 @@
 import { mock } from "jest-mock-extended";
-import { BehaviorSubject, map, of } from "rxjs";
+import { BehaviorSubject, filter, firstValueFrom, map, of } from "rxjs";
 
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -536,6 +536,23 @@ describe("Cipher Service", () => {
       await expect(
         cipherService.getRotatedData(originalUserKey, newUserKey, mockUserId),
       ).rejects.toThrow("Cannot rotate ciphers when decryption failures are present");
+    });
+
+    it("sends overlay update when cipherViews$ emits", async () => {
+      (cipherService.cipherViews$ as jest.Mock)?.mockRestore();
+
+      const decryptedView = new CipherView(encryptionContext.cipher);
+      jest.spyOn(cipherService, "getAllDecrypted").mockResolvedValue([decryptedView]);
+
+      const sendSpy = jest.spyOn(messageSender, "send");
+
+      await firstValueFrom(
+        cipherService
+          .cipherViews$(mockUserId)
+          .pipe(filter((cipherViews): cipherViews is CipherView[] => cipherViews != null)),
+      );
+      expect(sendSpy).toHaveBeenCalledWith("updateOverlayCiphers");
+      expect(sendSpy).toHaveBeenCalledTimes(1);
     });
   });
 
