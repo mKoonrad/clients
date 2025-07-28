@@ -48,7 +48,7 @@ describe("ChangeKdfService", () => {
   describe("updateUserKdfParams", () => {
     it("should throw an error if userKey is null", async () => {
       keyService.userKey$.mockReturnValueOnce(of(null));
-      masterPasswordService.saltForAccount$.mockReturnValueOnce(of(mockSalt));
+      masterPasswordService.saltForUser$.mockReturnValueOnce(of(mockSalt));
       kdfConfigService.getKdfConfig$.mockReturnValueOnce(of(mockOldKdfConfig));
       await expect(
         sut.updateUserKdfParams("masterPassword", mockNewKdfConfig, mockUserId),
@@ -56,7 +56,7 @@ describe("ChangeKdfService", () => {
     });
     it("should throw an error if salt is null", async () => {
       keyService.userKey$.mockReturnValueOnce(of(mockUserKey));
-      masterPasswordService.saltForAccount$.mockReturnValueOnce(of(null));
+      masterPasswordService.saltForUser$.mockReturnValueOnce(of(null));
       kdfConfigService.getKdfConfig$.mockReturnValueOnce(of(mockOldKdfConfig));
       await expect(
         sut.updateUserKdfParams("masterPassword", mockNewKdfConfig, mockUserId),
@@ -64,7 +64,7 @@ describe("ChangeKdfService", () => {
     });
     it("should throw an error if oldKdfConfig is null", async () => {
       keyService.userKey$.mockReturnValueOnce(of(mockUserKey));
-      masterPasswordService.saltForAccount$.mockReturnValueOnce(of(mockSalt));
+      masterPasswordService.saltForUser$.mockReturnValueOnce(of(mockSalt));
       kdfConfigService.getKdfConfig$.mockReturnValueOnce(of(null));
       await expect(
         sut.updateUserKdfParams("masterPassword", mockNewKdfConfig, mockUserId),
@@ -72,7 +72,7 @@ describe("ChangeKdfService", () => {
     });
     it("should call apiService.send with correct parameters", async () => {
       keyService.userKey$.mockReturnValueOnce(of(mockUserKey));
-      masterPasswordService.saltForAccount$.mockReturnValueOnce(of(mockSalt));
+      masterPasswordService.saltForUser$.mockReturnValueOnce(of(mockSalt));
       kdfConfigService.getKdfConfig$.mockReturnValueOnce(of(mockOldKdfConfig));
 
       masterPasswordService.makeMasterPasswordAuthenticationData

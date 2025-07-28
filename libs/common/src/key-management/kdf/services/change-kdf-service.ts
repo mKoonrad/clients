@@ -19,7 +19,7 @@ export class ChangeKdfService implements ChangeKdfServiceAbstraction {
   async updateUserKdfParams(masterPassword: string, kdf: KdfConfig, userId: UserId): Promise<void> {
     const userKey = await firstValueFromOrThrow(this.keyService.userKey$(userId), "userKey");
     const salt = await firstValueFromOrThrow(
-      this.masterPasswordService.saltForAccount$(userId),
+      this.masterPasswordService.saltForUser$(userId),
       "salt",
     );
     const oldKdfConfig = await firstValueFromOrThrow(
