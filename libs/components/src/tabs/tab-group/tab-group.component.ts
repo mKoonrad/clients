@@ -55,7 +55,7 @@ export class TabGroupComponent implements AfterContentChecked, AfterViewInit, On
    */
   readonly preserveContent = input(false);
 
-  /** Error if no `TabComponent` is supplied. (`contentChildren` doesn't support `required`) */
+  /** Error if no `TabComponent` is supplied. (`contentChildren`, used to query for all the tabs, doesn't support `required`) */
   private _tab = contentChild.required(TabComponent);
 
   protected tabs = contentChildren(TabComponent);

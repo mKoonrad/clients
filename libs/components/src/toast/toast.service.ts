@@ -1,4 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
 import { Injectable } from "@angular/core";
 import { IndividualConfig, ToastrService } from "ngx-toastr";
 
