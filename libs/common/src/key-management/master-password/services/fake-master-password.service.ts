@@ -33,6 +33,10 @@ export class FakeMasterPasswordService implements InternalMasterPasswordServiceA
     this.masterKeyHashSubject.next(initialMasterKeyHash);
   }
 
+  saltForUser$(userId: UserId): Observable<MasterPasswordSalt> {
+    return this.mock.saltForUser$(userId);
+  }
+
   masterKey$(userId: UserId): Observable<MasterKey> {
     return this.masterKeySubject.asObservable();
   }
