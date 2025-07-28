@@ -218,7 +218,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.email = this.formGroup.controls.email.value;
+    this.email = this.formGroup.controls.email.value ?? "";
     const masterPassword = this.formGroup.controls.masterPassword.value;
 
     this.formGroup.markAllAsTouched();
