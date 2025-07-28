@@ -20,7 +20,9 @@ export class RadioGroupComponent implements ControlValueAccessor {
   selected: unknown;
   disabled = false;
 
-  name = input.required<string>();
+  get name() {
+    return this.ngControl?.name?.toString();
+  }
 
   readonly block = input(false);
 
