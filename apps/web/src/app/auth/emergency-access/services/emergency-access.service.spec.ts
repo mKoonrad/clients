@@ -19,7 +19,9 @@ import { CsprngArray } from "@bitwarden/common/types/csprng";
 import { UserId } from "@bitwarden/common/types/guid";
 import { UserKey, MasterKey, UserPrivateKey } from "@bitwarden/common/types/key";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
-import { KdfType, KeyService } from "@bitwarden/key-management";
+import { Cipher } from "@bitwarden/common/vault/models/domain/cipher";
+import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
+import { Argon2KdfConfig, KdfType, KeyService, PBKDF2KdfConfig } from "@bitwarden/key-management";
 
 import { EmergencyAccessStatusType } from "../enums/emergency-access-status-type";
 import { EmergencyAccessType } from "../enums/emergency-access-type";
@@ -29,6 +31,7 @@ import {
   EmergencyAccessGranteeDetailsResponse,
   EmergencyAccessGrantorDetailsResponse,
   EmergencyAccessTakeoverResponse,
+  EmergencyAccessViewResponse,
 } from "../response/emergency-access.response";
 
 import { EmergencyAccessApiService } from "./emergency-access-api.service";
@@ -43,7 +46,7 @@ describe("EmergencyAccessService", () => {
   let cipherService: MockProxy<CipherService>;
   let logService: MockProxy<LogService>;
   let emergencyAccessService: EmergencyAccessService;
-  let configService: ConfigService;
+  let configService: MockProxy<ConfigService>;
 
   const mockNewUserKey = new SymmetricCryptoKey(new Uint8Array(64)) as UserKey;
   const mockTrustedPublicKeys = [Utils.fromUtf8ToArray("trustedPublicKey")];
@@ -56,6 +59,7 @@ describe("EmergencyAccessService", () => {
     bulkEncryptService = mock<BulkEncryptService>();
     cipherService = mock<CipherService>();
     logService = mock<LogService>();
+    configService = mock<ConfigService>();
 
     emergencyAccessService = new EmergencyAccessService(
       emergencyAccessApiService,
@@ -150,88 +154,300 @@ describe("EmergencyAccessService", () => {
     });
   });
 
+  describe("getViewOnlyCiphers", () => {
+    const params = {
+      id: "emergency-access-id",
+      activeUserId: Utils.newGuid() as UserId,
+    };
+
+    it("throws an error is the active user's private key isn't available", async () => {
+      keyService.userPrivateKey$.mockReturnValue(of(null));
+
+      await expect(
+        emergencyAccessService.getViewOnlyCiphers(params.id, params.activeUserId),
+      ).rejects.toThrow("Active user does not have a private key, cannot get view only ciphers.");
+    });
+
+    it("should return decrypted and sorted ciphers using encryptService when feature flag is off", async () => {
+      const emergencyAccessViewResponse = {
+        keyEncrypted: "mockKeyEncrypted",
+        ciphers: [
+          { id: "cipher1", name: "encryptedName1" },
+          { id: "cipher2", name: "encryptedName2" },
+        ],
+      } as EmergencyAccessViewResponse;
+      emergencyAccessApiService.postEmergencyAccessView.mockResolvedValue(
+        emergencyAccessViewResponse,
+      );
+
+      const mockPrivateKey = new Uint8Array(64) as UserPrivateKey;
+      keyService.userPrivateKey$.mockReturnValue(of(mockPrivateKey));
+
+      const mockDecryptedGrantorUserKey = new SymmetricCryptoKey(new Uint8Array(64));
+      encryptService.decapsulateKeyUnsigned.mockResolvedValueOnce(mockDecryptedGrantorUserKey);
+      const mockGrantorUserKey = mockDecryptedGrantorUserKey as UserKey;
+
+      configService.getFeatureFlag.mockResolvedValue(false);
+
+      const mockCipherViews = [{ id: "cipher1" }, { id: "cipher2" }] as unknown as CipherView[];
+      const mockSortedCipherViews = [
+        { id: "cipher2" },
+        { id: "cipher1" },
+      ] as unknown as CipherView[];
+      mockCipherViews.sort = jest.fn().mockReturnValue(mockSortedCipherViews);
+      encryptService.decryptItems.mockResolvedValue(mockCipherViews);
+
+      const result = await emergencyAccessService.getViewOnlyCiphers(
+        params.id,
+        params.activeUserId,
+      );
+
+      expect(result).toEqual(mockSortedCipherViews);
+      expect(emergencyAccessApiService.postEmergencyAccessView).toHaveBeenCalledWith(params.id);
+      expect(keyService.userPrivateKey$).toHaveBeenCalledWith(params.activeUserId);
+      expect(encryptService.decapsulateKeyUnsigned).toHaveBeenCalledWith(
+        new EncString(emergencyAccessViewResponse.keyEncrypted),
+        mockPrivateKey,
+      );
+      expect(encryptService.decryptItems).toHaveBeenCalledWith(
+        emergencyAccessViewResponse.ciphers.map((c) => new Cipher(c)),
+        mockGrantorUserKey,
+      );
+      expect(cipherService.getLocaleSortingFunction).toHaveBeenCalled();
+    });
+  });
+
   describe("takeover", () => {
-    const mockId = "emergencyAccessId";
-    const mockEmail = "emergencyAccessEmail";
-    const mockName = "emergencyAccessName";
+    const params = {
+      id: "emergencyAccessId",
+      masterPassword: "mockPassword",
+      email: "emergencyAccessEmail",
+      activeUserId: Utils.newGuid() as UserId,
+    };
+
+    const takeoverResponse = {
+      keyEncrypted: "EncryptedKey",
+      kdf: KdfType.PBKDF2_SHA256,
+      kdfIterations: 500,
+    } as EmergencyAccessTakeoverResponse;
+
+    const userPrivateKey = new Uint8Array(64) as UserPrivateKey;
+    const mockMasterKey = new SymmetricCryptoKey(new Uint8Array(64) as CsprngArray) as MasterKey;
+    const mockMasterKeyHash = "mockMasterKeyHash";
+    let mockGrantorUserKey: UserKey;
+
+    // must mock [UserKey, EncString] return from keyService.encryptUserKeyWithMasterKey
+    // where UserKey is the decrypted grantor user key
+    const mockMasterKeyEncryptedUserKey = new EncString(
+      EncryptionType.AesCbc256_HmacSha256_B64,
+      "mockMasterKeyEncryptedUserKey",
+    );
+
+    beforeEach(() => {
+      emergencyAccessApiService.postEmergencyAccessTakeover.mockResolvedValueOnce(takeoverResponse);
+      keyService.userPrivateKey$.mockReturnValue(of(userPrivateKey));
+
+      const mockDecryptedGrantorUserKey = new SymmetricCryptoKey(new Uint8Array(64));
+      encryptService.decapsulateKeyUnsigned.mockResolvedValueOnce(mockDecryptedGrantorUserKey);
+      mockGrantorUserKey = mockDecryptedGrantorUserKey as UserKey;
+
+      keyService.makeMasterKey.mockResolvedValueOnce(mockMasterKey);
+      keyService.hashMasterKey.mockResolvedValueOnce(mockMasterKeyHash);
+      keyService.encryptUserKeyWithMasterKey.mockResolvedValueOnce([
+        mockGrantorUserKey,
+        mockMasterKeyEncryptedUserKey,
+      ]);
+    });
 
     it("posts a new password when decryption succeeds", async () => {
       // Arrange
-      emergencyAccessApiService.postEmergencyAccessTakeover.mockResolvedValueOnce({
-        keyEncrypted: "EncryptedKey",
-        kdf: KdfType.PBKDF2_SHA256,
-        kdfIterations: 500,
-      } as EmergencyAccessTakeoverResponse);
-
-      const mockDecryptedGrantorUserKey = new Uint8Array(64);
-      keyService.userPrivateKey$.mockReturnValue(of(new Uint8Array(64) as UserPrivateKey));
-      encryptService.decapsulateKeyUnsigned.mockResolvedValueOnce(
-        new SymmetricCryptoKey(mockDecryptedGrantorUserKey),
-      );
-
-      const mockMasterKey = new SymmetricCryptoKey(new Uint8Array(64) as CsprngArray) as MasterKey;
-
-      keyService.makeMasterKey.mockResolvedValueOnce(mockMasterKey);
-
-      const mockMasterKeyHash = "mockMasterKeyHash";
-      keyService.hashMasterKey.mockResolvedValueOnce(mockMasterKeyHash);
-
-      // must mock [UserKey, EncString] return from keyService.encryptUserKeyWithMasterKey
-      // where UserKey is the decrypted grantor user key
-      const mockMasterKeyEncryptedUserKey = new EncString(
-        EncryptionType.AesCbc256_HmacSha256_B64,
-        "mockMasterKeyEncryptedUserKey",
-      );
-
-      const mockUserKey = new SymmetricCryptoKey(mockDecryptedGrantorUserKey) as UserKey;
-
-      keyService.encryptUserKeyWithMasterKey.mockResolvedValueOnce([
-        mockUserKey,
-        mockMasterKeyEncryptedUserKey,
-      ]);
+      const expectedKdfConfig = new PBKDF2KdfConfig(takeoverResponse.kdfIterations);
 
       const expectedEmergencyAccessPasswordRequest = new EmergencyAccessPasswordRequest();
       expectedEmergencyAccessPasswordRequest.newMasterPasswordHash = mockMasterKeyHash;
       expectedEmergencyAccessPasswordRequest.key = mockMasterKeyEncryptedUserKey.encryptedString;
 
       // Act
-      await emergencyAccessService.takeover(mockId, mockEmail, mockName);
+      await emergencyAccessService.takeover(
+        params.id,
+        params.masterPassword,
+        params.email,
+        params.activeUserId,
+      );
 
       // Assert
+      expect(keyService.userPrivateKey$).toHaveBeenCalledWith(params.activeUserId);
+      expect(encryptService.decapsulateKeyUnsigned).toHaveBeenCalledWith(
+        new EncString(takeoverResponse.keyEncrypted),
+        userPrivateKey,
+      );
+      expect(keyService.makeMasterKey).toHaveBeenCalledWith(
+        params.masterPassword,
+        params.email,
+        expectedKdfConfig,
+      );
+      expect(keyService.hashMasterKey).toHaveBeenCalledWith(params.masterPassword, mockMasterKey);
+      expect(keyService.encryptUserKeyWithMasterKey).toHaveBeenCalledWith(
+        mockMasterKey,
+        mockGrantorUserKey,
+      );
       expect(emergencyAccessApiService.postEmergencyAccessPassword).toHaveBeenCalledWith(
-        mockId,
+        params.id,
         expectedEmergencyAccessPasswordRequest,
       );
     });
 
-    it("should not post a new password if decryption fails", async () => {
-      encryptService.rsaDecrypt.mockResolvedValueOnce(null);
-      emergencyAccessApiService.postEmergencyAccessTakeover.mockResolvedValueOnce({
+    it("uses argon2 KDF if takeover response is argon2", async () => {
+      const argon2TakeoverResponse = {
         keyEncrypted: "EncryptedKey",
-        kdf: KdfType.PBKDF2_SHA256,
-        kdfIterations: 500,
-      } as EmergencyAccessTakeoverResponse);
-      keyService.userPrivateKey$.mockReturnValue(of(new Uint8Array(64) as UserPrivateKey));
+        kdf: KdfType.Argon2id,
+        kdfIterations: 3,
+        kdfMemory: 64,
+        kdfParallelism: 4,
+      } as EmergencyAccessTakeoverResponse;
+      emergencyAccessApiService.postEmergencyAccessTakeover.mockReset();
+      emergencyAccessApiService.postEmergencyAccessTakeover.mockResolvedValueOnce(
+        argon2TakeoverResponse,
+      );
+
+      const expectedKdfConfig = new Argon2KdfConfig(
+        argon2TakeoverResponse.kdfIterations,
+        argon2TakeoverResponse.kdfMemory,
+        argon2TakeoverResponse.kdfParallelism,
+      );
+
+      const expectedEmergencyAccessPasswordRequest = new EmergencyAccessPasswordRequest();
+      expectedEmergencyAccessPasswordRequest.newMasterPasswordHash = mockMasterKeyHash;
+      expectedEmergencyAccessPasswordRequest.key = mockMasterKeyEncryptedUserKey.encryptedString;
+
+      await emergencyAccessService.takeover(
+        params.id,
+        params.masterPassword,
+        params.email,
+        params.activeUserId,
+      );
+
+      expect(keyService.userPrivateKey$).toHaveBeenCalledWith(params.activeUserId);
+      expect(encryptService.decapsulateKeyUnsigned).toHaveBeenCalledWith(
+        new EncString(argon2TakeoverResponse.keyEncrypted),
+        userPrivateKey,
+      );
+      expect(keyService.makeMasterKey).toHaveBeenCalledWith(
+        params.masterPassword,
+        params.email,
+        expectedKdfConfig,
+      );
+      expect(keyService.hashMasterKey).toHaveBeenCalledWith(params.masterPassword, mockMasterKey);
+      expect(keyService.encryptUserKeyWithMasterKey).toHaveBeenCalledWith(
+        mockMasterKey,
+        mockGrantorUserKey,
+      );
+      expect(emergencyAccessApiService.postEmergencyAccessPassword).toHaveBeenCalledWith(
+        params.id,
+        expectedEmergencyAccessPasswordRequest,
+      );
+    });
+
+    it("throws an error if masterKeyEncryptedUserKey is not found", async () => {
+      keyService.encryptUserKeyWithMasterKey.mockReset();
+      keyService.encryptUserKeyWithMasterKey.mockResolvedValueOnce(null);
+      const expectedKdfConfig = new PBKDF2KdfConfig(takeoverResponse.kdfIterations);
 
       await expect(
-        emergencyAccessService.takeover(mockId, mockEmail, mockName),
-      ).rejects.toThrowError("Failed to decrypt grantor key");
+        emergencyAccessService.takeover(
+          params.id,
+          params.masterPassword,
+          params.email,
+          params.activeUserId,
+        ),
+      ).rejects.toThrow("masterKeyEncryptedUserKey not found");
 
+      expect(keyService.userPrivateKey$).toHaveBeenCalledWith(params.activeUserId);
+      expect(encryptService.decapsulateKeyUnsigned).toHaveBeenCalledWith(
+        new EncString(takeoverResponse.keyEncrypted),
+        userPrivateKey,
+      );
+      expect(keyService.makeMasterKey).toHaveBeenCalledWith(
+        params.masterPassword,
+        params.email,
+        expectedKdfConfig,
+      );
+      expect(keyService.hashMasterKey).toHaveBeenCalledWith(params.masterPassword, mockMasterKey);
+      expect(keyService.encryptUserKeyWithMasterKey).toHaveBeenCalledWith(
+        mockMasterKey,
+        mockGrantorUserKey,
+      );
+      expect(emergencyAccessApiService.postEmergencyAccessPassword).not.toHaveBeenCalled();
+    });
+
+    it("should not post a new password if decryption fails", async () => {
+      emergencyAccessApiService.postEmergencyAccessTakeover.mockResolvedValueOnce(takeoverResponse);
+      encryptService.decapsulateKeyUnsigned.mockReset();
+      encryptService.decapsulateKeyUnsigned.mockResolvedValueOnce(null);
+
+      await expect(
+        emergencyAccessService.takeover(
+          params.id,
+          params.masterPassword,
+          params.email,
+          params.activeUserId,
+        ),
+      ).rejects.toThrow("Failed to decrypt grantor key");
+
+      expect(keyService.userPrivateKey$).toHaveBeenCalledWith(params.activeUserId);
+      expect(encryptService.decapsulateKeyUnsigned).toHaveBeenCalledWith(
+        new EncString(takeoverResponse.keyEncrypted),
+        userPrivateKey,
+      );
+      expect(keyService.makeMasterKey).not.toHaveBeenCalled();
+      expect(keyService.hashMasterKey).not.toHaveBeenCalled();
+      expect(keyService.encryptUserKeyWithMasterKey).not.toHaveBeenCalled();
+      expect(emergencyAccessApiService.postEmergencyAccessPassword).not.toHaveBeenCalled();
+    });
+
+    it("should not post a new password if decryption throws", async () => {
+      encryptService.decapsulateKeyUnsigned.mockReset();
+      encryptService.decapsulateKeyUnsigned.mockImplementationOnce(() => {
+        throw new Error("Failed to unwrap grantor key");
+      });
+
+      await expect(
+        emergencyAccessService.takeover(
+          params.id,
+          params.masterPassword,
+          params.email,
+          params.activeUserId,
+        ),
+      ).rejects.toThrowError("Failed to unwrap grantor key");
+
+      expect(keyService.userPrivateKey$).toHaveBeenCalledWith(params.activeUserId);
+      expect(encryptService.decapsulateKeyUnsigned).toHaveBeenCalledWith(
+        new EncString(takeoverResponse.keyEncrypted),
+        userPrivateKey,
+      );
+      expect(keyService.makeMasterKey).not.toHaveBeenCalled();
+      expect(keyService.hashMasterKey).not.toHaveBeenCalled();
+      expect(keyService.encryptUserKeyWithMasterKey).not.toHaveBeenCalled();
       expect(emergencyAccessApiService.postEmergencyAccessPassword).not.toHaveBeenCalled();
     });
 
     it("should throw an error if the users private key cannot be retrieved", async () => {
-      emergencyAccessApiService.postEmergencyAccessTakeover.mockResolvedValueOnce({
-        keyEncrypted: "EncryptedKey",
-        kdf: KdfType.PBKDF2_SHA256,
-        kdfIterations: 500,
-      } as EmergencyAccessTakeoverResponse);
       keyService.userPrivateKey$.mockReturnValue(of(null));
 
-      await expect(emergencyAccessService.takeover(mockId, mockEmail, mockName)).rejects.toThrow(
-        "user does not have a private key",
-      );
+      await expect(
+        emergencyAccessService.takeover(
+          params.id,
+          params.masterPassword,
+          params.email,
+          params.activeUserId,
+        ),
+      ).rejects.toThrow("user does not have a private key");
 
+      expect(keyService.userPrivateKey$).toHaveBeenCalledWith(params.activeUserId);
+      expect(encryptService.decapsulateKeyUnsigned).not.toHaveBeenCalled();
+      expect(keyService.makeMasterKey).not.toHaveBeenCalled();
+      expect(keyService.hashMasterKey).not.toHaveBeenCalled();
+      expect(keyService.encryptUserKeyWithMasterKey).not.toHaveBeenCalled();
       expect(emergencyAccessApiService.postEmergencyAccessPassword).not.toHaveBeenCalled();
     });
   });
