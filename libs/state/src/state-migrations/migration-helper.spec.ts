@@ -1,8 +1,7 @@
 import { MockProxy, mock } from "jest-mock-extended";
 
 import { ClientType } from "@bitwarden/common/enums";
-// eslint-disable-next-line no-restricted-imports
-import { Utils } from "@bitwarden/common/src/platform/misc/utils";
+import { newGuid } from "@bitwarden/guid";
 import { LogService } from "@bitwarden/logging";
 import { AbstractStorageService } from "@bitwarden/storage-core";
 import { FakeStorageService } from "@bitwarden/storage-test-utils";
@@ -291,8 +290,8 @@ function injectData(data: Record<string, unknown>, path: string[]): InjectedData
     }
   }
 
-  const propertyName = `__injectedProperty__${Utils.newGuid()}`;
-  const propertyValue = `__injectedValue__${Utils.newGuid()}`;
+  const propertyName = `__injectedProperty__${newGuid()}`;
+  const propertyValue = `__injectedValue__${newGuid()}`;
 
   injectedData.push({
     propertyName: propertyName,
