@@ -150,7 +150,7 @@ export abstract class KeyService {
 
   /**
    * Generates a new user key
-   * @deprecated Interacting with the master key directly is prohibited. Use {@link makeUserKey} instead.
+   * @deprecated Interacting with the master key directly is prohibited. Use {@link makeUserKeyV1} instead.
    * @throws Error when master key is null and there is no active user
    * @param masterKey The user's master key. When null, grabs master key from active user.
    * @returns A new user key and the master key protected version of it
