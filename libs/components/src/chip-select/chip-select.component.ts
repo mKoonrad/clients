@@ -235,7 +235,7 @@ export class ChipSelectComponent<T = unknown> implements ControlValueAccessor, A
     const chipWidth = this.chipSelectButton()?.nativeElement.getBoundingClientRect().width ?? 0;
 
     const firstMenuItemWidth =
-      this.menu()?.menuItems().at(0)!.elementRef.nativeElement.getBoundingClientRect().width ?? 0;
+      this.menu()?.menuItems().at(0)?.elementRef.nativeElement.getBoundingClientRect().width ?? 0;
 
     this.menuWidth = Math.max(chipWidth, firstMenuItemWidth);
   }
