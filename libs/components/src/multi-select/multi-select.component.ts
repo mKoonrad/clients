@@ -1,5 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
 import { hasModifierKey } from "@angular/cdk/keycodes";
 import {
   Component,
@@ -48,10 +46,10 @@ let nextId = 0;
  * This component has been implemented to only support Multi-select list events
  */
 export class MultiSelectComponent implements OnInit, BitFormFieldControl, ControlValueAccessor {
-  readonly select = viewChild(NgSelectComponent);
+  readonly select = viewChild.required(NgSelectComponent);
 
   // Parent component should only pass selectable items (complete list - selected items = baseItems)
-  readonly baseItems = model<SelectItemView[]>();
+  readonly baseItems = model.required<SelectItemView[]>();
   // Defaults to native ng-select behavior - set to "true" to clear selected items on dropdown close
   readonly removeSelectedItems = input(false);
   readonly placeholder = model<string>();
@@ -61,10 +59,10 @@ export class MultiSelectComponent implements OnInit, BitFormFieldControl, Contro
   @Input({ transform: booleanAttribute }) disabled?: boolean;
 
   // Internal tracking of selected items
-  protected selectedItems: SelectItemView[];
+  protected selectedItems: SelectItemView[] | null = null;
 
   // Default values for our implementation
-  loadingText: string;
+  loadingText?: string;
 
   protected searchInputId = `search-input-${nextId++}`;
 
@@ -184,11 +182,11 @@ export class MultiSelectComponent implements OnInit, BitFormFieldControl, Contro
   get ariaDescribedBy() {
     return this._ariaDescribedBy;
   }
-  set ariaDescribedBy(value: string) {
+  set ariaDescribedBy(value: string | undefined) {
     this._ariaDescribedBy = value;
-    this.select()?.searchInput.nativeElement.setAttribute("aria-describedby", value);
+    this.select()?.searchInput.nativeElement.setAttribute("aria-describedby", value ?? "");
   }
-  private _ariaDescribedBy: string;
+  private _ariaDescribedBy?: string;
 
   /**Implemented as part of BitFormFieldControl */
   get labelForId() {
@@ -209,16 +207,17 @@ export class MultiSelectComponent implements OnInit, BitFormFieldControl, Contro
   set required(value: any) {
     this._required = value != null && value !== false;
   }
-  private _required: boolean;
+  private _required: boolean = false;
 
   /**Implemented as part of BitFormFieldControl */
   get hasError() {
-    return this.ngControl?.status === "INVALID" && this.ngControl?.touched;
+    return !!(this.ngControl?.status === "INVALID" && this.ngControl?.touched);
   }
 
   /**Implemented as part of BitFormFieldControl */
   get error(): [string, any] {
-    const key = Object.keys(this.ngControl?.errors)[0];
-    return [key, this.ngControl?.errors[key]];
+    const errors = this.ngControl?.errors ?? {};
+    const key = Object.keys(errors)[0];
+    return [key, errors[key]];
   }
 }
