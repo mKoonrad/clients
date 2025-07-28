@@ -28,7 +28,10 @@ export class CollectionData {
     this.userDefaultCollectionEmail = response.userDefaultCollectionEmail;
   }
 
-  static fromJSON(obj: Jsonify<CollectionData>) {
+  static fromJSON(obj: Jsonify<CollectionData | null>): CollectionData | null {
+    if (obj == null) {
+      return null;
+    }
     return Object.assign(new CollectionData(new CollectionDetailsResponse({})), obj);
   }
 }

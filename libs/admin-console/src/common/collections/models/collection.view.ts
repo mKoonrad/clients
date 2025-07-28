@@ -20,7 +20,7 @@ export class CollectionView implements View, ITreeNodeObject {
   assigned: boolean = false;
   type: CollectionType = CollectionTypes.SharedCollection;
   userDefaultCollectionEmail: string | undefined;
-  
+
   private _name: string | undefined;
 
   constructor(c?: Collection | CollectionAccessDetailsResponse) {
@@ -48,7 +48,7 @@ export class CollectionView implements View, ITreeNodeObject {
     this._name = name;
   }
 
-  get name(): string | undefined {
+  get name(): string {
     return this.userDefaultCollectionEmail ?? this._name;
   }
 

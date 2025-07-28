@@ -23,7 +23,7 @@ export class Collection extends Domain {
   type: CollectionType = CollectionTypes.SharedCollection;
   userDefaultCollectionEmail: string | undefined;
 
-  constructor(obj?: CollectionData) {
+  constructor(obj?: CollectionData | null) {
     super();
     if (obj == null) {
       return;
