@@ -1,4 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
 import { Directive, HostBinding, HostListener, input } from "@angular/core";
 
 import { DisclosureComponent } from "./disclosure.component";

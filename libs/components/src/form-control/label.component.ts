@@ -1,4 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
 import { CommonModule } from "@angular/common";
 import { Component, ElementRef, HostBinding, input, Optional } from "@angular/core";
 

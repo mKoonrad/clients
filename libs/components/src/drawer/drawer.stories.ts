@@ -1,4 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
 import { RouterTestingModule } from "@angular/router/testing";
 import { Meta, StoryObj, moduleMetadata } from "@storybook/angular";
 
