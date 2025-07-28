@@ -26,6 +26,7 @@ import {
   CollectionResponse,
   CollectionView,
   CollectionService,
+  CollectionAccessDetailsResponse,
 } from "@bitwarden/admin-console/common";
 import {
   getOrganizationById,
@@ -393,24 +394,22 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const collectionView = new CollectionAdminView();
-    collectionView.id = this.params.collectionId as CollectionId;
-    collectionView.organizationId = this.formGroup.controls.selectedOrg.value;
-    collectionView.externalId = this.formGroup.controls.externalId.value;
-    collectionView.groups = this.formGroup.controls.access.value
-      .filter((v) => v.type === AccessItemType.Group)
-      .map(convertToSelectionView);
-    collectionView.users = this.formGroup.controls.access.value
-      .filter((v) => v.type === AccessItemType.Member)
-      .map(convertToSelectionView);
+    const collectionAccessDetailsRes = new CollectionAccessDetailsResponse({
+      id: this.params.collectionId as CollectionId,
+      externalId: this.formGroup.controls.externalId.value,
+      organizationId: this.formGroup.controls.selectedOrg.value,
+      name: this.formGroup.controls.parent.value
+        ? `${parent}/${this.formGroup.controls.name.value}`
+        : this.formGroup.controls.name.value,
+      groups: this.formGroup.controls.access.value
+        .filter((v) => v.type === AccessItemType.Group)
+        .map(convertToSelectionView),
+      users: this.formGroup.controls.access.value
+        .filter((v) => v.type === AccessItemType.Member)
+        .map(convertToSelectionView),
+    });
 
-    const parent = this.formGroup.controls.parent.value;
-    if (parent) {
-      collectionView.name = `${parent}/${this.formGroup.controls.name.value}`;
-    } else {
-      collectionView.name = this.formGroup.controls.name.value;
-    }
-
+    const collectionView = new CollectionAdminView(collectionAccessDetailsRes);
     const userId = await firstValueFrom(this.accountService.activeAccount$.pipe(getUserId));
     const savedCollection = await this.collectionAdminService.save(collectionView, userId);
 

@@ -14,42 +14,35 @@ export const CollectionTypes = {
 export type CollectionType = (typeof CollectionTypes)[keyof typeof CollectionTypes];
 
 export class Collection extends Domain {
-  id!: CollectionId;
-  organizationId!: string;
-  name!: EncString;
+  id: CollectionId;
+  organizationId: string;
+  name: EncString;
   externalId: string | undefined;
   readOnly: boolean = false;
   hidePasswords: boolean = false;
   manage: boolean = false;
   type: CollectionType = CollectionTypes.SharedCollection;
 
-  constructor(obj: Partial<CollectionData> = {}) {
+  constructor(obj: CollectionData) {
     super();
     if (obj == null || obj.name == null || obj.organizationId == null || obj.id == null) {
-      throw new Error("Partial must contain name and organizationId.");
+      throw new Error("CollectionData must contain name and organizationId.");
     }
 
-    this.buildDomainModel(
-      this,
-      obj,
-      {
-        id: null,
-        organizationId: null,
-        name: null,
-        externalId: null,
-        readOnly: null,
-        hidePasswords: null,
-        manage: null,
-        type: null,
-      },
-      ["id", "organizationId", "readOnly", "hidePasswords", "manage", "type"],
-    );
+    this.id = obj.id;
+    this.organizationId = obj.organizationId;
+    this.name = new EncString(obj.name);
+    this.externalId = obj.externalId;
+    this.readOnly = obj.readOnly;
+    this.hidePasswords = obj.hidePasswords;
+    this.manage = obj.manage;
+    this.type = obj.type;
   }
 
   decrypt(orgKey: OrgKey): Promise<CollectionView> {
     return this.decryptObj<Collection, CollectionView>(
       this,
-      new CollectionView(this),
+      new CollectionView(this, ""),
       ["name"],
       this.organizationId ?? null,
       orgKey,

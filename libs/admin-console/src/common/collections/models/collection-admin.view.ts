@@ -22,8 +22,8 @@ export class CollectionAdminView extends CollectionView {
    */
   assigned: boolean = false;
 
-  constructor(response?: CollectionAccessDetailsResponse) {
-    super(response);
+  constructor(response: CollectionAccessDetailsResponse) {
+    super(response, response.name);
 
     if (!response) {
       return;

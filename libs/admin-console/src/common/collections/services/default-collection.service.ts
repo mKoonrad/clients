@@ -23,7 +23,7 @@ import { ServiceUtils } from "@bitwarden/common/vault/service-utils";
 import { KeyService } from "@bitwarden/key-management";
 
 import { CollectionService } from "../abstractions/collection.service";
-import { Collection, CollectionData, CollectionView } from "../models";
+import { Collection, CollectionData, CollectionDetailsResponse, CollectionView } from "../models";
 
 import { DECRYPTED_COLLECTION_DATA_KEY, ENCRYPTED_COLLECTION_DATA_KEY } from "./collection.state";
 
@@ -115,7 +115,9 @@ export class DefaultCollectionService implements CollectionService {
       if (collections == null) {
         collections = {};
       }
-      collections[toUpdate.id] = toUpdate;
+      if (toUpdate.id) {
+        collections[toUpdate.id] = toUpdate;
+      }
 
       return collections;
     });
@@ -193,18 +195,21 @@ export class DefaultCollectionService implements CollectionService {
       ),
     );
 
-    const collection = new Collection({
-      id: model.id,
-      organizationId: model.organizationId as OrganizationId,
-      readOnly: model.readOnly,
-      externalId: model.externalId,
-      name: model.name,
-    });
-
     const encryptedName = await this.encryptService.encryptString(model.name, key);
-    collection.name = encryptedName;
+    const cd = new CollectionData(
+      new CollectionDetailsResponse({
+        id: model.id,
+        organizationId: model.organizationId as OrganizationId,
+        readOnly: model.readOnly,
+        externalId: model.externalId,
+        name: encryptedName,
+        manage: model.manage,
+        hidePasswords: model.hidePasswords,
+        type: model.type,
+      }),
+    );
 
-    return collection;
+    return new Collection(cd);
   }
 
   // TODO: this should be private.
@@ -233,9 +238,7 @@ export class DefaultCollectionService implements CollectionService {
   getAllNested(collections: CollectionView[]): TreeNode<CollectionView>[] {
     const nodes: TreeNode<CollectionView>[] = [];
     collections.forEach((c) => {
-      const collectionCopy = new CollectionView();
-      collectionCopy.id = c.id;
-      collectionCopy.organizationId = c.organizationId;
+      const collectionCopy = structuredClone(c);
       const parts = c.name != null ? c.name.replace(/^\/+|\/+$/g, "").split(NestingDelimiter) : [];
       ServiceUtils.nestedTraverse(nodes, 0, parts, collectionCopy, undefined, NestingDelimiter);
     });

@@ -27,6 +27,7 @@ import {
 } from "rxjs/operators";
 
 import {
+  CollectionAccessDetailsResponse,
   CollectionAdminService,
   CollectionAdminView,
   CollectionService,
@@ -373,11 +374,13 @@ export class VaultComponent implements OnInit, OnDestroy {
       this.allCollectionsWithoutUnassigned$,
     ]).pipe(
       map(([organizationId, allCollections]) => {
-        const noneCollection = new CollectionAdminView();
-        noneCollection.name = this.i18nService.t("unassigned");
-        noneCollection.id = Unassigned;
-        noneCollection.organizationId = organizationId;
-        return allCollections.concat(noneCollection);
+        const cadr = new CollectionAccessDetailsResponse({
+          name: this.i18nService.t("unassigned"),
+          id: Unassigned,
+          organizationId,
+        });
+
+        return allCollections.concat(new CollectionAdminView(cadr));
       }),
     );
 

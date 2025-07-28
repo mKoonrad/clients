@@ -1,6 +1,11 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
-import { CollectionView } from "@bitwarden/admin-console/common";
+import {
+  Collection,
+  CollectionData,
+  CollectionDetailsResponse,
+  CollectionView,
+} from "@bitwarden/admin-console/common";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { CipherType } from "@bitwarden/common/vault/enums";
 import { TreeNode } from "@bitwarden/common/vault/models/domain/tree-node";
@@ -309,14 +314,8 @@ function createFolderFilterNode(options: Partial<FolderFilter>): TreeNode<Folder
 function createCollectionFilterNode(
   options: Partial<CollectionFilter>,
 ): TreeNode<CollectionFilter> {
-  const collection = new CollectionView() as CollectionFilter;
-  collection.id = options.id;
-  collection.name = options.name ?? "";
-  collection.icon = options.icon ?? "";
-  collection.organizationId = options.organizationId;
-  collection.externalId = options.externalId ?? "";
-  collection.readOnly = options.readOnly ?? false;
-  collection.hidePasswords = options.hidePasswords ?? false;
+  const cd = new CollectionData(new CollectionDetailsResponse(options));
+  const collection = new CollectionView(new Collection(cd), options.name) as CollectionFilter;
   return new TreeNode<CollectionFilter>(collection, null);
 }
 

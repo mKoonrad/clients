@@ -1,6 +1,3 @@
-// FIXME: Update this file to be type safe and remove this and next line
-// @ts-strict-ignore
-
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { SelectionReadOnlyRequest } from "@bitwarden/common/admin-console/models/request/selection-read-only.request";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
@@ -18,6 +15,7 @@ import {
   BulkCollectionAccessRequest,
   CollectionAccessSelectionView,
   CollectionAdminView,
+  Collection,
 } from "../models";
 
 export class DefaultCollectionAdminService implements CollectionAdminService {
@@ -114,25 +112,29 @@ export class DefaultCollectionAdminService implements CollectionAdminService {
     collections: CollectionResponse[] | CollectionAccessDetailsResponse[],
   ): Promise<CollectionAdminView[]> {
     const orgKey = await this.keyService.getOrgKey(organizationId);
+    if (!orgKey) {
+      throw new Error("No key for this collection's organization.");
+    }
 
     const promises = collections.map(async (c) => {
-      const view = new CollectionAdminView();
-      view.id = c.id;
-      view.name = await this.encryptService.decryptString(new EncString(c.name), orgKey);
-      view.externalId = c.externalId;
-      view.organizationId = c.organizationId;
+      const cdr = new CollectionAccessDetailsResponse({
+        id: c.id,
+        name: await this.encryptService.decryptString(new EncString(c.name), orgKey),
+        externalId: c.externalId,
+        organizationId: c.organizationId,
+      });
 
       if (isCollectionAccessDetailsResponse(c)) {
-        view.groups = c.groups;
-        view.users = c.users;
-        view.assigned = c.assigned;
-        view.readOnly = c.readOnly;
-        view.hidePasswords = c.hidePasswords;
-        view.manage = c.manage;
-        view.unmanaged = c.unmanaged;
+        cdr.groups = c.groups;
+        cdr.users = c.users;
+        cdr.assigned = c.assigned;
+        cdr.readOnly = c.readOnly;
+        cdr.hidePasswords = c.hidePasswords;
+        cdr.manage = c.manage;
+        cdr.unmanaged = c.unmanaged;
       }
 
-      return view;
+      return new CollectionAdminView(cdr);
     });
 
     return await Promise.all(promises);
@@ -142,22 +144,33 @@ export class DefaultCollectionAdminService implements CollectionAdminService {
     if (model.organizationId == null) {
       throw new Error("Collection has no organization id.");
     }
+
     const key = await this.keyService.getOrgKey(model.organizationId);
     if (key == null) {
       throw new Error("No key for this collection's organization.");
     }
-    const collection = new CollectionRequest();
-    collection.externalId = model.externalId;
-    collection.name = (await this.encryptService.encryptString(model.name, key)).encryptedString;
-    collection.groups = model.groups.map(
-      (group) =>
-        new SelectionReadOnlyRequest(group.id, group.readOnly, group.hidePasswords, group.manage),
+
+    const cd = new CollectionData(
+      new CollectionDetailsResponse({
+        externalId: model.externalId,
+        name: (await this.encryptService.encryptString(model.name, key)).encryptedString,
+        groups: model.groups.map(
+          (group) =>
+            new SelectionReadOnlyRequest(
+              group.id,
+              group.readOnly,
+              group.hidePasswords,
+              group.manage,
+            ),
+        ),
+        users: model.users.map(
+          (user) =>
+            new SelectionReadOnlyRequest(user.id, user.readOnly, user.hidePasswords, user.manage),
+        ),
+      }),
     );
-    collection.users = model.users.map(
-      (user) =>
-        new SelectionReadOnlyRequest(user.id, user.readOnly, user.hidePasswords, user.manage),
-    );
-    return collection;
+
+    return new CollectionRequest(new Collection(cd));
   }
 }
 

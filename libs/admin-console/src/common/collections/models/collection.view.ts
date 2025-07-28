@@ -2,18 +2,19 @@ import { Jsonify } from "type-fest";
 
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { View } from "@bitwarden/common/models/view/view";
-import { CollectionId, OrganizationId } from "@bitwarden/common/types/guid";
+import { CollectionId } from "@bitwarden/common/types/guid";
 import { ITreeNodeObject } from "@bitwarden/common/vault/models/domain/tree-node";
 
 import { Collection, CollectionType, CollectionTypes } from "./collection";
-import { CollectionAccessDetailsResponse } from "./collection.response";
+import { CollectionData } from "./collection.data";
+import { CollectionAccessDetailsResponse, CollectionDetailsResponse } from "./collection.response";
 
 export const NestingDelimiter = "/";
 
 export class CollectionView implements View, ITreeNodeObject {
-  id: CollectionId = "" as CollectionId;
-  organizationId: string | undefined;
-  name: string = "";
+  id: CollectionId | undefined;
+  organizationId: string;
+  name: string;
   externalId: string | undefined;
   // readOnly applies to the items within a collection
   readOnly: boolean = false;
@@ -22,13 +23,14 @@ export class CollectionView implements View, ITreeNodeObject {
   assigned: boolean = false;
   type: CollectionType = CollectionTypes.SharedCollection;
 
-  constructor(c?: Collection | CollectionAccessDetailsResponse) {
-    if (!c) {
-      return;
+  constructor(c: Collection | CollectionAccessDetailsResponse, name: string) {
+    if (c.organizationId == null) {
+      throw new Error("@TODO");
     }
 
     this.id = c.id;
     this.organizationId = c.organizationId;
+    this.name = name;
     this.externalId = c.externalId;
     if (c instanceof Collection) {
       this.readOnly = c.readOnly;
@@ -95,16 +97,8 @@ export class CollectionView implements View, ITreeNodeObject {
   }
 
   static fromJSON(obj: Jsonify<CollectionView>) {
-    return Object.assign(
-      new CollectionView(
-        new Collection({
-          name: obj.name,
-          organizationId: obj.organizationId as OrganizationId,
-          id: obj.id,
-        }),
-      ),
-      obj,
-    );
+    const cd = new CollectionData(new CollectionDetailsResponse({ ...obj }));
+    return Object.assign(new CollectionView(new Collection(cd), obj.name), obj);
   }
 
   get isDefaultCollection() {
