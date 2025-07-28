@@ -54,6 +54,10 @@ export class ChangeKdfConfirmationComponent {
   };
 
   private async makeKeyAndSaveAsync() {
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+    if (activeAccount == null) {
+      throw new Error("No active account found.");
+    }
     const masterPassword = this.form.value.masterPassword;
 
     // Ensure the KDF config is valid.

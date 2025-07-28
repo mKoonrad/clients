@@ -3,6 +3,7 @@
 import { firstValueFrom, map, Observable } from "rxjs";
 
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { assertNonNullish } from "@bitwarden/common/auth/utils";
 import { SdkLoadService } from "@bitwarden/common/platform/abstractions/sdk/sdk-load.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 // eslint-disable-next-line no-restricted-imports
@@ -78,6 +79,14 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
     private accountService: AccountService,
   ) {}
 
+  saltForUser$(userId: UserId): Observable<MasterPasswordSalt> {
+    assertNonNullish(userId, "userId");
+    return this.accountService.accounts$.pipe(
+      map((accounts) => accounts[userId].email),
+      map((email) => this.emailToSalt(email)),
+    );
+  }
+
   masterKey$(userId: UserId): Observable<MasterKey> {
     if (userId == null) {
       throw new Error("User ID is required.");
@@ -122,7 +131,7 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
     return EncString.fromJSON(key);
   }
 
-  emailToSalt(email: string): MasterPasswordSalt {
+  private emailToSalt(email: string): MasterPasswordSalt {
     return email.toLowerCase().trim() as MasterPasswordSalt;
   }
 
@@ -239,15 +248,12 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
     kdf: KdfConfig,
     salt: MasterPasswordSalt,
   ): Promise<MasterPasswordAuthenticationData> {
-    if (password == null) {
-      throw new Error("Password is required.");
-    }
-    if (kdf == null) {
-      throw new Error("KDF configuration is required.");
-    }
-    if (salt == null) {
-      throw new Error("Salt is required.");
-    }
+    assertNonNullish(password, "password");
+    assertNonNullish(kdf, "kdf");
+    assertNonNullish(salt, "salt");
+
+    // We don't trust callers to use masterpasswordsalt correctly. They may type assert incorrectly.
+    salt = salt.toLowerCase().trim() as MasterPasswordSalt;
 
     const SERVER_AUTHENTICATION_HASH_ITERATIONS = 1;
 
@@ -279,18 +285,13 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
     salt: MasterPasswordSalt,
     userKey: UserKey,
   ): Promise<MasterPasswordUnlockData> {
-    if (password == null) {
-      throw new Error("Password is required.");
-    }
-    if (kdf == null) {
-      throw new Error("KDF configuration is required.");
-    }
-    if (salt == null) {
-      throw new Error("Salt is required.");
-    }
-    if (userKey == null) {
-      throw new Error("User key is required.");
-    }
+    assertNonNullish(password, "password");
+    assertNonNullish(kdf, "kdf");
+    assertNonNullish(salt, "salt");
+    assertNonNullish(userKey, "userKey");
+
+    // We don't trust callers to use masterpasswordsalt correctly. They may type assert incorrectly.
+    salt = salt.toLowerCase().trim() as MasterPasswordSalt;
 
     await SdkLoadService.Ready;
     const masterKeyWrappedUserKey = new EncString(
@@ -312,12 +313,8 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
     password: string,
     masterPasswordUnlockData: MasterPasswordUnlockData,
   ): Promise<UserKey> {
-    if (password == null) {
-      throw new Error("Password is required.");
-    }
-    if (masterPasswordUnlockData == null) {
-      throw new Error("Master password unlock data is required.");
-    }
+    assertNonNullish(password, "password");
+    assertNonNullish(masterPasswordUnlockData, "masterPasswordUnlockData");
 
     await SdkLoadService.Ready;
     const userKey = new SymmetricCryptoKey(

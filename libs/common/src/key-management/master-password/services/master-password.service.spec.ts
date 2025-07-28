@@ -1,14 +1,17 @@
 import { mock, MockProxy } from "jest-mock-extended";
-import { of } from "rxjs";
+import { firstValueFrom, of } from "rxjs";
 import * as rxjs from "rxjs";
 
-import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { SdkLoadService } from "@bitwarden/common/platform/abstractions/sdk/sdk-load.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 // eslint-disable-next-line no-restricted-imports
 import { KdfConfig, PBKDF2KdfConfig } from "@bitwarden/key-management";
 
-import { makeSymmetricCryptoKey } from "../../../../spec";
+import {
+  FakeAccountService,
+  makeSymmetricCryptoKey,
+  mockAccountServiceWith,
+} from "../../../../spec";
 import { ForceSetPasswordReason } from "../../../auth/models/domain/force-set-password-reason";
 import { KeyGenerationService } from "../../../platform/abstractions/key-generation.service";
 import { LogService } from "../../../platform/abstractions/log.service";
@@ -33,9 +36,9 @@ describe("MasterPasswordService", () => {
   let encryptService: MockProxy<EncryptService>;
   let logService: MockProxy<LogService>;
   let cryptoFunctionService: MockProxy<CryptoFunctionService>;
-  let accountService: MockProxy<AccountService>;
+  let accountService: FakeAccountService;
 
-  const userId = "user-id" as UserId;
+  const userId = "00000000-0000-0000-0000-000000000000" as UserId;
   const mockUserState = {
     state$: of(null),
     update: jest.fn().mockResolvedValue(null),
@@ -56,7 +59,7 @@ describe("MasterPasswordService", () => {
     encryptService = mock<EncryptService>();
     logService = mock<LogService>();
     cryptoFunctionService = mock<CryptoFunctionService>();
-    accountService = mock<AccountService>();
+    accountService = mockAccountServiceWith(userId);
 
     stateProvider.getUser.mockReturnValue(mockUserState as any);
 
@@ -77,6 +80,23 @@ describe("MasterPasswordService", () => {
     Object.defineProperty(SdkLoadService, "Ready", {
       value: Promise.resolve(),
       configurable: true,
+    });
+  });
+
+  describe("saltForUser$", () => {
+    it("throws when userid not present", async () => {
+      expect(() => {
+        sut.saltForUser$(null as unknown as UserId);
+      }).toThrow("userId is null or undefined.");
+    });
+    it("throws when userid present but not in account service", async () => {
+      await expect(
+        firstValueFrom(sut.saltForUser$("00000000-0000-0000-0000-000000000001" as UserId)),
+      ).rejects.toThrow("Cannot read properties of undefined (reading 'email')");
+    });
+    it("returns salt", async () => {
+      const salt = await firstValueFrom(sut.saltForUser$(userId));
+      expect(salt).toBeDefined();
     });
   });
 

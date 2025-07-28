@@ -21,14 +21,12 @@ export abstract class MasterPasswordServiceAbstraction {
    */
   abstract forceSetPasswordReason$: (userId: UserId) => Observable<ForceSetPasswordReason>;
   /**
-   * An observable that emits the salt for the user.
+   * An observable that emits the master password salt for the user.
+   * @param userId The user ID.
+   * @throws If the user ID is missing.
+   * @throws If the user ID is provided, but the user is not found.
    */
-  abstract saltForAccount$: (userId: UserId) => Observable<MasterPasswordSalt>;
-  /**
-   * Converts an email to a salt for the master password.
-   * @param email The email address to convert.
-   */
-  abstract emailToSalt(email: string): MasterPasswordSalt;
+  abstract saltForUser$: (userId: UserId) => Observable<MasterPasswordSalt>;
   /**
    * An observable that emits the master key for the user.
    * @deprecated Interacting with the master-key directly is deprecated. Please use {@link makeMasterPasswordUnlockData}, {@link makeMasterPasswordAuthenticationData} or {@link unwrapUserKeyFromMasterPasswordUnlockData} instead.
