@@ -537,8 +537,8 @@ describe("Cipher Service", () => {
         cipherService.getRotatedData(originalUserKey, newUserKey, mockUserId),
       ).rejects.toThrow("Cannot rotate ciphers when decryption failures are present");
     });
-    
-   it("uses the sdk to re-encrypt ciphers when feature flag is enabled", async () => {
+
+    it("uses the sdk to re-encrypt ciphers when feature flag is enabled", async () => {
       configService.getFeatureFlag
         .calledWith(FeatureFlag.PM22136_SdkCipherEncryption)
         .mockResolvedValue(true);
