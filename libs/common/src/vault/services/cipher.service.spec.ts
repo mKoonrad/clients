@@ -7,6 +7,7 @@ import { CipherResponse } from "@bitwarden/common/vault/models/response/cipher.r
 // This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
 // eslint-disable-next-line no-restricted-imports
 import { CipherDecryptionKeys, KeyService } from "@bitwarden/key-management";
+import { MessageSender } from "@bitwarden/messaging";
 
 import { FakeAccountService, mockAccountServiceWith } from "../../../spec/fake-account-service";
 import { FakeStateProvider } from "../../../spec/fake-state-provider";
@@ -108,6 +109,7 @@ describe("Cipher Service", () => {
   const logService = mock<LogService>();
   const stateProvider = new FakeStateProvider(accountService);
   const cipherEncryptionService = mock<CipherEncryptionService>();
+  const messageSender = mock<MessageSender>();
 
   const userId = "TestUserId" as UserId;
   const orgId = "4ff8c0b2-1d3e-4f8c-9b2d-1d3e4f8c0b2" as OrganizationId;
@@ -137,6 +139,7 @@ describe("Cipher Service", () => {
       accountService,
       logService,
       cipherEncryptionService,
+      messageSender,
     );
 
     encryptionContext = { cipher: new Cipher(cipherData), encryptedFor: userId };
