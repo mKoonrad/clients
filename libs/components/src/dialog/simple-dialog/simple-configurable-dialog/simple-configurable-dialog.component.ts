@@ -81,10 +81,10 @@ export class SimpleConfigurableDialogComponent {
     if (this.showCancelButton) {
       // If accept text is overridden, use cancel, otherwise no
       this.cancelButtonText = this.translate(
-        (this.simpleDialogOpts.cancelButtonText ??
-          this.simpleDialogOpts.acceptButtonText !== undefined)
-          ? { key: "cancel" }
-          : { key: "no" },
+        this.simpleDialogOpts.cancelButtonText ??
+          (this.simpleDialogOpts.acceptButtonText !== undefined
+            ? { key: "cancel" }
+            : { key: "no" }),
       );
     }
   }
