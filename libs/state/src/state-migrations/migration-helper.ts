@@ -1,4 +1,4 @@
-import { ClientType } from "@bitwarden/common/enums";
+import { ClientType } from "@bitwarden/client-type";
 import { LogService } from "@bitwarden/logging";
 import { AbstractStorageService } from "@bitwarden/storage-core";
 

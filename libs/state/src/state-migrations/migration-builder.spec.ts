@@ -1,6 +1,6 @@
 import { mock } from "jest-mock-extended";
 
-import { ClientType } from "@bitwarden/common/enums";
+import { ClientType } from "@bitwarden/client-type";
 
 import { MigrationBuilder } from "./migration-builder";
 import { MigrationHelper } from "./migration-helper";

@@ -1,6 +1,6 @@
 import { MockProxy, mock } from "jest-mock-extended";
 
-import { ClientType } from "@bitwarden/common/enums";
+import { ClientType } from "@bitwarden/client-type";
 import { newGuid } from "@bitwarden/guid";
 import { LogService } from "@bitwarden/logging";
 import { AbstractStorageService } from "@bitwarden/storage-core";
