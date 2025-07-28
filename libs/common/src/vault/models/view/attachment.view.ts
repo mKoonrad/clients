@@ -4,7 +4,7 @@ import { Jsonify } from "type-fest";
 
 import { AttachmentView as SdkAttachmentView } from "@bitwarden/sdk-internal";
 
-import { EncryptedString, EncString } from "../../../key-management/crypto/models/enc-string";
+import { EncString } from "../../../key-management/crypto/models/enc-string";
 import { View } from "../../../models/view/view";
 import { SymmetricCryptoKey } from "../../../platform/models/domain/symmetric-crypto-key";
 import { Attachment } from "../domain/attachment";
@@ -69,7 +69,7 @@ export class AttachmentView implements View {
       size: this.size,
       sizeName: this.sizeName,
       fileName: this.fileName,
-      key: this.encryptedKey?.toJSON() as EncryptedString,
+      key: this.encryptedKey?.toSdk(),
       // TODO: PM-23005 - Temporary field, should be removed when encrypted migration is complete
       decryptedKey: this.key ? this.key.toBase64() : null,
     };
