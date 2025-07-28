@@ -94,16 +94,6 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
     return this.stateProvider.getUser(userId, MASTER_KEY).state$;
   }
 
-  saltForAccount$(userId: UserId): Observable<MasterPasswordSalt> {
-    if (userId == null) {
-      throw new Error("User ID is required.");
-    }
-    return this.accountService.activeAccount$.pipe(
-      map((a) => a?.email),
-      map((email) => this.emailToSalt(email)),
-    );
-  }
-
   masterKeyHash$(userId: UserId): Observable<string> {
     if (userId == null) {
       throw new Error("User ID is required.");
@@ -131,7 +121,7 @@ export class MasterPasswordService implements InternalMasterPasswordServiceAbstr
     return EncString.fromJSON(key);
   }
 
-  private emailToSalt(email: string): MasterPasswordSalt {
+  emailToSalt(email: string): MasterPasswordSalt {
     return email.toLowerCase().trim() as MasterPasswordSalt;
   }
 

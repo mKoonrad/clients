@@ -303,7 +303,7 @@ export class InputPasswordComponent implements OnInit {
 
       const salt =
         this.userId != null
-          ? await firstValueFrom(this.masterPasswordService.saltForAccount$(this.userId))
+          ? await firstValueFrom(this.masterPasswordService.saltForUser$(this.userId))
           : this.masterPasswordService.emailToSalt(this.email);
       if (salt == null) {
         throw new Error("Salt is required to create master key.");
