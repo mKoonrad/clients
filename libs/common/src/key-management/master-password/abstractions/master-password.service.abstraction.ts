@@ -24,6 +24,7 @@ export abstract class MasterPasswordServiceAbstraction {
    * An observable that emits the master password salt for the user.
    * @param userId The user ID.
    * @throws If the user ID is missing.
+   * @throws If the user ID is provided, but the user is not found.
    */
   abstract saltForUser$: (userId: UserId) => Observable<MasterPasswordSalt>;
   /**
