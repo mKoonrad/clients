@@ -148,7 +148,7 @@ export class DefaultCollectionAdminService implements CollectionAdminService {
     }
     const collection = new CollectionRequest();
     collection.externalId = model.externalId;
-    if (collection.name) {
+    if (model.name) {
       collection.name = (await this.encryptService.encryptString(model.name, key)).encryptedString;
     }
     collection.groups = model.groups.map(
