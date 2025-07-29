@@ -41,7 +41,7 @@ export class TabComponent implements OnInit {
     return this._contentPortal;
   }
 
-  isActive: boolean = false;
+  isActive?: boolean;
 
   constructor(private _viewContainerRef: ViewContainerRef) {}
 

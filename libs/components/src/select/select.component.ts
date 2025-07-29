@@ -101,7 +101,7 @@ export class SelectComponent<T> implements BitFormFieldControl, ControlValueAcce
   set disabled(value: any) {
     this._disabled = value != null && value !== false;
   }
-  private _disabled: boolean = false;
+  private _disabled?: boolean;
 
   /**Implemented as part of NG_VALUE_ACCESSOR */
   writeValue(obj: T): void {

@@ -125,7 +125,7 @@ export class CheckboxComponent implements BitFormControlAbstraction {
   set required(value: any) {
     this._required = value != null && value !== false;
   }
-  private _required: boolean = false;
+  private _required?: boolean;
 
   get hasError() {
     return !!(this.ngControl?.status === "INVALID" && this.ngControl?.touched);
