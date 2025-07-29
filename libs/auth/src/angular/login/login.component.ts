@@ -80,7 +80,6 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   clientType: ClientType;
   ClientType = ClientType;
-  email?: string;
   orgPoliciesFromInvite: PasswordPolicies | null = null;
   LoginUiState = LoginUiState;
   isKnownDevice = false;
@@ -219,7 +218,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.email = this.formGroup.controls.email.value ?? "";
+    const email = this.formGroup.controls.email.value;
     const masterPassword = this.formGroup.controls.masterPassword.value;
 
     this.formGroup.markAllAsTouched();
@@ -227,7 +226,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.email || !masterPassword) {
+    if (!email || !masterPassword) {
       this.logService.error("Email and master password are required");
       return;
     }
@@ -236,14 +235,14 @@ export class LoginComponent implements OnInit, OnDestroy {
     // login strategies. Since it is optional and we only want to be doing this on the
     // web we will only send in content in the right context.
     this.orgPoliciesFromInvite = this.loginComponentService.getOrgPoliciesFromOrgInvite
-      ? await this.loginComponentService.getOrgPoliciesFromOrgInvite(this.email)
+      ? await this.loginComponentService.getOrgPoliciesFromOrgInvite(email)
       : null;
 
     const orgMasterPasswordPolicyOptions =
       this.orgPoliciesFromInvite?.enforcedPasswordPolicyOptions;
 
     const credentials = new PasswordLoginCredentials(
-      this.email,
+      email,
       masterPassword,
       undefined,
       orgMasterPasswordPolicyOptions,
