@@ -911,7 +911,7 @@ const safeProviders: SafeProvider[] = [
       EncryptService,
       CryptoFunctionServiceAbstraction,
       CollectionService,
-      KdfConfigService,      
+      KdfConfigService,
       RestrictedItemTypesService,
     ],
   }),
