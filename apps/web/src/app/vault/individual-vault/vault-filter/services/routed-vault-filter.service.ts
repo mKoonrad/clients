@@ -33,11 +33,12 @@ export class RoutedVaultFilterService implements OnDestroy {
         const type = isRoutedVaultFilterItemType(unsafeType) ? unsafeType : undefined;
 
         return {
-          collectionId: (queryParams.get("collectionId") ?? undefined) as CollectionId,
+          collectionId: (queryParams.get("collectionId") as CollectionId) ?? undefined,
           folderId: queryParams.get("folderId") ?? undefined,
-          organizationId: (params.get("organizationId") ??
-            queryParams.get("organizationId") ??
-            undefined) as OrganizationId,
+          organizationId:
+            (params.get("organizationId") as OrganizationId) ??
+            (queryParams.get("organizationId") as OrganizationId) ??
+            undefined,
           organizationIdParamType:
             params.get("organizationId") != undefined ? ("path" as const) : ("query" as const),
           type,

@@ -1,5 +1,5 @@
 import { Unassigned } from "@bitwarden/admin-console/common";
-import { CollectionId } from "@bitwarden/common/types/guid";
+import { CollectionId, OrganizationId } from "@bitwarden/common/types/guid";
 import { CipherType } from "@bitwarden/common/vault/enums";
 import { TreeNode } from "@bitwarden/common/vault/models/domain/tree-node";
 
@@ -54,7 +54,8 @@ export class RoutedVaultFilterBridge implements VaultFilter {
   set selectedOrganizationNode(value: TreeNode<OrganizationFilter>) {
     this.bridgeService.navigate({
       ...this.routedFilter,
-      organizationId: value?.node.id === "MyVault" ? Unassigned : value?.node.id,
+      organizationId:
+        value?.node.id === "MyVault" ? (Unassigned as OrganizationId) : value?.node.id,
       folderId: undefined,
       collectionId: undefined,
     });
@@ -102,7 +103,7 @@ export class RoutedVaultFilterBridge implements VaultFilter {
     let collectionId: CollectionId | undefined;
 
     if (value != null && value.node.id === null) {
-      collectionId = Unassigned;
+      collectionId = Unassigned as CollectionId;
     } else if (
       value?.node.id === "AllCollections" &&
       this.routedFilter.organizationIdParamType === "path"

@@ -5,10 +5,9 @@ import { CollectionAccessSelectionView } from "./collection-access-selection.vie
 import { CollectionAccessDetailsResponse } from "./collection.response";
 import { CollectionView } from "./collection.view";
 
-// TODO: this is used to represent the pseudo "Unassigned" collection
-// AND ALSO the user's personal vault - this should be separated out to different consts.
-// The type union allows this to be glossed over for now.
-export const Unassigned = "unassigned" as CollectionId & OrganizationId;
+// TODO: this is used to represent the pseudo "Unassigned" collection as well as
+// the user's personal vault (as a pseudo organization). This should be separated out into different values.
+export const Unassigned = "unassigned" as CollectionId | OrganizationId;
 
 export class CollectionAdminView extends CollectionView {
   groups: CollectionAccessSelectionView[] = [];
