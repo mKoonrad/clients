@@ -9,7 +9,7 @@ import { concatMap, map, pairwise, startWith, switchMap, takeUntil, timeout } fr
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { VaultTimeoutInputComponent } from "@bitwarden/auth/angular";
-import { PinServiceAbstraction } from "@bitwarden/auth/common";
+import { PinServiceAbstraction } from "@bitwarden/common/key-management/pin/pin.service.abstraction";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
 import { getFirstPolicy } from "@bitwarden/common/admin-console/services/policy/default-policy.service";

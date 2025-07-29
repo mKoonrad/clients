@@ -1,9 +1,10 @@
 import { EncString } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import { UserId } from "@bitwarden/common/types/guid";
 import { PinKey, UserKey } from "@bitwarden/common/types/key";
+// eslint-disable-next-line no-restricted-imports
 import { KdfConfig } from "@bitwarden/key-management";
 
-import { PinLockType } from "../services";
+import { PinLockType } from "./pin.service.implementation";
 
 /**
  * The PinService is used for PIN-based unlocks. Below is a very basic overview of the PIN flow:

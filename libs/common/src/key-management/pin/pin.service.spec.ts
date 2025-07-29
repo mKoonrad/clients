@@ -14,6 +14,7 @@ import {
 } from "@bitwarden/common/spec";
 import { UserId } from "@bitwarden/common/types/guid";
 import { PinKey, UserKey } from "@bitwarden/common/types/key";
+// eslint-disable-next-line no-restricted-imports
 import { DEFAULT_KDF_CONFIG, KdfConfigService } from "@bitwarden/key-management";
 
 import {

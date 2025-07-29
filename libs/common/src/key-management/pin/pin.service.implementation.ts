@@ -19,9 +19,10 @@ import {
 } from "@bitwarden/common/platform/state";
 import { UserId } from "@bitwarden/common/types/guid";
 import { PinKey, UserKey } from "@bitwarden/common/types/key";
+// eslint-disable-next-line no-restricted-imports
 import { KdfConfig, KdfConfigService } from "@bitwarden/key-management";
 
-import { PinServiceAbstraction } from "../../abstractions/pin.service.abstraction";
+import { PinServiceAbstraction } from "./pin.service.abstraction";
 
 /**
  * - DISABLED   : No PIN set.

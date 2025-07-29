@@ -1,5 +1,5 @@
 {
   "extends": "../../tsconfig.base",
-  "include": ["src", "spec"],
+  "include": ["src", "spec", "../common/src/key-management/pin/pin.service.abstraction.ts"],
   "exclude": ["node_modules", "dist"]
 }
