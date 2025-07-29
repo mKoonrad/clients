@@ -7,15 +7,15 @@ import {
   Component,
   EventEmitter,
   Input,
-  OnDestroy,
   Output,
   contentChild,
   contentChildren,
   effect,
   input,
   viewChildren,
+  inject,
+  DestroyRef,
 } from "@angular/core";
-import { Subject } from "rxjs";
 
 import { TabHeaderComponent } from "../shared/tab-header.component";
 import { TabListContainerDirective } from "../shared/tab-list-container.directive";
@@ -38,9 +38,10 @@ let nextId = 0;
     TabBodyComponent,
   ],
 })
-export class TabGroupComponent implements AfterContentChecked, AfterViewInit, OnDestroy {
+export class TabGroupComponent implements AfterContentChecked, AfterViewInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   private readonly _groupId: number;
-  private readonly destroy$ = new Subject<void>();
   private _indexToSelect: number | null = 0;
 
   /**
@@ -174,11 +175,6 @@ export class TabGroupComponent implements AfterContentChecked, AfterViewInit, On
       .withHorizontalOrientation("ltr")
       .withWrap()
       .withHomeAndEnd();
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private _clampTabIndex(index: number): number {

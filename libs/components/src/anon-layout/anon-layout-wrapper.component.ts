@@ -1,6 +1,7 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Data, NavigationEnd, Router, RouterModule } from "@angular/router";
-import { Subject, filter, of, switchMap, takeUntil, tap } from "rxjs";
+import { Subject, filter, of, switchMap, tap } from "rxjs";
 
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 
@@ -49,7 +50,7 @@ export interface AnonLayoutWrapperData {
   templateUrl: "anon-layout-wrapper.component.html",
   imports: [AnonLayoutComponent, RouterModule],
 })
-export class AnonLayoutWrapperComponent implements OnInit, OnDestroy {
+export class AnonLayoutWrapperComponent implements OnInit {
   private destroy$ = new Subject<void>();
 
   protected pageTitle?: string | null;
@@ -68,6 +69,8 @@ export class AnonLayoutWrapperComponent implements OnInit, OnDestroy {
     private changeDetectorRef: ChangeDetectorRef,
   ) {}
 
+  private readonly destroyRef = inject(DestroyRef);
+
   ngOnInit(): void {
     // Set the initial page data on load
     this.setAnonLayoutWrapperDataFromRouteData(this.route.snapshot.firstChild?.data);
@@ -83,7 +86,7 @@ export class AnonLayoutWrapperComponent implements OnInit, OnDestroy {
         // reset page data on page changes
         tap(() => this.resetPageData()),
         switchMap(() => this.route.firstChild?.data || of(null)),
-        takeUntil(this.destroy$),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((firstChildRouteData: Data | null) => {
         this.setAnonLayoutWrapperDataFromRouteData(firstChildRouteData);
@@ -119,7 +122,7 @@ export class AnonLayoutWrapperComponent implements OnInit, OnDestroy {
   private listenForServiceDataChanges() {
     this.anonLayoutWrapperDataService
       .anonLayoutWrapperData$()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((data: AnonLayoutWrapperData) => {
         this.setAnonLayoutWrapperData(data);
       });
@@ -177,10 +180,5 @@ export class AnonLayoutWrapperComponent implements OnInit, OnDestroy {
     this.maxWidth = null;
     this.hideCardWrapper = null;
     this.hideIcon = null;
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }
