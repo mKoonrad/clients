@@ -1,0 +1,145 @@
+[importer] libs/importer/src/importers/keeper/keeper-csv-importer.spec.ts:106:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 106     importer.organizationId = Utils.newGuid();
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/keeper/keeper-csv-importer.spec.ts:129:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 129     importer.organizationId = Utils.newGuid();
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/keeper/keeper-json-importer.spec.ts:96:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 96     importer.organizationId = Utils.newGuid();
+[importer]        ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/netwrix/netwrix-passwordsecure-csv-importer.spec.ts:82:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 82     importer.organizationId = Utils.newGuid();
+[importer]        ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/netwrix/netwrix-passwordsecure-csv-importer.spec.ts:96:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 96     importer.organizationId = Utils.newGuid();
+[importer]        ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/nordpass-csv-importer.spec.ts:227:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer]   Type 'string' is not assignable to type 'Tagged<"OrganizationId">'.
+[importer] 
+[importer] 227     importer.organizationId = Utils.newGuid();
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/onepassword/onepassword-1pux-importer.spec.ts:694:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 694     importer.organizationId = Utils.newGuid();
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/passsordxp/passwordxp-csv-importer.spec.ts:149:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer]   Type 'string' is not assignable to type 'Tagged<"OrganizationId">'.
+[importer] 
+[importer] 149     importer.organizationId = "someOrg";
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/passsordxp/passwordxp-csv-importer.spec.ts:175:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 175     importer.organizationId = "someOrg";
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/password-depot/password-depot-17-xml-importer.spec.ts:488:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 488     importer.organizationId = "someOrgId";
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/protonpass/protonpass-json-importer.spec.ts:93:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 93     importer.organizationId = Utils.newGuid();
+[importer]        ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/psono/psono-json-importer.spec.ts:239:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 239     importer.organizationId = "someOrg";
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/importers/zohovault-csv-importer.spec.ts:76:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer]   Type 'string' is not assignable to type 'Tagged<"OrganizationId">'.
+[importer] 
+[importer] 76     importer.organizationId = "someOrgId";
+[importer]        ~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/services/import.service.spec.ts:80:11 - error TS2345: Argument of type 'string' is not assignable to parameter of type 'OrganizationId'.
+[importer] 
+[importer] 80           organizationId,
+[importer]              ~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/services/import.service.spec.ts:148:5 - error TS2322: Type 'string' is not assignable to type 'CollectionId'.
+[importer]   Type 'string' is not assignable to type 'Tagged<"CollectionId">'.
+[importer] 
+[importer] 148     mockImportTargetCollection.id = "myImportTarget";
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/services/import.service.spec.ts:150:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 150     mockImportTargetCollection.organizationId = organizationId;
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/services/import.service.spec.ts:153:5 - error TS2322: Type 'string' is not assignable to type 'CollectionId'.
+[importer]   Type 'string' is not assignable to type 'Tagged<"CollectionId">'.
+[importer] 
+[importer] 153     mockCollection1.id = "collection1";
+[importer]         ~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/services/import.service.spec.ts:155:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 155     mockCollection1.organizationId = organizationId;
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/services/import.service.spec.ts:158:5 - error TS2322: Type 'string' is not assignable to type 'CollectionId'.
+[importer]   Type 'string' is not assignable to type 'Tagged<"CollectionId">'.
+[importer] 
+[importer] 158     mockCollection1.id = "collection2";
+[importer]         ~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] libs/importer/src/services/import.service.spec.ts:160:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[importer] 
+[importer] 160     mockCollection1.organizationId = organizationId;
+[importer]         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[importer] 
+[importer] 
+[importer] Found 20 errors in 11 files.
+[importer] 
+[importer] Errors  Files
+[importer]      2  libs/importer/src/importers/keeper/keeper-csv-importer.spec.ts:106
+[importer]      1  libs/importer/src/importers/keeper/keeper-json-importer.spec.ts:96
+[importer]      2  libs/importer/src/importers/netwrix/netwrix-passwordsecure-csv-importer.spec.ts:82
+[importer]      1  libs/importer/src/importers/nordpass-csv-importer.spec.ts:227
+[importer]      1  libs/importer/src/importers/onepassword/onepassword-1pux-importer.spec.ts:694
+[importer]      2  libs/importer/src/importers/passsordxp/passwordxp-csv-importer.spec.ts:149
+[importer]      1  libs/importer/src/importers/password-depot/password-depot-17-xml-importer.spec.ts:488
+[importer]      1  libs/importer/src/importers/protonpass/protonpass-json-importer.spec.ts:93
+[importer]      1  libs/importer/src/importers/psono/psono-json-importer.spec.ts:239
+[importer]      1  libs/importer/src/importers/zohovault-csv-importer.spec.ts:76
+[importer]      7  libs/importer/src/services/import.service.spec.ts:80
+[importer] npx tsc --noEmit --project /Users/thomasrittson/Projects/clients/libs/importer/tsconfig.json exited with code 2
+[auth] npx tsc --noEmit --project /Users/thomasrittson/Projects/clients/libs/auth/tsconfig.json exited with code 0
+[vault] libs/vault/src/cipher-form/components/item-details/item-details-section.component.spec.ts:36:5 - error TS2322: Type 'string' is not assignable to type 'CollectionId'.
+[vault]   Type 'string' is not assignable to type 'Tagged<"CollectionId">'.
+[vault] 
+[vault] 36     id,
+[vault]        ~~
+[vault] 
+[vault]   libs/admin-console/src/common/collections/models/collection.view.ts:14:3
+[vault]     14   id: CollectionId | undefined;
+[vault]          ~~
+[vault]     The expected type comes from property 'id' which is declared here on type 'CollectionView'
+[vault] 
+[vault] libs/vault/src/cipher-form/components/item-details/item-details-section.component.spec.ts:38:5 - error TS2322: Type 'string' is not assignable to type 'OrganizationId'.
+[vault]   Type 'string' is not assignable to type 'Tagged<"OrganizationId">'.
+[vault] 
+[vault] 38     organizationId,
+[vault]        ~~~~~~~~~~~~~~
+[vault] 
+[vault]   libs/admin-console/src/common/collections/models/collection.view.ts:15:3
+[vault]     15   organizationId: OrganizationId | undefined;
+[vault]          ~~~~~~~~~~~~~~
+[vault]     The expected type comes from property 'organizationId' which is declared here on type 'CollectionView'
+[vault] 
