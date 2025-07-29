@@ -32,6 +32,9 @@ describe("SecretService", () => {
   beforeEach(() => {
     jest.resetAllMocks();
 
+    accountService = mock<AccountService>();
+    accountService.activeAccount$ = activeAccountSubject;
+
     sut = new SecretService(
       keyService,
       apiService,
@@ -39,9 +42,6 @@ describe("SecretService", () => {
       accessPolicyService,
       accountService,
     );
-
-    accountService = mock<AccountService>();
-    accountService.activeAccount$ = activeAccountSubject;
 
     encryptService.encryptString.mockResolvedValue({
       encryptedString: "mockEncryptedString",

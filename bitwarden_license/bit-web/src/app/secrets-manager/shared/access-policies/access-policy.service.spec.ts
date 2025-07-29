@@ -4,7 +4,11 @@ import { mock, MockProxy } from "jest-mock-extended";
 import { BehaviorSubject } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import {
+  Account,
+  AccountInfo,
+  AccountService,
+} from "@bitwarden/common/auth/abstractions/account.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
@@ -31,6 +35,7 @@ import { ProjectServiceAccountsAccessPoliciesRequest } from "./models/requests/p
 import { ServiceAccountGrantedPoliciesRequest } from "./models/requests/service-account-granted-policies.request";
 
 import { trackEmissions } from "@bitwarden/common/../spec";
+import { UserId } from "@bitwarden/common/types/guid";
 
 describe("AccessPolicyService", () => {
   let sut: AccessPolicyService;
@@ -38,13 +43,19 @@ describe("AccessPolicyService", () => {
   const keyService = mock<KeyService>();
   const apiService = mock<ApiService>();
   const encryptService = mock<EncryptService>();
-  const accountService: MockProxy<AccountService> = mock<AccountService>();
-  const activeAccountSubject = new BehaviorSubject<Account | null>(null);
-  accountService.activeAccount$ = activeAccountSubject;
+  let accountService: MockProxy<AccountService>;
+  const activeAccountSubject = new BehaviorSubject<{ id: UserId } & AccountInfo>({
+    id: "testId" as UserId,
+    email: "test@example.com",
+    emailVerified: true,
+    name: "Test User",
+  });
 
   beforeEach(() => {
     jest.resetAllMocks();
 
+    accountService = mock<AccountService>();
+    accountService.activeAccount$ = activeAccountSubject;
     sut = new AccessPolicyService(keyService, apiService, encryptService, accountService);
   });
 

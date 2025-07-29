@@ -2,7 +2,11 @@ import { mock, MockProxy } from "jest-mock-extended";
 import { BehaviorSubject } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import {
+  Account,
+  AccountInfo,
+  AccountService,
+} from "@bitwarden/common/auth/abstractions/account.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { EncString } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
@@ -17,6 +21,7 @@ import { SecretsManagerImportedProjectRequest } from "../models/requests/sm-impo
 import { SecretsManagerImportedSecretRequest } from "../models/requests/sm-imported-secret.request";
 
 import { SecretsManagerPortingApiService } from "./sm-porting-api.service";
+import { UserId } from "@bitwarden/common/types/guid";
 
 describe("SecretsManagerPortingApiService", () => {
   let sut: SecretsManagerPortingApiService;
@@ -24,13 +29,19 @@ describe("SecretsManagerPortingApiService", () => {
   const apiService = mock<ApiService>();
   const encryptService = mock<EncryptService>();
   const keyService = mock<KeyService>();
-  const accountService: MockProxy<AccountService> = mock<AccountService>();
-  const activeAccountSubject = new BehaviorSubject<Account | null>(null);
-  accountService.activeAccount$ = activeAccountSubject;
+  let accountService: MockProxy<AccountService>;
+  const activeAccountSubject = new BehaviorSubject<{ id: UserId } & AccountInfo>({
+    id: "testId" as UserId,
+    email: "test@example.com",
+    emailVerified: true,
+    name: "Test User",
+  });
 
   beforeEach(() => {
     jest.resetAllMocks();
 
+    accountService = mock<AccountService>();
+    accountService.activeAccount$ = activeAccountSubject;
     sut = new SecretsManagerPortingApiService(
       apiService,
       encryptService,
@@ -61,7 +72,6 @@ describe("SecretsManagerPortingApiService", () => {
 
     it("emits the import successful", async () => {
       const expectedRequest = toRequest([project1, project2], [secret1, secret2]);
-
       let subscriptionCount = 0;
       sut.imports$.subscribe((request) => {
         expect(request).toBeDefined();
