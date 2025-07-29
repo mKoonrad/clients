@@ -112,7 +112,7 @@ export class CheckboxComponent implements BitFormControlAbstraction {
   set disabled(value: any) {
     this._disabled = value != null && value !== false;
   }
-  private _disabled: boolean = false;
+  private _disabled?: boolean;
 
   // TODO: Skipped for signal migration because:
   //  Accessor inputs cannot be migrated as they are too complex.
