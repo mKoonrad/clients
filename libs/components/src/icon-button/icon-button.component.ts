@@ -14,8 +14,7 @@ import {
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { debounce, interval } from "rxjs";
 
-// import { A11yTitleDirective } from "../a11y";
-import { setA11yTitleAndAriaLabel } from "../a11y/setA11yTitleAndAriaLabel";
+import { setA11yTitleAndAriaLabel } from "../a11y/set-a11y-title-and-aria-label";
 import { ButtonLikeAbstraction, ButtonType } from "../shared/button-like.abstraction";
 import { FocusableElement } from "../shared/focusable-element";
 
