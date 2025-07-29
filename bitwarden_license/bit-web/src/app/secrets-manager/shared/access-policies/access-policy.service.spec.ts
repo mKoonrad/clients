@@ -1,9 +1,10 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
-import { mock } from "jest-mock-extended";
+import { mock, MockProxy } from "jest-mock-extended";
+import { BehaviorSubject } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
@@ -37,7 +38,9 @@ describe("AccessPolicyService", () => {
   const keyService = mock<KeyService>();
   const apiService = mock<ApiService>();
   const encryptService = mock<EncryptService>();
-  const accountService = mock<AccountService>();
+  const accountService: MockProxy<AccountService> = mock<AccountService>();
+  const activeAccountSubject = new BehaviorSubject<Account | null>(null);
+  accountService.activeAccount$ = activeAccountSubject;
 
   beforeEach(() => {
     jest.resetAllMocks();

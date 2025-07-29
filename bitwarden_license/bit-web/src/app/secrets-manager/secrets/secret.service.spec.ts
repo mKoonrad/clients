@@ -1,7 +1,8 @@
-import { mock } from "jest-mock-extended";
+import { mock, MockProxy } from "jest-mock-extended";
+import { BehaviorSubject } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { Account, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { EncString } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import { KeyService } from "@bitwarden/key-management";
@@ -19,7 +20,9 @@ describe("SecretService", () => {
   const apiService = mock<ApiService>();
   const encryptService = mock<EncryptService>();
   const accessPolicyService = mock<AccessPolicyService>();
-  const accountService = mock<AccountService>();
+  const accountService: MockProxy<AccountService> = mock<AccountService>();
+  const activeAccountSubject = new BehaviorSubject<Account | null>(null);
+  accountService.activeAccount$ = activeAccountSubject;
 
   beforeEach(() => {
     jest.resetAllMocks();
