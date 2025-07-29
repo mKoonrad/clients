@@ -4,15 +4,12 @@ import { mock, MockProxy } from "jest-mock-extended";
 import { BehaviorSubject } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import {
-  Account,
-  AccountInfo,
-  AccountService,
-} from "@bitwarden/common/auth/abstractions/account.service";
+import { AccountInfo, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import { CsprngArray } from "@bitwarden/common/types/csprng";
+import { UserId } from "@bitwarden/common/types/guid";
 import { OrgKey } from "@bitwarden/common/types/key";
 import { KeyService } from "@bitwarden/key-management";
 
@@ -35,7 +32,6 @@ import { ProjectServiceAccountsAccessPoliciesRequest } from "./models/requests/p
 import { ServiceAccountGrantedPoliciesRequest } from "./models/requests/service-account-granted-policies.request";
 
 import { trackEmissions } from "@bitwarden/common/../spec";
-import { UserId } from "@bitwarden/common/types/guid";
 
 describe("AccessPolicyService", () => {
   let sut: AccessPolicyService;

@@ -2,16 +2,13 @@ import { mock, MockProxy } from "jest-mock-extended";
 import { BehaviorSubject } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import {
-  Account,
-  AccountInfo,
-  AccountService,
-} from "@bitwarden/common/auth/abstractions/account.service";
+import { AccountInfo, AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { EncString } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import { CsprngArray } from "@bitwarden/common/types/csprng";
+import { UserId } from "@bitwarden/common/types/guid";
 import { OrgKey } from "@bitwarden/common/types/key";
 import { KeyService } from "@bitwarden/key-management";
 
@@ -21,7 +18,6 @@ import { SecretsManagerImportedProjectRequest } from "../models/requests/sm-impo
 import { SecretsManagerImportedSecretRequest } from "../models/requests/sm-imported-secret.request";
 
 import { SecretsManagerPortingApiService } from "./sm-porting-api.service";
-import { UserId } from "@bitwarden/common/types/guid";
 
 describe("SecretsManagerPortingApiService", () => {
   let sut: SecretsManagerPortingApiService;
