@@ -63,6 +63,7 @@
               buttonType="secondary"
               [bitMenuTriggerFor]="appListDropdown"
               class="tw-border-0 tw-bg-transparent tw-p-0"
+              [label]="'editDomain' | i18n"
             ></button>
             <bit-menu #appListDropdown>
               <a href="#" bitMenuItem appStopClick (click)="toggleExcluded(d)" *ngIf="!d.excluded">
