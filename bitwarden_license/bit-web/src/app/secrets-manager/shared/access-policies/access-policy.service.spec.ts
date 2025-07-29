@@ -3,6 +3,7 @@
 import { mock } from "jest-mock-extended";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
@@ -36,11 +37,12 @@ describe("AccessPolicyService", () => {
   const keyService = mock<KeyService>();
   const apiService = mock<ApiService>();
   const encryptService = mock<EncryptService>();
+  const accountService = mock<AccountService>();
 
   beforeEach(() => {
     jest.resetAllMocks();
 
-    sut = new AccessPolicyService(keyService, apiService, encryptService);
+    sut = new AccessPolicyService(keyService, apiService, encryptService, accountService);
   });
 
   it("instantiates", () => {
