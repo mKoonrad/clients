@@ -173,7 +173,7 @@ export class SelectComponent<T> implements BitFormFieldControl, ControlValueAcce
   set required(value: any) {
     this._required = value != null && value !== false;
   }
-  private _required: boolean = false;
+  private _required?: boolean;
 
   /**Implemented as part of BitFormFieldControl */
   get hasError() {
