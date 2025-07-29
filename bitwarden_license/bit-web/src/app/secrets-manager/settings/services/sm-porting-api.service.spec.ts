@@ -1,6 +1,7 @@
 import { mock } from "jest-mock-extended";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { EncryptService } from "@bitwarden/common/key-management/crypto/abstractions/encrypt.service";
 import { EncString } from "@bitwarden/common/key-management/crypto/models/enc-string";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
@@ -22,11 +23,17 @@ describe("SecretsManagerPortingApiService", () => {
   const apiService = mock<ApiService>();
   const encryptService = mock<EncryptService>();
   const keyService = mock<KeyService>();
+  const accountService = mock<AccountService>();
 
   beforeEach(() => {
     jest.resetAllMocks();
 
-    sut = new SecretsManagerPortingApiService(apiService, encryptService, keyService);
+    sut = new SecretsManagerPortingApiService(
+      apiService,
+      encryptService,
+      keyService,
+      accountService,
+    );
 
     encryptService.encryptString.mockResolvedValue(mockEncryptedString);
     encryptService.decryptString.mockResolvedValue(mockUnencryptedString);
