@@ -13,7 +13,6 @@ import {
   Observable,
   shareReplay,
   switchMap,
-  withLatestFrom,
   tap,
 } from "rxjs";
 
@@ -112,8 +111,8 @@ export class MembersComponent extends BaseMembersComponent<OrganizationUserView>
   protected showUserManagementControls$: Observable<boolean>;
 
   // Fixed sizes used for cdkVirtualScroll
-  protected rowHeight = 69;
-  protected rowHeightClass = `tw-h-[69px]`;
+  protected rowHeight = 66;
+  protected rowHeightClass = `tw-h-[66px]`;
 
   private organizationUsersCount = 0;
 
@@ -201,7 +200,14 @@ export class MembersComponent extends BaseMembersComponent<OrganizationUserView>
             this.organization.canManageUsersPassword &&
             !this.organization.hasPublicAndPrivateKeys
           ) {
-            const orgShareKey = await this.keyService.getOrgKey(this.organization.id);
+            const orgShareKey = await firstValueFrom(
+              this.accountService.activeAccount$.pipe(
+                getUserId,
+                switchMap((userId) => this.keyService.orgKeys$(userId)),
+                map((orgKeys) => orgKeys[this.organization.id] ?? null),
+              ),
+            );
+
             const orgKeys = await this.keyService.makeKeyPair(orgShareKey);
             const request = new OrganizationKeysRequest(orgKeys[0], orgKeys[1].encryptedString);
             const response = await this.organizationApiService.updateKeys(
@@ -306,14 +312,19 @@ export class MembersComponent extends BaseMembersComponent<OrganizationUserView>
   async getCollectionNameMap() {
     const response = from(this.apiService.getCollections(this.organization.id)).pipe(
       map((res) =>
-        res.data.map((r) => new Collection(new CollectionData(r as CollectionDetailsResponse))),
+        res.data.map((r) =>
+          Collection.fromCollectionData(new CollectionData(r as CollectionDetailsResponse)),
+        ),
       ),
     );
 
-    const decryptedCollections$ = this.accountService.activeAccount$.pipe(
-      getUserId,
-      switchMap((userId) => this.keyService.orgKeys$(userId)),
-      withLatestFrom(response),
+    const decryptedCollections$ = combineLatest([
+      this.accountService.activeAccount$.pipe(
+        getUserId,
+        switchMap((userId) => this.keyService.orgKeys$(userId)),
+      ),
+      response,
+    ]).pipe(
       switchMap(([orgKeys, collections]) =>
         this.collectionService.decryptMany$(collections, orgKeys),
       ),
@@ -351,7 +362,13 @@ export class MembersComponent extends BaseMembersComponent<OrganizationUserView>
         this.organizationUserService.confirmUser(this.organization, user, publicKey),
       );
     } else {
-      const orgKey = await this.keyService.getOrgKey(this.organization.id);
+      const orgKey = await firstValueFrom(
+        this.accountService.activeAccount$.pipe(
+          getUserId,
+          switchMap((userId) => this.keyService.orgKeys$(userId)),
+          map((orgKeys) => orgKeys[this.organization.id] ?? null),
+        ),
+      );
       const key = await this.encryptService.encapsulateKeyUnsigned(orgKey, publicKey);
       const request = new OrganizationUserConfirmRequest();
       request.key = key.encryptedString;
@@ -719,7 +736,7 @@ export class MembersComponent extends BaseMembersComponent<OrganizationUserView>
 
     const dialogRef = BulkConfirmDialogComponent.open(this.dialogService, {
       data: {
-        organizationId: this.organization.id,
+        organization: this.organization,
         users: this.dataSource.getCheckedUsers(),
       },
     });

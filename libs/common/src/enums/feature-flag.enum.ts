@@ -36,9 +36,6 @@ export enum FeatureFlag {
 
   /* Key Management */
   PrivateKeyRegeneration = "pm-12241-private-key-regeneration",
-  PM4154_BulkEncryptionService = "PM-4154-bulk-encryption-service",
-  UseSDKForDecryption = "use-sdk-for-decryption",
-  PM17987_BlockType0 = "pm-17987-block-type-0",
   EnrollAeadOnKeyRotation = "enroll-aead-on-key-rotation",
   ForceUpdateKDFSettings = "pm-18021-force-update-kdf-settings",
 
@@ -51,12 +48,10 @@ export enum FeatureFlag {
 
   /* Vault */
   PM8851_BrowserOnboardingNudge = "pm-8851-browser-onboarding-nudge",
-  PM9111ExtensionPersistAddEditForm = "pm-9111-extension-persist-add-edit-form",
   PM19941MigrateCipherDomainToSdk = "pm-19941-migrate-cipher-domain-to-sdk",
   PM22134SdkCipherListView = "pm-22134-sdk-cipher-list-view",
   PM22136_SdkCipherEncryption = "pm-22136-sdk-cipher-encryption",
   CipherKeyEncryption = "cipher-key-encryption",
-  EndUserNotifications = "pm-10609-end-user-notifications",
   RemoveCardItemTypePolicy = "pm-16442-remove-card-item-type-policy",
   PM19315EndUserActivationMvp = "pm-19315-end-user-activation-mvp",
 
@@ -98,9 +93,7 @@ export const DefaultFeatureFlagValue = {
 
   /* Vault */
   [FeatureFlag.PM8851_BrowserOnboardingNudge]: FALSE,
-  [FeatureFlag.PM9111ExtensionPersistAddEditForm]: FALSE,
   [FeatureFlag.CipherKeyEncryption]: FALSE,
-  [FeatureFlag.EndUserNotifications]: FALSE,
   [FeatureFlag.PM19941MigrateCipherDomainToSdk]: FALSE,
   [FeatureFlag.RemoveCardItemTypePolicy]: FALSE,
   [FeatureFlag.PM22134SdkCipherListView]: FALSE,
@@ -122,9 +115,6 @@ export const DefaultFeatureFlagValue = {
 
   /* Key Management */
   [FeatureFlag.PrivateKeyRegeneration]: FALSE,
-  [FeatureFlag.PM4154_BulkEncryptionService]: FALSE,
-  [FeatureFlag.UseSDKForDecryption]: FALSE,
-  [FeatureFlag.PM17987_BlockType0]: FALSE,
   [FeatureFlag.EnrollAeadOnKeyRotation]: FALSE,
   [FeatureFlag.ForceUpdateKDFSettings]: FALSE,
 
