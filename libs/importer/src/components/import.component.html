@@ -53,12 +53,7 @@
             />
           </ng-container>
         </bit-select>
-        <bit-hint *ngIf="organizationId">
-           {{ "importTargetHintCollection" | i18n }}
-        </bit-hint>
-        <bit-hint *ngIf="!organizationId">
-           {{ "importTargetHintFolder" | i18n }}
-        </bit-hint>
+        <bit-hint>{{ organizationId ? ("importTargetHintCollection" | i18n) : ("importTargetHintFolder" | i18n) }}</bit-hint>
       </bit-form-field>
     </bit-card>
   </bit-section>
